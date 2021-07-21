@@ -9,6 +9,11 @@ This mod is made to fix Mojang's issue of when you step in a soul fire, you have
 <br />
 
 
+### The old overlay:
+
+<img src="https://imgur.com/1VzAHp5.png" align="bottom" />
+
+<br />
 
 
 ### The new overlay:
