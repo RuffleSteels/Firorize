@@ -1,9 +1,11 @@
-# Fabric Example Mod
+<img src="icon.png" align="right" />
 
-## Setup
+# Improved Fire Overlay Mod [![RuffleSteels](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/RuffleSteels/Improved-Fire-Overlay/blob/master/README.md)
+>####Fixes the issue of the soul fire overlay
 
-For setup instructions please see the [fabric wiki page](https://fabricmc.net/wiki/tutorial:setup) that relates to the IDE that you are using.
 
-## License
+>####Fully client-side
 
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+This mod is made to fix Mojang's issue of when you step in a soul fire, you have the normal orange overlay.
+
+
