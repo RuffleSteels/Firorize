@@ -6,7 +6,7 @@
 
 This mod is made to fix Mojang's issue of when you step in a soul fire, you have the normal orange overlay.
 
-<br />
+
 
 
 ### The old overlay:
