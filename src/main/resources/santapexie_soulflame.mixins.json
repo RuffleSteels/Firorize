@@ -10,7 +10,8 @@
     "fire_overlays.client.InGameOverlayRendererMixin",
     "fire_overlays.client.EntityRenderDispatcherMixin",
     "fire_overlays.client.ClientSoulFireBlockMixin",
-    "fire_overlays.client.ClientFireBlockMixin"
+    "fire_overlays.client.ClientFireBlockMixin",
+    "fire_overlays.client.MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

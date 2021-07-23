@@ -8,6 +8,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.FireBlock;
 import net.minecraft.block.SoulFireBlock;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -31,6 +32,9 @@ public class ClientFireBlockMixin extends AbstractFireBlock {
     public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
         if(entity instanceof PlayerEntity) {
             Main.shouldBeRenderingPlayer = false;
+        }
+        if (entity instanceof MobEntity && Main.onFireEntityList.contains(entity)) {
+            Main.onFireEntityList.remove(entity);
         }
         super.onEntityCollision(state, world, pos, entity);
     }
