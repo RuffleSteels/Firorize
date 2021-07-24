@@ -43,7 +43,7 @@ public class Main implements ClientModInitializer {
             }
                 if (entity.isOnFire() && onFireEntityList.contains(entity) && entity instanceof MobEntity) {
                     if (client.world.getBlockState(entity.getBlockPos().up()).getBlock() == Blocks.FIRE || client.world.getBlockState(entity.getBlockPos()).getBlock() == Blocks.FIRE) {
-                        onFireEntityList.add(entity);
+                        onFireEntityList.remove(entity);
                     }
                 }
                 if (!entity.isPlayer() && onFireEntityList.contains(entity) && entity instanceof MobEntity && entity.isInLava()) {
