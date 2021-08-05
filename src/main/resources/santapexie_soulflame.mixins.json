@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.santapexie.santapexie_soulflame.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "fire_overlays.client.InGameOverlayRendererMixin",
+    "fire_overlays.client.EntityRenderDispatcherMixin",
+    "fire_overlays.client.ClientSoulFireBlockMixin",
+    "fire_overlays.client.ClientFireBlockMixin",
+    "fire_overlays.client.MinecraftClientMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
