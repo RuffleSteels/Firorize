@@ -6,14 +6,15 @@
   "name": "Improved Flame Overlays",
   "description": "This client-side mod fixes Mojang's issue of the blue soul fire having a orange fire overlay when you or any mob steps in it.",
   "authors": [
-    "Santapexie"
+    "RuffleSteels"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://github.com/RuffleSteels/Improved-Fire-Overlay",
+    "sources": "https://github.com/RuffleSteels/Improved-Fire-Overlay",
+    "issues": "https://github.com/RuffleSteels/Improved-Fire-Overlay/issues"
   },
 
-  "license": "CC0-1.0",
+  "license": "MIT License",
   "icon": "assets/santapexie_soulflame/icon.png",
 
   "environment": "*",
