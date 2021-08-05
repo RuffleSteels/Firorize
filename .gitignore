@@ -1,0 +1,35 @@
+# gradle
+
+.gradle/
+build/
+out/
+classes/
+settings.gradle
+libs/lambdynamiclights-2.0.2+1.17.jar
+
+# eclipse
+
+*.launch
+
+# idea
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# macos
+
+*.DS_Store
+
+# fabric
+
+run/
