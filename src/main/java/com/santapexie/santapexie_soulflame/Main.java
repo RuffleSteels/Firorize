@@ -35,7 +35,6 @@ public class Main implements ClientModInitializer {
 
          ClientTickEvents.START_CLIENT_TICK.register((client) -> {
             if(client.world != null) {
-                System.out.println(onFireEntityList);
                 onFireEntityList.removeIf(entity -> entity.isRemoved());
                 onFireEntityList.removeIf(entity -> !entity.isPlayer() && !entity.isOnFire());
 
