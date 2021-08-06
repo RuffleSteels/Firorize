@@ -1,8 +1,7 @@
 package com.santapexie.santapexie_soulflame.mixin.fire_overlays.client;
 
+import com.santapexie.santapexie_soulflame.SoulFireEntityAccessor;
 
-import com.santapexie.santapexie_soulflame.Main;
-import com.santapexie.santapexie_soulflame.OnSoulFireAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -13,9 +12,6 @@ import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.LavaFluid;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,18 +22,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class EntityRenderDispatcherMixin {
     private static final SpriteIdentifier SOUL_FIRE_0 = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0"));
     private static final SpriteIdentifier SOUL_FIRE_1 = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1"));
-    private static final SpriteIdentifier FIRE_0 = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_0"));
-    private static final SpriteIdentifier FIRE_1 = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1"));
     MinecraftClient client = MinecraftClient.getInstance();
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 0))
     private Sprite getSprite0(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
-        if (Main.shouldBeRenderingPlayer && entity instanceof PlayerEntity) {
+        if (((SoulFireEntityAccessor)entity).isOnSoulFire()) {
             return SOUL_FIRE_0.getSprite();
-        }
-        for(Entity temp : Main.onFireEntityList) {
-            if(entity == temp) {
-                return SOUL_FIRE_0.getSprite();
-            }
         }
         return obj.getSprite();
     }
@@ -46,13 +35,8 @@ public class EntityRenderDispatcherMixin {
 
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 1))
     private Sprite getSprite1(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
-        if (Main.shouldBeRenderingPlayer && entity instanceof PlayerEntity) {
+        if (((SoulFireEntityAccessor)entity).isOnSoulFire()) {
             return SOUL_FIRE_1.getSprite();
-        }
-        for(Entity temp : Main.onFireEntityList) {
-            while(entity == temp) {
-                return SOUL_FIRE_1.getSprite();
-            }
         }
         return obj.getSprite();
     }

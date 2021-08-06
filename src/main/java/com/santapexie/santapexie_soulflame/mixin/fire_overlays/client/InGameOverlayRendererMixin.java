@@ -1,8 +1,7 @@
 package com.santapexie.santapexie_soulflame.mixin.fire_overlays.client;
 
+import com.santapexie.santapexie_soulflame.SoulFireEntityAccessor;
 
-import com.santapexie.santapexie_soulflame.Main;
-import com.santapexie.santapexie_soulflame.OnSoulFireAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -23,8 +22,8 @@ public class InGameOverlayRendererMixin {
 
 
     @Redirect(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;"))
-    private static Sprite getSprite(SpriteIdentifier obj, MinecraftClient minecraftClient) {
-        if (Main.shouldBeRenderingPlayer) {
+    private static Sprite getSprite(SpriteIdentifier obj, MinecraftClient client) {
+        if (((SoulFireEntityAccessor) client.player).isOnSoulFire()) {
             return SOUL_FIRE_1.getSprite();
         }
         return obj.getSprite();
