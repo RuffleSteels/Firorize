@@ -11,9 +11,6 @@ import net.minecraft.util.math.Box;
 @Environment(EnvType.CLIENT)
 public class Main implements ClientModInitializer {
 
-    public static boolean shouldBeRenderingPlayer;
-
-
     @Override
     public void onInitializeClient() {
 
