@@ -4,8 +4,6 @@
 build/
 out/
 classes/
-settings.gradle
-libs/lambdynamiclights-2.0.2+1.17.jar
 
 # eclipse
 
