@@ -31,13 +31,8 @@ public class EntityRenderDispatcherMixin {
     MinecraftClient client = MinecraftClient.getInstance();
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 0))
     private Sprite getSprite0(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
-        if (Main.shouldBeRenderingPlayer && entity instanceof PlayerEntity) {
+        if (((OnSoulFireAccessor)entity).isRenderSoulFire()) {
             return SOUL_FIRE_0.getSprite();
-        }
-        for(Entity temp : Main.onFireEntityList) {
-            if(entity == temp) {
-                return SOUL_FIRE_0.getSprite();
-            }
         }
         return obj.getSprite();
     }
@@ -46,13 +41,8 @@ public class EntityRenderDispatcherMixin {
 
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 1))
     private Sprite getSprite1(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
-        if (Main.shouldBeRenderingPlayer && entity instanceof PlayerEntity) {
+        if (((OnSoulFireAccessor)entity).isRenderSoulFire()) {
             return SOUL_FIRE_1.getSprite();
-        }
-        for(Entity temp : Main.onFireEntityList) {
-            while(entity == temp) {
-                return SOUL_FIRE_1.getSprite();
-            }
         }
         return obj.getSprite();
     }

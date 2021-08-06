@@ -23,8 +23,8 @@ public class InGameOverlayRendererMixin {
 
 
     @Redirect(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;"))
-    private static Sprite getSprite(SpriteIdentifier obj, MinecraftClient minecraftClient) {
-        if (Main.shouldBeRenderingPlayer) {
+    private static Sprite getSprite(SpriteIdentifier obj, MinecraftClient client) {
+        if (((OnSoulFireAccessor) client.player).isRenderSoulFire()) {
             return SOUL_FIRE_1.getSprite();
         }
         return obj.getSprite();

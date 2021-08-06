@@ -12,6 +12,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public interface OnSoulFireAccessor {
-    void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity);
+    boolean isRenderSoulFire();
 
+    void setRenderSoulFire(boolean renderSoulFire);
 }
