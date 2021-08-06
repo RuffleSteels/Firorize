@@ -20,3 +20,8 @@ This mod is made to fix Mojang's issue of when you step in a soul fire, you have
 ### The new overlay:
 
 <img src="https://i.imgur.com/hDAOwuC.png" align="bottom" />
+
+<br />
+<strong>Credit to </strong>
+<a href="https://github.com/altrisi"><strong>altrisi</strong></a>
+<strong>for performance assistance!</strong>
