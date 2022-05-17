@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.oscimate.oscimate_soulflame.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+  ],
+  "client": [
+    "fire_overlays.client.InGameOverlayRendererMixin",
+    "fire_overlays.client.EntityRenderDispatcherMixin",
+    "fire_overlays.client.ClientEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "santapexie_soulflame",
+  "id": "oscimate_soulflame",
   "version": "${version}",
 
   "name": "Improved Flame Overlays",
@@ -15,22 +15,23 @@
   },
 
   "license": "MIT License",
-  "icon": "assets/santapexie_soulflame/icon.png",
+  "icon": "assets/oscimate_soulflame/icon.png",
 
   "environment": "*",
   "entrypoints": {
     "client": [
-      "com.santapexie.santapexie_soulflame.Main"
+      "com.oscimate.oscimate_soulflame.Main"
     ]
   },
   "mixins": [
-    "santapexie_soulflame.mixins.json"
+    "oscimate_soulflame.mixins.json"
   ],
 
   "depends": {
-    "fabricloader": ">=0.7.4",
+    "fabricloader": ">=0.13.3",
     "fabric": "*",
-    "minecraft": "1.17.x"
+    "minecraft": "~1.18.2",
+    "java": ">=17"
   },
   "suggests": {
     "another-mod": "*"
