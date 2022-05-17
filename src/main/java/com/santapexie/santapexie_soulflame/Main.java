@@ -15,8 +15,6 @@ import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.world.ScheduledTick;
-import net.minecraft.world.TickScheduler;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
