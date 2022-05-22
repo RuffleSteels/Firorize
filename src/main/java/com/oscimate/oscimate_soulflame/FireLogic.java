@@ -12,8 +12,9 @@ public enum FireLogic {
 
 
 
+
     public Text getTranslatableName() {
-        return new TranslatableText("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getCurrentFireLogic());
+        return new TranslatableText("oscimate_soulflame.config." + this.name());
     }
 
 }

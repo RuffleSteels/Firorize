@@ -32,7 +32,7 @@ public class ConfigManager {
             try (FileReader reader = new FileReader(file)) {
                 config = this.GSON.fromJson(reader, FireLogicConfig.class);
             } catch (IOException e) {
-
+                System.out.println(e);
             }
         }
         if(config == null) {
@@ -47,14 +47,13 @@ public class ConfigManager {
             System.out.println("WRITTEN " + Main.CONFIG_MANAGER.getCurrentFireLogic());
             writer.write(this.GSON.toJson(new FireLogicConfig()));
         } catch (IOException e) {
-            System.out.println("ERROR");
+            System.out.println(e);
         }
     }
 
 
 
     public void onConfigChange() {
-        System.out.println("config changed to "+ Main.CONFIG_MANAGER.getCurrentFireLogic());
         save();
     }
 
