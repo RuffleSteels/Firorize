@@ -5,11 +5,15 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Blocks;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 
 @Environment(EnvType.CLIENT)
 public class Main implements ClientModInitializer {
+
+    public static boolean isEnabled = false;
 
     @Override
     public void onInitializeClient() {
@@ -17,6 +21,10 @@ public class Main implements ClientModInitializer {
         ClientTickEvents.START_CLIENT_TICK.register((client) -> {
             if(client.world != null) {
                 client.world.getEntities().forEach(entity -> {
+
+                    if(isEnabled) {
+                        entity.sendSystemMessage(new LiteralText("Enabled"), Util.NIL_UUID);
+                    }
 
                     if (entity.isInLava()) {
                         ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
