@@ -19,6 +19,7 @@
 
   "environment": "*",
   "entrypoints": {
+    "modmenu": [ "com.oscimate.oscimate_soulflame.config.ModMenuApiImpl" ],
     "client": [
       "com.oscimate.oscimate_soulflame.Main"
     ]
