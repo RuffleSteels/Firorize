@@ -12,9 +12,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class ConfigManager {
-    public FireLogic currentFireLogic = FireLogic.PERSISTENT;
+    public FireLogic currentFireLogic;
     private static final Gson GSON = new Gson();
-    private static File file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json").toFile();
+    public static File file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json").toFile();
     private FireLogicConfig config;
 
     public FireLogic getCurrentFireLogic() {
@@ -36,6 +36,7 @@ public class ConfigManager {
             }
         }
         if(config == null) {
+            Main.CONFIG_MANAGER.setCurrentFireLogic(FireLogic.PERSISTENT);
             config = new FireLogicConfig();
             save();
         }

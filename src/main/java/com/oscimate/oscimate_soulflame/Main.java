@@ -16,9 +16,7 @@ import org.checkerframework.checker.units.qual.C;
 @Environment(EnvType.CLIENT)
 public class Main implements ClientModInitializer {
 
-    public static boolean isEnabled = false;
 
-    public FireLogic currentFireLogic = FireLogic.PERSISTENT;
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
 
@@ -26,44 +24,63 @@ public class Main implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         this.CONFIG_MANAGER.load();
+        if(CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.PERSISTENT) {
+            ClientTickEvents.START_CLIENT_TICK.register((client) -> {
+                if (client.world != null) {
+                    client.world.getEntities().forEach(entity -> {
 
-        ClientTickEvents.START_CLIENT_TICK.register((client) -> {
-            if(client.world != null) {
-                client.world.getEntities().forEach(entity -> {
+                        if (entity.isInLava()) {
+                            ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
+                            return;
+                        }
+                        if(CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.PERSISTENT) {
+                            Box box = entity.getBoundingBox();
+                            BlockPos.Mutable mutable = new BlockPos.Mutable();
+                            BlockPos blockPos = new BlockPos(box.minX + 0.001D, box.minY + 0.001D, box.minZ + 0.001D);
+                            BlockPos blockPos2 = new BlockPos(box.maxX - 0.001D, box.maxY - 0.001D, box.maxZ - 0.001D);
 
-                    if(isEnabled) {
-                        entity.sendSystemMessage(new LiteralText("Enabled"), Util.NIL_UUID);
-                    }
-
-                    if (entity.isInLava()) {
-                        ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
-                        return;
-                    }
-
-
-                    Box box = entity.getBoundingBox();
-                    BlockPos.Mutable mutable = new BlockPos.Mutable();
-                    BlockPos blockPos = new BlockPos(box.minX + 0.001D, box.minY + 0.001D, box.minZ + 0.001D);
-                    BlockPos blockPos2 = new BlockPos(box.maxX - 0.001D, box.maxY - 0.001D, box.maxZ - 0.001D);
-
-                    for(int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
-                        for (int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
-                            for (int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
-                                mutable.set(i, j, k);
-                                if (client.world.getBlockState(mutable).getBlock() == Blocks.SOUL_FIRE) {
-                                    ((OnSoulFireAccessor) entity).setRenderSoulFire(true);
-                                    return;
+                            for (int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
+                                for (int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
+                                    for (int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
+                                        mutable.set(i, j, k);
+                                        if (client.world.getBlockState(mutable).getBlock() == Blocks.SOUL_FIRE) {
+                                            ((OnSoulFireAccessor) entity).setRenderSoulFire(true);
+                                            return;
+                                        }
+                                        if (client.world.getBlockState(mutable).getBlock() == Blocks.FIRE) {
+                                            ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
+                                            return;
+                                        }
+                                    }
                                 }
-                                if (client.world.getBlockState(mutable).getBlock() == Blocks.FIRE) {
-                                    ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
-                                    return;
+                            }
+                        } else if (CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.CONSISTENT) {
+                            Box box = entity.getBoundingBox();
+                            BlockPos.Mutable mutable = new BlockPos.Mutable();
+                            BlockPos blockPos = new BlockPos(box.minX + 0.001D, box.minY + 0.001D, box.minZ + 0.001D);
+                            BlockPos blockPos2 = new BlockPos(box.maxX - 0.001D, box.maxY - 0.001D, box.maxZ - 0.001D);
+
+                            for (int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
+                                for (int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
+                                    for (int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
+                                        mutable.set(i, j, k);
+                                        if (client.world.getBlockState(mutable).getBlock() == Blocks.SOUL_FIRE) {
+                                            ((OnSoulFireAccessor) entity).setRenderSoulFire(true);
+                                            return;
+                                        }
+                                        if (client.world.getBlockState(mutable).getBlock() == Blocks.FIRE || client.world.getBlockState(mutable).getBlock() != Blocks.SOUL_FIRE) {
+                                            ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
+                                            return;
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
 
-                });
-            }
-        });
+                    });
+
+                }
+            });
+        }
     }
 }
