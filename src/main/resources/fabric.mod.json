@@ -15,10 +15,11 @@
   },
 
   "license": "MIT License",
-  "icon": "assets/oscimate_soulflame/icon.png",
+  "icon": "assets/oscimate_soulflame/img.png",
 
   "environment": "*",
   "entrypoints": {
+    "modmenu": [ "com.oscimate.oscimate_soulflame.config.ModMenuApiImpl" ],
     "client": [
       "com.oscimate.oscimate_soulflame.Main"
     ]
