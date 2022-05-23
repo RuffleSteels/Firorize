@@ -12,9 +12,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class ConfigManager {
-    public FireLogic currentFireLogic = FireLogic.PERSISTENT;
+    public FireLogic currentFireLogic;
     private static final Gson GSON = new Gson();
-    private static File file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json").toFile();
+    public static File file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json").toFile();
     private FireLogicConfig config;
 
     public FireLogic getCurrentFireLogic() {
@@ -32,10 +32,11 @@ public class ConfigManager {
             try (FileReader reader = new FileReader(file)) {
                 config = this.GSON.fromJson(reader, FireLogicConfig.class);
             } catch (IOException e) {
-
+                System.out.println(e);
             }
         }
         if(config == null) {
+            Main.CONFIG_MANAGER.setCurrentFireLogic(FireLogic.PERSISTENT);
             config = new FireLogicConfig();
             save();
         }
@@ -47,14 +48,13 @@ public class ConfigManager {
             System.out.println("WRITTEN " + Main.CONFIG_MANAGER.getCurrentFireLogic());
             writer.write(this.GSON.toJson(new FireLogicConfig()));
         } catch (IOException e) {
-            System.out.println("ERROR");
+            System.out.println(e);
         }
     }
 
 
 
     public void onConfigChange() {
-        System.out.println("config changed to "+ Main.CONFIG_MANAGER.getCurrentFireLogic());
         save();
     }
 
