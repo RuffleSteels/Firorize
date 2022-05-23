@@ -1,4 +1,6 @@
 {
   "oscimate_soulflame.config.PERSISTENT": "Persistent",
-  "oscimate_soulflame.config.CONSISTENT": "Consistent"
+  "oscimate_soulflame.config.CONSISTENT": "Consistent",
+  "oscimate_soulflame.config.PERSISTENT.tooltip": "Persistent does...",
+  "oscimate_soulflame.config.CONSISTENT.tooltip": "Consistent does..."
 }

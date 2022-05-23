@@ -3,13 +3,17 @@ package com.oscimate.oscimate_soulflame.config;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.*;
+import net.minecraft.util.Language;
 import org.checkerframework.checker.units.qual.C;
+
+import java.util.List;
 
 public class ConfigScreen extends Screen {
     Integer buttonWidth = 130;
@@ -26,6 +30,7 @@ public class ConfigScreen extends Screen {
         CyclingButtonWidget<FireLogic> enabledButton = CyclingButtonWidget.builder(FireLogic::getTranslatableName)
                 .values(FireLogic.values())
                 .initially(Main.CONFIG_MANAGER.getCurrentFireLogic())
+                .tooltip(client -> value -> value.getTranslatableTooltip(client))
                 .build(this.width / 2 - (buttonWidth/2), buttonWidth/2, buttonWidth, 20, new LiteralText("Fire Logic"), (button, fireLogic) -> {
                     Main.CONFIG_MANAGER.setCurrentFireLogic((FireLogic) fireLogic);
                 });
