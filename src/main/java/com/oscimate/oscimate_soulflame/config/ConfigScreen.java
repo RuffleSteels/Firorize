@@ -1,5 +1,6 @@
 package com.oscimate.oscimate_soulflame.config;
 
+import com.google.common.collect.ImmutableList;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
@@ -11,9 +12,15 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.*;
 import org.checkerframework.checker.units.qual.C;
 
+import java.util.List;
+
 public class ConfigScreen extends Screen {
     Integer buttonWidth = 130;
     private Screen parent;
+    private static final Text FIRE_LOGIC;
+    private static final Text FAST_GRAPHICS_TOOLTIP = new TranslatableText("options.graphics.fast.tooltip");
+
+
 
 
     protected ConfigScreen(Text title) {
@@ -48,5 +55,9 @@ public class ConfigScreen extends Screen {
     @Override
     public void removed() {
         Main.CONFIG_MANAGER.onConfigChange();
+    }
+
+    static {
+        FIRE_LOGIC = new TranslatableText("options.hideLightningFlashes.tooltip");
     }
 }
