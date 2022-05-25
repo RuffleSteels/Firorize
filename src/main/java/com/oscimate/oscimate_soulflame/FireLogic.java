@@ -15,8 +15,6 @@ public enum FireLogic {
     PERSISTENT,
     CONSISTENT;
 
-
-
     public Text getTranslatableName() {
         return new TranslatableText("oscimate_soulflame.config." + this.name());
     }
@@ -24,5 +22,6 @@ public enum FireLogic {
     public List<OrderedText> getTranslatableTooltip(MinecraftClient minecraftClient) {
         return minecraftClient.textRenderer.wrapLines(new TranslatableText("oscimate_soulflame.config." + this.name() + ".tooltip"), 200);
     }
+
 
 }

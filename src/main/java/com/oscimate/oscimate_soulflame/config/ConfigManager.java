@@ -6,10 +6,8 @@ import com.oscimate.oscimate_soulflame.Main;
 import net.fabricmc.loader.api.FabricLoader;
 
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 
 public class ConfigManager {
     public FireLogic currentFireLogic;
@@ -27,19 +25,41 @@ public class ConfigManager {
     }
 
 
-    public void load() {
+//    public void load() {
+//        if(file.exists()) {
+//            try (FileReader reader = new FileReader(file)) {
+//                config = this.GSON.fromJson(reader, FireLogicConfig.class);
+//            } catch (IOException e) {
+//                System.out.println(e);
+//            }
+//        }
+//        if(config == null) {
+//            Main.CONFIG_MANAGER.setCurrentFireLogic(FireLogic.PERSISTENT);
+//            config = new FireLogicConfig();
+//            save();
+//        }
+//    }
+
+    public Boolean fileExists() {
+        return this.file.exists();
+    }
+
+    public FireLogic getStartupConfig() {
+        FireLogicConfig jsonOutput = null;
         if(file.exists()) {
-            try (FileReader reader = new FileReader(file)) {
-                config = this.GSON.fromJson(reader, FireLogicConfig.class);
+            try (Reader reader = Files.newBufferedReader(file.toPath())) {
+                jsonOutput = this.GSON.fromJson(reader, FireLogicConfig.class);
+                reader.close();
             } catch (IOException e) {
-                System.out.println(e);
+                    System.out.println(e);
+                }
             }
+            if(jsonOutput.getFireLogic() == null) {
+                System.out.println("@@");
+                setCurrentFireLogic(FireLogic.PERSISTENT);
+                save();
         }
-        if(config == null) {
-            Main.CONFIG_MANAGER.setCurrentFireLogic(FireLogic.PERSISTENT);
-            config = new FireLogicConfig();
-            save();
-        }
+        return jsonOutput.getFireLogic();
     }
 
 

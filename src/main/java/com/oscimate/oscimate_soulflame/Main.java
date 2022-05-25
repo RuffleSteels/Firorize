@@ -23,7 +23,10 @@ public class Main implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        this.CONFIG_MANAGER.load();
+        if(!this.CONFIG_MANAGER.fileExists()) {
+            this.CONFIG_MANAGER.save();
+        }
+        System.out.println(this.CONFIG_MANAGER.getStartupConfig());
         ClientTickEvents.START_CLIENT_TICK.register((client) -> {
             if (client.world != null) {
                 client.world.getEntities().forEach(entity -> {
