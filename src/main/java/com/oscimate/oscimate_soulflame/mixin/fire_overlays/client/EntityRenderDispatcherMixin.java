@@ -29,6 +29,7 @@ public class EntityRenderDispatcherMixin {
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 0))
     private Sprite getSprite0(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
         if (((OnSoulFireAccessor)entity).isRenderSoulFire()) {
+            System.out.println(entity + " on soul fire");
             return SOUL_FIRE_0.getSprite();
         }
         return obj.getSprite();
