@@ -25,21 +25,6 @@ public class ConfigManager {
     }
 
 
-//    public void load() {
-//        if(file.exists()) {
-//            try (FileReader reader = new FileReader(file)) {
-//                config = this.GSON.fromJson(reader, FireLogicConfig.class);
-//            } catch (IOException e) {
-//                System.out.println(e);
-//            }
-//        }
-//        if(config == null) {
-//            Main.CONFIG_MANAGER.setCurrentFireLogic(FireLogic.PERSISTENT);
-//            config = new FireLogicConfig();
-//            save();
-//        }
-//    }
-
     public Boolean fileExists() {
         return this.file.exists();
     }
@@ -55,10 +40,11 @@ public class ConfigManager {
                 }
             }
             if(jsonOutput.getFireLogic() == null) {
-                System.out.println("@@");
+                System.out.println("Its null");
                 setCurrentFireLogic(FireLogic.PERSISTENT);
                 save();
-        }
+            }
+        currentFireLogic = jsonOutput.getFireLogic();
         return jsonOutput.getFireLogic();
     }
 

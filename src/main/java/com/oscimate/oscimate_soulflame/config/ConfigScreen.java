@@ -68,13 +68,6 @@ public class ConfigScreen extends Screen {
         this.renderOriginWindow(stack, mouseX, mouseY);
         this.drawCenteredText(stack, this.textRenderer, "Improved Fire Overlay", this.width / 2, 20, 0xFFFFFF);
         super.render(stack, mouseX, mouseY, delta);
-
-//        this.renderOrderedTooltip(stack, this.getTranslatableTooltip(client), width / 2 - 100, (int) (height * 0.5F));
-
-//        Optional<Element> optional = this.hoveredElement(mouseX, mouseY);
-//        if (optional.isPresent() && optional.get() instanceof CyclingButtonWidget<?> cyclingButtonWidget) {
-//            this.renderOrderedTooltip(stack, cyclingButtonWidget.getOrderedTooltip(), width / 2 - 100, (int) (height * 0.5F));
-//        }
     }
 
 
