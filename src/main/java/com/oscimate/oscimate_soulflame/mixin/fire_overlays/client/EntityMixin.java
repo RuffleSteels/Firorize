@@ -28,18 +28,20 @@ public abstract class EntityMixin {
 
     @Inject(method = "baseTick", at = @At("HEAD"))
     public void checkBlockUnderneath(CallbackInfo ci) {
-        if (world.getBlockState(getBlockPos()).getBlock() instanceof SoulFireBlock) {
-            ((OnSoulFireAccessor)((Entity)(Object)this)).setRenderSoulFire(true);
-        }
-        if (world.getBlockState(getBlockPos()).getBlock() instanceof FireBlock) {
-            ((OnSoulFireAccessor)((Entity)(Object)this)).setRenderSoulFire(false);
-        }
-        if (((Entity)(Object)this).isInLava()) {
-            ((OnSoulFireAccessor)((Entity)(Object)this)).setRenderSoulFire(false);
-        }
-        if(Main.CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.CONSISTENT) {
-            if (!(world.getBlockState(getBlockPos()).getBlock() instanceof SoulFireBlock)) {
+        if(world.isClient) {
+            if (world.getBlockState(getBlockPos()).getBlock() instanceof SoulFireBlock) {
+                ((OnSoulFireAccessor) ((Entity) (Object) this)).setRenderSoulFire(true);
+            }
+            if (world.getBlockState(getBlockPos()).getBlock() instanceof FireBlock) {
                 ((OnSoulFireAccessor) ((Entity) (Object) this)).setRenderSoulFire(false);
+            }
+            if (((Entity) (Object) this).isInLava()) {
+                ((OnSoulFireAccessor) ((Entity) (Object) this)).setRenderSoulFire(false);
+            }
+            if (Main.CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.CONSISTENT) {
+                if (!(world.getBlockState(getBlockPos()).getBlock() instanceof SoulFireBlock)) {
+                    ((OnSoulFireAccessor) ((Entity) (Object) this)).setRenderSoulFire(false);
+                }
             }
         }
     }
