@@ -11,6 +11,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.mob.SkeletonEntity;
+import net.minecraft.fluid.LavaFluid;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
@@ -31,6 +32,9 @@ public abstract class EntityMixin {
             ((OnSoulFireAccessor)((Entity)(Object)this)).setRenderSoulFire(true);
         }
         if (world.getBlockState(getBlockPos()).getBlock() instanceof FireBlock) {
+            ((OnSoulFireAccessor)((Entity)(Object)this)).setRenderSoulFire(false);
+        }
+        if (((Entity)(Object)this).isInLava()) {
             ((OnSoulFireAccessor)((Entity)(Object)this)).setRenderSoulFire(false);
         }
         if(Main.CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.CONSISTENT) {

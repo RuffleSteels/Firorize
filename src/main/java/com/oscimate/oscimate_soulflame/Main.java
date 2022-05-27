@@ -27,33 +27,33 @@ public class Main implements ClientModInitializer {
             this.CONFIG_MANAGER.save();
         }
         System.out.println(this.CONFIG_MANAGER.getStartupConfig());
-        ClientTickEvents.START_CLIENT_TICK.register((client) -> {
-            if (client.world != null) {
-                client.world.getEntities().forEach(entity -> {
-                    if (entity.isInLava()) {
-                        ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
-                        return;
-                    }
-                    if(CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.CONSISTENT) {
-                        Box box = entity.getBoundingBox();
-                        BlockPos.Mutable mutable = new BlockPos.Mutable();
-                        BlockPos blockPos = new BlockPos(box.minX + 0.001D, box.minY + 0.001D, box.minZ + 0.001D);
-                        BlockPos blockPos2 = new BlockPos(box.maxX - 0.001D, box.maxY - 0.001D, box.maxZ - 0.001D);
-
-                        for (int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
-                            for (int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
-                                for (int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
-                                    mutable.set(i, j, k);
-                                    if (client.world.getBlockState(mutable).getBlock() != Blocks.SOUL_FIRE) {
-                                        ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        });
+//        ClientTickEvents.START_CLIENT_TICK.register((client) -> {
+//            if (client.world != null) {
+//                client.world.getEntities().forEach(entity -> {
+//                    if (entity.isInLava()) {
+//                        ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
+//                        return;
+//                    }
+//                    if(CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.CONSISTENT) {
+//                        Box box = entity.getBoundingBox();
+//                        BlockPos.Mutable mutable = new BlockPos.Mutable();
+//                        BlockPos blockPos = new BlockPos(box.minX + 0.001D, box.minY + 0.001D, box.minZ + 0.001D);
+//                        BlockPos blockPos2 = new BlockPos(box.maxX - 0.001D, box.maxY - 0.001D, box.maxZ - 0.001D);
+//
+//                        for (int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
+//                            for (int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
+//                                for (int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
+//                                    mutable.set(i, j, k);
+//                                    if (client.world.getBlockState(mutable).getBlock() != Blocks.SOUL_FIRE) {
+//                                        ((OnSoulFireAccessor) entity).setRenderSoulFire(false);
+//                                        return;
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                });
+//            }
+//        });
     }
 }
