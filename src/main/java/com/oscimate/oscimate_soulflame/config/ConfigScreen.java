@@ -7,12 +7,12 @@ import com.oscimate.oscimate_soulflame.config.ConfigManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -42,7 +42,7 @@ public class ConfigScreen extends Screen {
                 .values(FireLogic.values())
                 .initially(Main.CONFIG_MANAGER.getStartupConfig())
                 .tooltip(value -> value.getTranslatableTooltip(client))
-                .build(this.width / 2 - (buttonWidth/2), buttonWidth/2, buttonWidth, 20, new LiteralText("Fire Logic"), (button, fireLogic) -> {
+                .build(this.width / 2 - (buttonWidth/2), buttonWidth/2, buttonWidth, 20, Text.literal("Fire Logic"), (button, fireLogic) -> {
                     Main.CONFIG_MANAGER.setCurrentFireLogic((FireLogic) fireLogic);
                 });
         this.addDrawableChild(enabledButton);
@@ -55,7 +55,7 @@ public class ConfigScreen extends Screen {
         RenderSystem.setShaderTexture(0, WINDOW);
         this.drawTexture(matrices, width/2 - (windowWidth/2), height/2 - (windowHeight/2), 0, 0, windowWidth, windowHeight);
         RenderSystem.setShaderTexture(0, WINDOW);
-        Text title = new LiteralText("ImprovedFireOverlay");
+        Text title = Text.literal("ImprovedFireOverlay");
         this.drawCenteredText(matrices, this.textRenderer, title.getString(), width / 2, guiTop - 15, 0xFFFFFF);
         this.renderOriginContent(matrices, mouseX, mouseY);
         RenderSystem.disableBlend();
@@ -73,7 +73,7 @@ public class ConfigScreen extends Screen {
 
 
     public List<OrderedText> getTranslatableTooltip(MinecraftClient minecraftClient) {
-        return minecraftClient.textRenderer.wrapLines(new TranslatableText("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".tooltip"), 200);
+        return minecraftClient.textRenderer.wrapLines(Text.translatable("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".tooltip"), 200);
     }
 
     public void onClose() {
@@ -95,7 +95,7 @@ public class ConfigScreen extends Screen {
         int startY = y;
         int endY = y - 72 + windowHeight;
 
-        Text info = new TranslatableText("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".info");
+        Text info = Text.translatable("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".info");
 
         List<OrderedText> descLines = textRenderer.wrapLines(info, textWidth);
         for(OrderedText line : descLines) {
@@ -106,9 +106,9 @@ public class ConfigScreen extends Screen {
             y += 12;
         }
 
-        int titleWidth = textRenderer.getWidth(new TranslatableText("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".title"));
+        int titleWidth = textRenderer.getWidth(Text.translatable("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".title"));
 
-        textRenderer.draw(matrices, new TranslatableText("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".title").formatted(Formatting.UNDERLINE), width/2 - (titleWidth/2), titleHeight, 0xFFFFFF);
+        textRenderer.draw(matrices, Text.translatable("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".title").formatted(Formatting.UNDERLINE), width/2 - (titleWidth/2), titleHeight, 0xFFFFFF);
 
     }
 
