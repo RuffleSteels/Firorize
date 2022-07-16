@@ -4,6 +4,7 @@
   "package": "com.oscimate.oscimate_soulflame.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "fire_overlays.client.RenderQuadMixin"
   ],
   "client": [
     "fire_overlays.client.InGameOverlayRendererMixin",
