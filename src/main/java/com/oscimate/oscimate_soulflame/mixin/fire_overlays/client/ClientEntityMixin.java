@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(Entity.class)
 public class ClientEntityMixin implements OnSoulFireAccessor {
+
     @Unique
     private boolean renderSoulFire;
 
