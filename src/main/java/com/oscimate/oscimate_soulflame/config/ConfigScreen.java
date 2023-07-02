@@ -3,24 +3,19 @@ package com.oscimate.oscimate_soulflame.config;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
-import com.oscimate.oscimate_soulflame.config.ConfigManager;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.*;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Language;
-import org.checkerframework.checker.units.qual.C;
 
 import java.util.List;
-import java.util.Optional;
 
 public class ConfigScreen extends Screen {
     Integer buttonWidth = 130;
@@ -41,33 +36,36 @@ public class ConfigScreen extends Screen {
         CyclingButtonWidget<FireLogic> enabledButton = CyclingButtonWidget.builder(FireLogic::getTranslatableName)
                 .values(FireLogic.values())
                 .initially(Main.CONFIG_MANAGER.getStartupConfig())
-                .tooltip(value -> value.getTranslatableTooltip(client))
-                .build(this.width / 2 - (buttonWidth/2), buttonWidth/2, buttonWidth, 20, Text.literal("Fire Logic"), (button, fireLogic) -> {
+                .tooltip(value -> Tooltip.of(Text.literal("Changes the soul fire logic")))
+                .build(this.width / 2 - (buttonWidth/2), height/2 - windowHeight/2 - 20*2, buttonWidth, 20, Text.literal("Fire Logic"), (button, fireLogic) -> {
                     Main.CONFIG_MANAGER.setCurrentFireLogic((FireLogic) fireLogic);
                 });
         this.addDrawableChild(enabledButton);
-        this.addDrawableChild(new ButtonWidget(width / 2 - 100, (int) (height * 0.8F), 200, 20, ScreenTexts.DONE, (button) -> onClose()));
+        this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
         super.init();
     }
 
-    private void renderOriginWindow(MatrixStack matrices, int mouseX, int mouseY) {
-        RenderSystem.enableBlend();
-        RenderSystem.setShaderTexture(0, WINDOW);
-        this.drawTexture(matrices, width/2 - (windowWidth/2), height/2 - (windowHeight/2), 0, 0, windowWidth, windowHeight);
-        RenderSystem.setShaderTexture(0, WINDOW);
-        Text title = Text.literal("ImprovedFireOverlay");
-        this.drawCenteredText(matrices, this.textRenderer, title.getString(), width / 2, guiTop - 15, 0xFFFFFF);
-        this.renderOriginContent(matrices, mouseX, mouseY);
-        RenderSystem.disableBlend();
+    private void renderOriginWindow(DrawContext drawContext) {
+        this.addDrawable((matrices, mouseX, mouseY, delta) -> {
+            RenderSystem.enableBlend();
+            RenderSystem.setShaderTexture(0, WINDOW);
+
+            drawContext.drawTexture(WINDOW, width/2 - (windowWidth/2), height/2 - (windowHeight/2), 0, 0, windowWidth, windowHeight);
+
+            Text title = Text.literal("ImprovedFireOverlay");
+            drawContext.drawText(this.textRenderer, title.getString(), width / 2, guiTop - 15, 0xFFFFFF, false);
+            this.renderOriginContent(drawContext, mouseX, mouseY);
+            RenderSystem.disableBlend();
+        });
     }
 
 
     @Override
-    public void render(MatrixStack stack, int mouseX, int mouseY, float delta) {
-        this.renderBackground(stack);
-        this.renderOriginWindow(stack, mouseX, mouseY);
-        this.drawCenteredText(stack, this.textRenderer, "Improved Fire Overlay", this.width / 2, 20, 0xFFFFFF);
-        super.render(stack, mouseX, mouseY, delta);
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderBackground(context);
+        this.renderOriginWindow(context);
+        context.drawText(this.textRenderer, "Improved Fire Overlay", this.width / 2 - textRenderer.getWidth("Improved Fire Overlay") / 2, height/2 - windowHeight/2 - 20*3 - 5, 0xFFFFFF, false);
+        super.render(context, mouseX, mouseY, delta);
     }
 
 
@@ -85,7 +83,7 @@ public class ConfigScreen extends Screen {
         Main.CONFIG_MANAGER.onConfigChange();
     }
 
-    private void renderOriginContent(MatrixStack matrices, int mouseX, int mouseY) {
+    private void renderOriginContent(DrawContext drawContext, int mouseX, int mouseY) {
 
         int textWidth = windowWidth - 30;
         int titleHeight = (height/2 - (windowHeight/2)) + 15;
@@ -101,14 +99,14 @@ public class ConfigScreen extends Screen {
         for(OrderedText line : descLines) {
             if(y >= startY - 18 && y <= endY + 12) {
                 int infoWidth = textRenderer.getWidth(line);
-                textRenderer.draw(matrices, line, width/2 - (windowWidth/2) + 15, (((infoHeight + 25) - windowHeight/2) + 30) + (y +2), 0xCCCCCC);
+                drawContext.drawText(this.textRenderer, line, width/2 - (windowWidth/2) + 15, (((infoHeight + 25) - windowHeight/2) + 30) + (y +2), 0xCCCCCC, false);
             }
             y += 12;
         }
 
         int titleWidth = textRenderer.getWidth(Text.translatable("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".title"));
 
-        textRenderer.draw(matrices, Text.translatable("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".title").formatted(Formatting.UNDERLINE), width/2 - (titleWidth/2), titleHeight, 0xFFFFFF);
+        drawContext.drawText(this.textRenderer, Text.translatable("oscimate_soulflame.config." + Main.CONFIG_MANAGER.getStartupConfig().toString() + ".title").formatted(Formatting.UNDERLINE), width/2 - (titleWidth/2), titleHeight, 0xFFFFFF, false);
 
     }
 

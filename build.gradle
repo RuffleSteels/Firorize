@@ -3,6 +3,10 @@ plugins {
 	id 'maven-publish'
 }
 
+loom {
+	accessWidenerPath = file("src/main/resources/oscimate_soulflame.accesswidener")
+}
+
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
@@ -13,6 +17,9 @@ group = project.maven_group
 repositories {
 	maven {
 		url = "https://maven.terraformersmc.com/"
+	}
+	maven {
+		url = "https://jitpack.io"
 	}
 }
 
@@ -25,7 +32,10 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation "com.terraformersmc:modmenu:4.0.4"
+	modImplementation "com.terraformersmc:modmenu:7.1.0"
+
+	implementation("com.github.LlamaLad7:MixinExtras:0.1.1")
+	annotationProcessor("com.github.LlamaLad7:MixinExtras:0.1.1")
 
 }
 

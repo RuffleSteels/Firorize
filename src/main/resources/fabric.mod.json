@@ -17,9 +17,11 @@
   "license": "MIT License",
   "icon": "assets/oscimate_soulflame/img.png",
 
+  "accessWidener" : "oscimate_soulflame.accesswidener",
   "environment": "*",
   "entrypoints": {
     "modmenu": [ "com.oscimate.oscimate_soulflame.config.ModMenuApiImpl" ],
+    "preLaunch": [ "com.oscimate.oscimate_soulflame.PreLaunch" ],
     "client": [
       "com.oscimate.oscimate_soulflame.Main"
     ]
@@ -31,7 +33,7 @@
   "depends": {
     "fabricloader": ">=0.13.3",
     "fabric": "*",
-    "minecraft": "~1.19",
+    "minecraft": "~1.20.1",
     "java": ">=17"
   },
   "suggests": {

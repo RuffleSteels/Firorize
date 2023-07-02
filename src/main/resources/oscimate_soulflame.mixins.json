@@ -4,12 +4,13 @@
   "package": "com.oscimate.oscimate_soulflame.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "fire_overlays.client.RenderQuadMixin"
   ],
   "client": [
-    "fire_overlays.client.InGameOverlayRendererMixin",
+    "fire_overlays.client.ClientEntityMixin",
     "fire_overlays.client.EntityRenderDispatcherMixin",
-    "fire_overlays.client.ClientEntityMixin"
+    "fire_overlays.client.BlockRenderManagerAccessor",
+    "fire_overlays.client.InGameOverlayRendererMixin",
+    "fire_overlays.client.ModelLoaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1
