@@ -75,7 +75,6 @@ public class Main implements ClientModInitializer {
                                     try {
                                         Block block = entity.getWorld().getBlockState(mutable).getBlock();
                                         if (Main.CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.PERSISTENT) {
-                                            System.out.println(entity.getDamageSources());
                                             if (block instanceof SoulFireBlock) {
                                                 ((OnSoulFireAccessor)entity).setRenderSoulFire(true);
                                             }
