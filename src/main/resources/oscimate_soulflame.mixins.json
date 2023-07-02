@@ -8,9 +8,7 @@
   "client": [
     "fire_overlays.client.ClientEntityMixin",
     "fire_overlays.client.EntityRenderDispatcherMixin",
-    "fire_overlays.client.BlockRenderManagerAccessor",
-    "fire_overlays.client.InGameOverlayRendererMixin",
-    "fire_overlays.client.ModelLoaderMixin"
+    "fire_overlays.client.InGameOverlayRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

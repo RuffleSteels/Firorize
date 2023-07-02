@@ -26,14 +26,14 @@ public class ConfigManager {
 
 
     public Boolean fileExists() {
-        return this.file.exists();
+        return file.exists();
     }
 
     public FireLogic getStartupConfig() {
         FireLogicConfig jsonOutput = null;
         if(file.exists()) {
             try (Reader reader = Files.newBufferedReader(file.toPath())) {
-                jsonOutput = this.GSON.fromJson(reader, FireLogicConfig.class);
+                jsonOutput = GSON.fromJson(reader, FireLogicConfig.class);
                 reader.close();
             } catch (IOException e) {
                     System.out.println(e);
@@ -52,7 +52,7 @@ public class ConfigManager {
     public void save() {
         try (FileWriter writer = new FileWriter(file)) {
             System.out.println("WRITTEN " + Main.CONFIG_MANAGER.getCurrentFireLogic());
-            writer.write(this.GSON.toJson(new FireLogicConfig()));
+            writer.write(GSON.toJson(new FireLogicConfig()));
         } catch (IOException e) {
             System.out.println(e);
         }
