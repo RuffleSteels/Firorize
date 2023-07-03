@@ -2,10 +2,12 @@ package com.oscimate.oscimate_soulflame;
 
 import com.google.common.base.Suppliers;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
+import com.oscimate.oscimate_soulflame.rendering.PillarModelVariantProvider;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.FireBlock;
 import net.minecraft.block.SoulFireBlock;
@@ -37,6 +39,8 @@ public class Main implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
+        ModelLoadingRegistry.INSTANCE.registerVariantProvider(manager -> new PillarModelVariantProvider());
 
 //        BlockRenderLayerMap.INSTANCE.putBlock(Blocks.FIRE, CustomRenderLayer.getCustomTint());
 //
@@ -87,6 +91,9 @@ public class Main implements ClientModInitializer {
                                             if (!entity.doesRenderOnFire()) {
                                                 ((OnSoulFireAccessor)entity).setRenderSoulFire(false);
                                             }
+
+
+
 
                                         }
                                         if (Main.CONFIG_MANAGER.getCurrentFireLogic() == FireLogic.CONSISTENT) {
