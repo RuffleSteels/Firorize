@@ -22,9 +22,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class EntityRenderDispatcherMixin {
     private static final SpriteIdentifier SOUL_FIRE_0 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0"));
     private static final SpriteIdentifier SOUL_FIRE_1 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1"));
-    private static final SpriteIdentifier FIRE_0 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_0"));
-    private static final SpriteIdentifier FIRE_1 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1"));
-    MinecraftClient client = MinecraftClient.getInstance();
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 0))
     private Sprite getSprite0(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
         if (((OnSoulFireAccessor)entity).isRenderSoulFire()) {
