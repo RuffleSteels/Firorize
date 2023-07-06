@@ -5,8 +5,8 @@ import net.fabricmc.fabric.api.client.model.ModelVariantProvider;
 import net.minecraft.client.render.model.UnbakedModel;
 import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 
 public class PillarModelVariantProvider implements ModelVariantProvider {
 
