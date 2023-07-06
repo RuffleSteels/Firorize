@@ -4,5 +4,6 @@ public interface OnSoulFireAccessor {
     boolean isRenderSoulFire();
 
     void setRenderSoulFire(boolean renderSoulFire);
+
 }
 

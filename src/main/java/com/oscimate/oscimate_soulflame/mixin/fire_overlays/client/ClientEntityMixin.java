@@ -20,4 +20,5 @@ public class ClientEntityMixin implements OnSoulFireAccessor {
     public void setRenderSoulFire(boolean renderSoulFire) {
         this.renderSoulFire = renderSoulFire;
     }
+
 }

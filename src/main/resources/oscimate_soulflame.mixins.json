@@ -10,8 +10,8 @@
     "fire_overlays.client.ClientEntityMixin",
     "fire_overlays.client.EntityRenderDispatcherMixin",
     "fire_overlays.client.InGameOverlayRendererMixin",
-    "fire_overlays.client.RenderLayerAccessor",
-    "fire_overlays.client.ZombieAttackMixin"
+    "fire_overlays.client.OscimateClientPlayNetworkHandler",
+    "fire_overlays.client.RenderLayerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
