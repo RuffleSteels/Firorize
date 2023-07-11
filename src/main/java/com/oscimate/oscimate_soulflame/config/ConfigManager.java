@@ -8,60 +8,60 @@ import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class ConfigManager {
     public FireLogic currentFireLogic;
+    public long currentFireHeightSlider;
     private static final Gson GSON = new Gson();
-    public static File file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json").toFile();
-    private FireLogicConfig config;
+    public static Path file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json");
 
     public FireLogic getCurrentFireLogic() {
         return this.currentFireLogic;
     }
-    public void setCurrentFireLogic(FireLogic fireLogic) {
-        System.out.println(fireLogic);
-        this.currentFireLogic = fireLogic;
-        save();
+    public long getCurrentFireHeightSlider() {
+        return this.currentFireHeightSlider;
     }
 
+    public void setCurrentFireLogic(FireLogic fireLogic) {
+        this.currentFireLogic = fireLogic;
+    }
+    public void setCurrentFireHeightSlider(long fireHeightSlider) {
+        this.currentFireHeightSlider =  fireHeightSlider;
+    }
 
     public Boolean fileExists() {
-        return file.exists();
+        return Files.exists(file);
     }
 
-    public FireLogic getStartupConfig() {
+    public void getStartupConfig() {
         FireLogicConfig jsonOutput = null;
-        if(file.exists()) {
-            try (Reader reader = Files.newBufferedReader(file.toPath())) {
+        if(fileExists()) {
+            try (Reader reader = Files.newBufferedReader(file)) {
                 jsonOutput = GSON.fromJson(reader, FireLogicConfig.class);
-                reader.close();
             } catch (IOException e) {
-                    System.out.println(e);
-                }
+                System.out.println(e);
             }
-            if(jsonOutput.getFireLogic() == null) {
-                System.out.println("Its null");
-                setCurrentFireLogic(FireLogic.PERSISTENT);
-                save();
-            }
-        currentFireLogic = jsonOutput.getFireLogic();
-        return jsonOutput.getFireLogic();
+        }
+        if(jsonOutput.getFireLogic() == null) {
+            setCurrentFireLogic(FireLogic.PERSISTENT);
+            save();
+        } else {
+            setCurrentFireLogic(jsonOutput.getFireLogic());
+        }
+        if(jsonOutput.getFireHeightSlider() > 100 || jsonOutput.getFireHeightSlider() < 0) {
+            setCurrentFireHeightSlider(100);
+            save();
+        } else {
+            setCurrentFireHeightSlider(jsonOutput.getFireHeightSlider());
+        }
     }
-
 
     public void save() {
-        try (FileWriter writer = new FileWriter(file)) {
-            System.out.println("WRITTEN " + Main.CONFIG_MANAGER.getCurrentFireLogic());
-            writer.write(GSON.toJson(new FireLogicConfig()));
+        try {
+            Files.writeString(file, GSON.toJson(new FireLogicConfig()));
         } catch (IOException e) {
             System.out.println(e);
         }
     }
-
-
-
-    public void onConfigChange() {
-        save();
-    }
-
 }

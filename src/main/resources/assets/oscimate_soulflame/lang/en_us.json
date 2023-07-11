@@ -6,5 +6,8 @@
   "oscimate_soulflame.config.PERSISTENT.info": "This is the default option. This fire logic makes it so when you exit soul fire, you stay having the blue overlay until burnt out, or if you step in another type of fire / lava.",
   "oscimate_soulflame.config.CONSISTENT.info": "This fire logic makes it so when you exit a soul fire, you immediately get put back into the normal orange fire overlay and you stay in the orange overlay until burnt out. When you re-enter soul fire, the blue overlay will be shown.",
   "oscimate_soulflame.config.PERSISTENT.title": "About Persistent Fire",
-  "oscimate_soulflame.config.CONSISTENT.title": "About Consistent Fire"
+  "oscimate_soulflame.config.CONSISTENT.title": "About Consistent Fire",
+  "oscimate_soulflame.config.fireHeight.min": "Hidden",
+  "oscimate_soulflame.config.fireHeight.middle": "Casual",
+  "oscimate_soulflame.config.fireHeight.max": "Vanilla"
 }

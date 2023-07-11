@@ -44,6 +44,7 @@ import java.util.function.Supplier;
 public class Main implements ClientModInitializer {
     public static final String MODID = "oscimate_soulflame";
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
+    public static double currentFireHeight = 0.0;
     public static final Supplier<Sprite> BLANK_FIRE = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_1")).getSprite());
 
     public int getColorInt(int r, int g, int b) {
@@ -75,6 +76,7 @@ public class Main implements ClientModInitializer {
         if(!CONFIG_MANAGER.fileExists()) {
             CONFIG_MANAGER.save();
         }
-        System.out.println(CONFIG_MANAGER.getStartupConfig());
+        CONFIG_MANAGER.getStartupConfig();
+//        System.out.println(CONFIG_MANAGER.getCurrentFireHeightSlider() + " -- " + CONFIG_MANAGER.getCurrentFireLogic());
     }
 }
