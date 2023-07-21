@@ -1,18 +1,25 @@
 package com.oscimate.oscimate_soulflame.mixin.fire_overlays.client;
 
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.OnSoulFireAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameOverlayRenderer;
-import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.render.*;
+import net.minecraft.client.render.model.ModelLoader;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.util.math.Vector2f;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,6 +34,11 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 public class InGameOverlayRendererMixin {
     private static final SpriteIdentifier SOUL_FIRE_1 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1"));
 
+    @Inject(method = "renderOverlays", at = @At("HEAD"))
+    private static void testingv(MinecraftClient client, MatrixStack matrices, CallbackInfo ci) {
+
+
+    }
 
 
     @Inject(method = "renderFireOverlay",

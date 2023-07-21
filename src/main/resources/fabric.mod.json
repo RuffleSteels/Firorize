@@ -23,7 +23,7 @@
     "modmenu": [
       "com.oscimate.oscimate_soulflame.config.ModMenuApiImpl"
     ],
-    "preLaunch": [ "com.oscimate.oscimate_soulflame.PreLaunch" ],
+    "preLaunch": [ "com.llamalad7.mixinextras.MixinExtrasBootstrap::init" ],
     "client": [
       "com.oscimate.oscimate_soulflame.Main"
     ]

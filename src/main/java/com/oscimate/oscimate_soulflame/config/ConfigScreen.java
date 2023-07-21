@@ -5,12 +5,16 @@ import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.option.GameOptionsScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
+import net.minecraft.client.gui.screen.option.VideoOptionsScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.gui.widget.SliderWidget;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
@@ -20,7 +24,7 @@ import net.minecraft.util.Identifier;
 import java.util.List;
 
 public class ConfigScreen extends Screen {
-    Integer buttonWidth = 130;
+    protected static final int buttonWidth = 130;
     private Screen parent;
     protected static final int windowWidth = 176;
     protected static final int windowHeight = 182;
@@ -37,9 +41,6 @@ public class ConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        FireHeightSliderWidget customTimeSliderWidget = new FireHeightSliderWidget(64, 68, this.buttonWidth, 20, Text.literal("Height"), (double) Main.CONFIG_MANAGER.getCurrentFireHeightSlider() /100);
-        this.addDrawableChild(customTimeSliderWidget);
-
         CyclingButtonWidget<FireLogic> enabledButton = CyclingButtonWidget.builder(FireLogic::getTranslatableName)
                 .values(FireLogic.values())
                 .initially(Main.CONFIG_MANAGER.getCurrentFireLogic())
@@ -48,18 +49,20 @@ public class ConfigScreen extends Screen {
                     Main.CONFIG_MANAGER.setCurrentFireLogic((FireLogic) fireLogic);
                 });
         this.addDrawableChild(enabledButton);
+        renderWindow();
+        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Height"), button -> this.client.setScreen(new ChangeFireHeightScreen(this))).dimensions(width / 2 - buttonWidth/2, (int) (height/2 + (windowHeight/3.5)), buttonWidth, 20).build());
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
         super.init();
     }
 
-    private void renderWindow(DrawContext drawContext) {
+    private void renderWindow() {
         this.addDrawable((matrices, mouseX, mouseY, delta) -> {
             RenderSystem.enableBlend();
             RenderSystem.setShaderTexture(0, WINDOW);
-            drawContext.drawTexture(WINDOW, width/2 - (windowWidth/2), height/2 - (windowHeight/2), 0, 0, windowWidth, windowHeight);
+            matrices.drawTexture(WINDOW, width/2 - (windowWidth/2), height/2 - (windowHeight/2), 0, 0, windowWidth, windowHeight);
             Text title = Text.literal("ImprovedFireOverlay");
-            drawContext.drawText(this.textRenderer, title.getString(), width / 2, guiTop - 15, 0xFFFFFF, false);
-            this.renderOriginContent(drawContext, mouseX, mouseY);
+            matrices.drawText(this.textRenderer, title.getString(), width / 2, guiTop - 15, 0xFFFFFF, false);
+            this.renderOriginContent(matrices, mouseX, mouseY);
             RenderSystem.disableBlend();
         });
     }
@@ -67,8 +70,7 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
-        this.renderWindow(context);
+        this.renderBackgroundTexture(context);
         context.drawText(this.textRenderer, "Improved Fire Overlay", this.width / 2 - textRenderer.getWidth("Improved Fire Overlay") / 2, height/2 - windowHeight/2 - 20*3 - 5, 0xFFFFFF, false);
         super.render(context, mouseX, mouseY, delta);
     }
