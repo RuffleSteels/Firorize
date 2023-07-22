@@ -1,28 +1,22 @@
 package com.oscimate.oscimate_soulflame.config;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.systems.VertexSorter;
 import com.oscimate.oscimate_soulflame.Main;
 
+import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.GameRendererMixin;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameOverlayRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.model.ModelLoader;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector2f;
-import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
-import org.w3c.dom.css.RGBColor;
-
-import java.awt.*;
 
 import static com.oscimate.oscimate_soulflame.config.ConfigScreen.windowHeight;
 
@@ -51,31 +45,44 @@ public class ChangeFireHeightScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackgroundTexture(context);
+        super.render(context, mouseX, mouseY, delta);
+
         MatrixStack matrixStack = context.getMatrices();
-        Matrix4f matrix = matrixStack.peek().getPositionMatrix();
+        matrixStack.push();
+        GameRenderer gameRenderer = MinecraftClient.getInstance().gameRenderer;
+        System.out.println(((GameRendererMixin)gameRenderer).callGetFov(gameRenderer.getCamera(), MinecraftClient.getInstance().getTickDelta(), false));
+        gameRenderer.loadProjectionMatrix(gameRenderer.getBasicProjectionMatrix(((GameRendererMixin)gameRenderer).callGetFov(gameRenderer.getCamera(), MinecraftClient.getInstance().getTickDelta(), false)));
+        matrixStack.loadIdentity();
+
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorTexProgram);
+        RenderSystem.depthFunc(519);
+        RenderSystem.depthMask(false);
+        RenderSystem.enableBlend();
         RenderSystem.setShaderTexture(0, new Identifier("textures/block/fire_1.png"));
+
         float f = 0.0F;
         float a = 1.0F;
         float i = 1/32F * (counter-1);
         float j = 1/32F * counter;
+
         for (int r = 0; r < 2; ++r) {
             matrixStack.push();
-            matrixStack.translate(1000.0F, 0.0F, 0.0f);
+
+            matrixStack.translate((float)(-(r * 2 - 1)) * 0.24f, -0.3f, 0.0f);
+            matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float)(r * 2 - 1) * 10.0f));
+            Matrix4f matrix4f = matrixStack.peek().getPositionMatrix();
             bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);
-            bufferBuilder.vertex(matrix, (float)10, (float)500, 0.0F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, j).next();
-            bufferBuilder.vertex(matrix, (float)500, (float)500, 0.0F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, j).next();
-            bufferBuilder.vertex(matrix, (float)500, (float)10, 0.0F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, i).next();
-            bufferBuilder.vertex(matrix, (float)10, (float)10, 0.0F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, i).next();
+            bufferBuilder.vertex(matrix4f, -0.5F, -0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, j).next();
+            bufferBuilder.vertex(matrix4f, 0.5F, -0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, j).next();
+            bufferBuilder.vertex(matrix4f, 0.5F, 0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, i).next();
+            bufferBuilder.vertex(matrix4f, -0.5F, 0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, i).next();
             BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-            RenderSystem.disableBlend();
             matrixStack.pop();
         }
-
-        super.render(context, mouseX, mouseY, delta);
+        RenderSystem.disableBlend();
+        RenderSystem.depthMask(true);
+        RenderSystem.depthFunc(515);
 
         if (ticks % 4 == 0) counter++;
         ticks++;
@@ -84,5 +91,4 @@ public class ChangeFireHeightScreen extends Screen {
             ticks = 0;
         }
     }
-
 }
