@@ -50,7 +50,6 @@ public class ChangeFireHeightScreen extends Screen {
         MatrixStack matrixStack = context.getMatrices();
         matrixStack.push();
         GameRenderer gameRenderer = MinecraftClient.getInstance().gameRenderer;
-        System.out.println(((GameRendererMixin)gameRenderer).callGetFov(gameRenderer.getCamera(), MinecraftClient.getInstance().getTickDelta(), false));
         gameRenderer.loadProjectionMatrix(gameRenderer.getBasicProjectionMatrix(((GameRendererMixin)gameRenderer).callGetFov(gameRenderer.getCamera(), MinecraftClient.getInstance().getTickDelta(), false)));
         matrixStack.loadIdentity();
 
@@ -63,26 +62,37 @@ public class ChangeFireHeightScreen extends Screen {
 
         float f = 0.0F;
         float a = 1.0F;
-        float i = 1/32F * (counter-1);
+        float i = 1/32F * (counter-1) + 0.0001F;
         float j = 1/32F * counter;
+
+        var modelView = RenderSystem.getModelViewStack();
+        modelView.push();
+        modelView.loadIdentity();
+        RenderSystem.applyModelViewMatrix();
+
+        matrixStack.translate(0.0, Main.currentFireHeight, 0.0);
 
         for (int r = 0; r < 2; ++r) {
             matrixStack.push();
-
             matrixStack.translate((float)(-(r * 2 - 1)) * 0.24f, -0.3f, 0.0f);
             matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float)(r * 2 - 1) * 10.0f));
             Matrix4f matrix4f = matrixStack.peek().getPositionMatrix();
             bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);
-            bufferBuilder.vertex(matrix4f, -0.5F, -0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, j).next();
-            bufferBuilder.vertex(matrix4f, 0.5F, -0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, j).next();
-            bufferBuilder.vertex(matrix4f, 0.5F, 0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, i).next();
-            bufferBuilder.vertex(matrix4f, -0.5F, 0.5F, 1.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, i).next();
+            bufferBuilder.vertex(matrix4f, -0.5F, -0.5F, -0.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, j).next();
+            bufferBuilder.vertex(matrix4f, 0.5F, -0.5F, -0.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, j).next();
+            bufferBuilder.vertex(matrix4f, 0.5F, 0.5F, -0.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, i).next();
+            bufferBuilder.vertex(matrix4f, -0.5F, 0.5F, -0.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, i).next();
             BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
             matrixStack.pop();
         }
+
+        modelView.pop();
+        RenderSystem.applyModelViewMatrix();
+
         RenderSystem.disableBlend();
         RenderSystem.depthMask(true);
         RenderSystem.depthFunc(515);
+
 
         if (ticks % 4 == 0) counter++;
         ticks++;

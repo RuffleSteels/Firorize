@@ -44,7 +44,6 @@ public class InGameOverlayRendererMixin {
     @Inject(method = "renderFireOverlay",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;translate(FFF)V"))
     private static void onRenderFireOverlay(MinecraftClient client, MatrixStack matrices, CallbackInfo ci) {
-
         matrices.translate(0.0, Main.currentFireHeight, 0.0);
     }
 

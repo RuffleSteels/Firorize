@@ -31,10 +31,9 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation "com.terraformersmc:modmenu:7.0.1"
+	modImplementation "com.terraformersmc:modmenu:8.0.1"
 
-	include(implementation("com.github.LlamaLad7:MixinExtras:0.1.1"))
-	annotationProcessor("com.github.LlamaLad7:MixinExtras:0.1.1")
+	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.3.6")))
 }
 
 processResources {
