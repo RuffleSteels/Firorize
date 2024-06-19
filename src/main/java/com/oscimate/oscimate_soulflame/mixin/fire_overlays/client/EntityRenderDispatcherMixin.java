@@ -20,6 +20,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
+import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -52,7 +53,7 @@ public class EntityRenderDispatcherMixin {
     public Camera camera;
 
     @Inject(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V"))
-    private void setShader(MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity, CallbackInfo ci) {
+    private void setShader(MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity, Quaternionf rotation, CallbackInfo ci) {
         RenderSystem.setShader(GameRendererSetting::getRenderTypeCustomTint);
 
     }
