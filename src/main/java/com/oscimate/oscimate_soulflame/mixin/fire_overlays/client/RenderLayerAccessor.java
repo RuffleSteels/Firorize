@@ -3,6 +3,7 @@ package com.oscimate.oscimate_soulflame.mixin.fire_overlays.client;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexFormat;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(RenderLayer.class)
@@ -10,6 +11,11 @@ public interface RenderLayerAccessor {
 
     @Invoker
     static RenderLayer.MultiPhase callOf(String name, VertexFormat vertexFormat, VertexFormat.DrawMode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, RenderLayer.MultiPhaseParameters phases) {
+        return null;
+    }
+
+    @Invoker("getTripwirePhaseData")
+    static RenderLayer.MultiPhaseParameters getTripwirePhaseData() {
         return null;
     }
 

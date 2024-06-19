@@ -1,12 +1,14 @@
 package com.oscimate.oscimate_soulflame.test;
 
 import com.oscimate.oscimate_soulflame.Main;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
 import net.fabricmc.fabric.api.client.model.loading.v1.FabricBakedModelManager;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.render.model.ModelLoader;
@@ -27,6 +29,8 @@ import java.util.function.Supplier;
 public class TestModel implements FabricBakedModel, BakedModel {
 
     BakedModel model;
+
+
 
     public TestModel(BakedModel model) {
         this.model = model;
@@ -59,7 +63,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public Sprite getParticleSprite() {
-        return null;
+        return model.getParticleSprite();
     }
 
     @Override
@@ -74,38 +78,47 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        if (((FabricBlockView)blockView).getBiomeFabric(pos).getKey().orElseThrow().equals(BiomeKeys.WARPED_FOREST)) {
+        if (((FabricBlockView)blockView).getBiomeFabric(pos).getKey().orElseThrow().equals(BiomeKeys.WARPED_FOREST) || ((FabricBlockView)blockView).getBiomeFabric(pos).getKey().orElseThrow().equals(BiomeKeys.BASALT_DELTAS)) {
             BakedModel bakedModel = new BakedModel() {
                 @Override
                 public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
                     List<BakedQuad> beforeTempList = model.getQuads(state, face, random); // get blockstate here
                     List<BakedQuad> tempList = new ArrayList<>();
                     for(int g = 0; g < beforeTempList.size(); g++) {
-                        tempList.add(g, beforeTempList.get(g));
+                        for (int h = 0; h < 3; h++) {
+                            tempList.add(g, beforeTempList.get(g));
+                        }
                     }
                     for (int n = 0; n < tempList.size(); n++) {
-                        int[] verticesOriginal = tempList.get(n).getVertexData();
-                        int[] verticesNew = new int[32];
-                        for (int cornerIndex = 0; cornerIndex < 4; ++cornerIndex) {
-                            int i = cornerIndex * 8;
-                            float min1U = tempList.get(n).getSprite().getMinU();
-                            float max1U = tempList.get(n).getSprite().getMaxU();
-                            float min2U = Main.BLANK_FIRE.get().getMinU();
-                            float max2U = Main.BLANK_FIRE.get().getMaxU();
-                            float min1V = tempList.get(n).getSprite().getMinV();
-                            float max1V = tempList.get(n).getSprite().getMaxV();
-                            float min2V = Main.BLANK_FIRE.get().getMinV();
-                            float max2V = Main.BLANK_FIRE.get().getMaxV();
+//                        for (int nn = 0; nn < 2; nn++) {
+                            int accN = (int) Math.floor(n/3);
+//                            boolean secondLayer = n+2 % 2 == 0;
+                            boolean overlayLayer = !(n % 3 == 1);
+                            Sprite sprite = overlayLayer ? Main.BLANK_FIRE_0_OVERLAY.get() : Main.BLANK_FIRE_0.get();
+                            int[] verticesOriginal = beforeTempList.get(accN).getVertexData();
+                            int[] verticesNew = new int[32];
+                            for (int cornerIndex = 0; cornerIndex < 4; ++cornerIndex) {
+                                int i = cornerIndex * 8;
+                                float min1U = beforeTempList.get(accN).getSprite().getMinU();
+                                float max1U = beforeTempList.get(accN).getSprite().getMaxU();
+                                float min2U = sprite.getMinU();
+                                float max2U = sprite.getMaxU();
+                                float min1V = beforeTempList.get(accN).getSprite().getMinV();
+                                float max1V = beforeTempList.get(accN).getSprite().getMaxV();
+                                float min2V = sprite.getMinV();
+                                float max2V = sprite.getMaxV();
 
-                            verticesNew[i] = verticesOriginal[i];
-                            verticesNew[i + 1] = verticesOriginal[i + 1];
-                            verticesNew[i + 2] = verticesOriginal[i + 2];
-                            verticesNew[i + 3] = verticesOriginal[i + 3];
-                            verticesNew[i + 4] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4]) - min1U) * (max2U - min2U) / (max1U - min1U) + min2U);
-                            verticesNew[i + 4 + 1] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4 + 1]) - min1V) * (max2V - min2V) / (max1V - min1V) + min2V);
-                        }
-                        BakedQuad bakedQuad = new BakedQuad(verticesNew, tempList.get(n).getColorIndex(), tempList.get(n).getFace(), Main.BLANK_FIRE.get(), tempList.get(n).hasShade());
-                        tempList.set(n, bakedQuad);
+                                verticesNew[i] = verticesOriginal[i];
+                                verticesNew[i + 1] = verticesOriginal[i + 1];
+                                verticesNew[i + 2] = verticesOriginal[i + 2];
+                                verticesNew[i + 3] = verticesOriginal[i + 3];
+                                verticesNew[i + 4] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4]) - min1U) * (max2U - min2U) / (max1U - min1U) + min2U);
+                                verticesNew[i + 4 + 1] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4 + 1]) - min1V) * (max2V - min2V) / (max1V - min1V) + min2V);
+                            }
+//                        System.out.println(beforeTempList.get(accN).getColorIndex());
+                            BakedQuad bakedQuad = new BakedQuad(verticesNew, overlayLayer ? 2 : 1, beforeTempList.get(accN).getFace(), sprite, beforeTempList.get(accN).hasShade());
+                            tempList.set(n, bakedQuad);
+//                        }
                     }
                     return tempList;
                 }

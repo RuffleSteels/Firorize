@@ -9,8 +9,10 @@ import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Optional;
+
 
 public class GameRendererSetting extends GameRenderer {
 

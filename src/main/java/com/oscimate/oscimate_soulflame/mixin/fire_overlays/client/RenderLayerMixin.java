@@ -12,7 +12,6 @@ import java.util.List;
 @Mixin(RenderLayer.class)
 public class RenderLayerMixin {
 
-
     @ModifyReturnValue(method = "getBlockLayers", at = @At("RETURN"))
     private static List<RenderLayer> addBlockLayer(List<RenderLayer> original) {
         ImmutableList<RenderLayer> immutableList = ImmutableList.<RenderLayer>builder().add(CustomRenderLayer.getCustomTint()).addAll(original).build();

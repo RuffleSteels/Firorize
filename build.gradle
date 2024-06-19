@@ -20,6 +20,7 @@ repositories {
 	maven {
 		url = "https://jitpack.io"
 	}
+	maven { url = "https://maven.isxander.dev/releases" }
 }
 
 dependencies {
@@ -34,6 +35,8 @@ dependencies {
 	modImplementation "com.terraformersmc:modmenu:8.0.1"
 
 	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.3.6")))
+
+	modImplementation "dev.isxander.yacl:yet-another-config-lib-fabric:3.3.2+1.20.4"
 }
 
 processResources {

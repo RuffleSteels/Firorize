@@ -1,6 +1,8 @@
 package com.oscimate.oscimate_soulflame;
 
 import com.google.common.base.Suppliers;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.oscimate.oscimate_soulflame.config.ChangeFireColorScreen;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
 import com.oscimate.oscimate_soulflame.test.TestModel;
 import net.fabricmc.api.ClientModInitializer;
@@ -20,6 +22,8 @@ import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.block.BlockModels;
+import net.minecraft.client.render.chunk.ChunkBuilder;
+import net.minecraft.client.render.chunk.ChunkRendererRegion;
 import net.minecraft.client.render.entity.ZombieBaseEntityRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -42,6 +46,7 @@ import net.minecraft.entity.mob.ZombieEntity;
 import net.minecraft.entity.projectile.ArrowEntity;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
@@ -62,13 +67,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.oscimate.oscimate_soulflame.CustomRenderLayer.getCustomTint;
+
 
 @Environment(EnvType.CLIENT)
 public class Main implements ClientModInitializer {
     public static final String MODID = "oscimate_soulflame";
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
     public static double currentFireHeight = 0.0;
-    public static final Supplier<Sprite> BLANK_FIRE = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_1")).getSprite());
+
+    public static final Supplier<Sprite> BLANK_FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite());
+    public static final Supplier<Sprite> BLANK_FIRE_0_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite());
+
+    public static final Supplier<Sprite> SOUL_FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1")).getSprite());
+    public static final Supplier<Sprite> SOUL_FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0")).getSprite());
+
+    public static final Supplier<Sprite> BLANK_FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_1")).getSprite());
+
+    public static final Supplier<Sprite> BLANK_FIRE_1_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_1")).getSprite());
+
 
     public int getColorInt(int r, int g, int b) {
         return r << 16 | g << 8 | b;
@@ -77,6 +94,9 @@ public class Main implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
+        ChangeFireColorScreen.CONFIG.load();
+        BlockRenderLayerMap.INSTANCE.putBlock(Blocks.FIRE, getCustomTint());
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
                 if (context.id().getPath().contains("block/fire_")) {
@@ -85,25 +105,34 @@ public class Main implements ClientModInitializer {
                 return model;
             });
         });
-
-//        BlockRenderLayerMap.INSTANCE.putBlock(Blocks.FIRE, CustomRenderLayer.getCustomTint());
-//
         ColorProviderRegistry.BLOCK.register(((state, world, pos, tintIndex) -> {
-//            int value = Color.;
-
-//            if (world.hasBiomes()) {
-//                RegistryKey<Biome> biome = world.getBiomeFabric(pos).getKey().orElseThrow();
-//                if(biome.equals(BiomeKeys.BASALT_DELTAS)) {
-//                    value = this.getColorInt(39, 40, 48);
-//                } else if (biome.equals(BiomeKeys.CRIMSON_FOREST)) {
-//                    value = this.getColorInt(255, 0, 0);
-//                } else if (biome.equals(BiomeKeys.WARPED_FOREST)) {
-//                    value = this.getColorInt(0, 255, 0);
-//                }
-//            }
-
-            return -1;
+            if (world.hasBiomes()) {
+                RegistryKey<Biome> biome = world.getBiomeFabric(pos).getKey().orElseThrow();
+                if (biome.equals(BiomeKeys.WARPED_FOREST)) {
+                    if (tintIndex == 1) {
+                        return this.getColorInt(0, 255, 200);
+//                        return this.getColorInt(167, 68, 0);
+                    }
+                    if (tintIndex == 2) {
+                        return this.getColorInt(195, 255, 0);
+//                        return this.getColorInt(74, 68, 0);
+                    }
+                }
+                else if (biome.equals(BiomeKeys.BASALT_DELTAS)) {
+                    if (tintIndex == 1) {
+                        return this.getColorInt(23, 68, 0);
+                    }
+                    if (tintIndex == 2) {
+                        return this.getColorInt(45, 95, 0);
+                    }
+                } else {
+                    return  this.getColorInt(0, 0, 0);
+                }
+            }
+            return  this.getColorInt(0, 0, 0);
+//            return -1;
         }), Blocks.FIRE);
+
 
         if(!CONFIG_MANAGER.fileExists()) {
             CONFIG_MANAGER.save();

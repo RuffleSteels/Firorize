@@ -52,6 +52,8 @@ public class ConfigScreen extends Screen {
         renderWindow();
         this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Height"), button -> this.client.setScreen(new ChangeFireHeightScreen(this))).dimensions(width / 2 - buttonWidth/2, (int) (height/2 + (windowHeight/3.5)), buttonWidth, 20).build());
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
+        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Color"), button -> this.client.setScreen(ChangeFireColorScreen.configScreen(this))).dimensions(width / 2 - buttonWidth/2, (int) (height/2 + (windowHeight/3.5)), buttonWidth, 40).build());
+
         super.init();
     }
 
