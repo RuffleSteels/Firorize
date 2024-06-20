@@ -9,8 +9,6 @@ in vec2 UV0;
 in ivec2 UV2;
 in vec3 Normal;
 
-uniform sampler2D Sampler2;
-
 uniform mat4 ModelViewMat;
 uniform mat4 ProjMat;
 uniform vec3 ChunkOffset;

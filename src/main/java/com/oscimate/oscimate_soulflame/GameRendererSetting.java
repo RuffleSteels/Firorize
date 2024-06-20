@@ -28,4 +28,13 @@ public class GameRendererSetting extends GameRenderer {
 
     @Nullable
     public static ShaderProgram renderTypeCustomTint;
+
+    @Nullable
+    public static ShaderProgram getRenderTypeColorWheel() {
+        return renderTypeColorWheel;
+    }
+
+
+    @Nullable
+    public static ShaderProgram renderTypeColorWheel;
 }

@@ -23,21 +23,13 @@ import java.util.function.Consumer;
 
 @Mixin(GameRenderer.class)
 public abstract class GamRenMixin {
-    @Shadow public abstract Matrix4f getBasicProjectionMatrix(double fov);
-
-    @Shadow protected abstract double getFov(Camera camera, float tickDelta, boolean changingFov);
-
-    @Inject(method = "renderHand", at = @At("HEAD"))
-    public void test(MatrixStack matrices, Camera camera, float tickDelta, CallbackInfo ci) {
-//        System.out.println(this.getBasicProjectionMatrix(this.getFov(camera, tickDelta, false)));
-
-    }
-
-
     @ModifyReceiver(method = "loadPrograms", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
     private List<Pair<ShaderProgram, Consumer<ShaderProgram>>> addShaderPrograms(List<Pair<ShaderProgram, Consumer<ShaderProgram>>> instance, Object e, ResourceFactory factory) throws IOException {
         instance.add(Pair.of(new ShaderProgram(factory, "oscimate_soulflame/rendertype_custom_tint", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL), program -> {
             GameRendererSetting.renderTypeCustomTint = program;
+        }));
+        instance.add(Pair.of(new ShaderProgram(factory, "oscimate_soulflame/rendertype_color_wheel", VertexFormats.POSITION_COLOR_TEXTURE), program -> {
+            GameRendererSetting.renderTypeColorWheel = program;
         }));
         return instance;
     }

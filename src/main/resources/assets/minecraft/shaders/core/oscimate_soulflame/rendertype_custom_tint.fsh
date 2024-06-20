@@ -51,17 +51,40 @@ vec3 HSVtoRGB(in vec3 HSV)
 void main() {
     vec4 textureColor = texture(Sampler0, texCoord0);
 
-    if (vertexColor.rgb == vec3(0, 0, 0)) {
+    if (textureColor.rgb == vec3(255, 0, 0)) {
         if (textureColor.a < 0.1) {
             discard;
         }
         fragColor = linear_fog(textureColor, vertexDistance, FogStart, FogEnd, FogColor);
     } else {
-        float saturation = 25;
-        float hue = RGBtoHSV(vertexColor.rgb).x;
+        vec3 initialHSV = RGBtoHSV(vertexColor.rgb);
+        float saturation = (100*initialHSV.y) /2;
+        float hue = initialHSV.x;
+        float lightness = initialHSV.z;
         float result;
+        float brightness;
 
-        float brightness = RGBtoHSV(textureColor.rgb).z * 100;
+        if (lightness >= 0.5) {
+            lightness = (lightness-0.5)*2;
+
+            float luminance = dot(textureColor.rgb, vec3(0.299, 0.587, 0.114));
+
+            float adjustment = pow(luminance, 1-lightness);
+
+            vec3 adjustedColor = textureColor.rgb * adjustment;
+
+            brightness = (RGBtoHSV(adjustedColor.rgb).z) * 100;
+        } else {
+
+            float luminance = dot(textureColor.rgb, vec3(0.299, 0.587, 0.114));
+
+            float adjustment = pow(luminance, 0.5);
+
+            vec3 adjustedColor = textureColor.rgb * adjustment;
+
+            brightness = (RGBtoHSV(adjustedColor.rgb).z * lightness) * 100;
+        }
+
 
         if (brightness > 48.654) {
             brightness = brightness/2 + 50.6;
@@ -82,8 +105,9 @@ void main() {
             result = 2.75*brightness + 55 + saturation;
         }
 
-        vec3 rrr = HSVtoRGB(vec3(hue, result/100, brightness/100));
 
+        vec3 rrr = HSVtoRGB(vec3(hue, result/100 * initialHSV.y, brightness/100 ));
+//
         vec4 final = vec4(rrr.r, rrr.g, rrr.b, textureColor.a);
 
         if (textureColor.a < 0.1) {
