@@ -6,6 +6,7 @@
   "mixins": [
   ],
   "client": [
+    "fire_overlays.client.BlockModelRendererMixin",
     "fire_overlays.client.BlockRenderManagerMixin",
     "fire_overlays.client.ClientEntityMixin",
     "fire_overlays.client.EntityRenderDispatcherMixin",

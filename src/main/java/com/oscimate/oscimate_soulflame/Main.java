@@ -79,10 +79,10 @@ public class Main implements ClientModInitializer {
                         return this.getColorInt(45, 95, 0);
                     }
                 } else {
-                    return  this.getColorInt(0, 0, 0);
+                    return this.getColorInt(0, 0, 0);
                 }
             }
-            return  this.getColorInt(0, 0, 0);
+            return this.getColorInt(0, 0, 0);
 //            return -1;
         }), Blocks.FIRE);
 

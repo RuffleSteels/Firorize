@@ -23,7 +23,7 @@ public class CustomRenderLayer extends RenderLayer {
 //
 //    public static final VertexFormat CUSTOM_POSITION_COLOR_TEXTURE_LIGHT_NORMAL = new VertexFormat(ImmutableMap.builder().put("UV1", CUSTOM_TEXTURE_ELEMENT).put("Position", POSITION_ELEMENT).put("Color", COLOR_ELEMENT).put("UV0", TEXTURE_ELEMENT).put("UV2", LIGHT_ELEMENT).put("Normal", NORMAL_ELEMENT).put("Padding", PADDING_ELEMENT).build());
 //
-    private static final RenderLayer CUSTOM_TINT = RenderLayerAccessor.callOf("custom_tint", POSITION_COLOR_TEXTURE_LIGHT_NORMAL, VertexFormat.DrawMode.QUADS, 262144, true, false, MultiPhaseParameters.builder().lightmap(ENABLE_LIGHTMAP).program(CUSTOM_TINT_SHADER).transparency(TRANSLUCENT_TRANSPARENCY).texture(BLOCK_ATLAS_TEXTURE).build(true));
+    private static final RenderLayer CUSTOM_TINT = RenderLayerAccessor.callOf("custom_tint", POSITION_COLOR_TEXTURE_LIGHT_NORMAL, VertexFormat.DrawMode.QUADS, 262144, true, false, MultiPhaseParameters.builder().lightmap(ENABLE_LIGHTMAP).program(CUSTOM_TINT_SHADER).transparency(TRANSLUCENT_TRANSPARENCY).depthTest(RenderPhase.LEQUAL_DEPTH_TEST).texture(BLOCK_ATLAS_TEXTURE).build(true));
 
     public CustomRenderLayer(String name, VertexFormat vertexFormat, VertexFormat.DrawMode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, Runnable startAction, Runnable endAction) {
         super(name, vertexFormat, drawMode, expectedBufferSize, hasCrumbling, translucent, startAction, endAction);
