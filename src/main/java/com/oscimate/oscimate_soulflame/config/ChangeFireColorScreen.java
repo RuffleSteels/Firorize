@@ -3,6 +3,8 @@ package com.oscimate.oscimate_soulflame.config;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.oscimate.oscimate_soulflame.CustomRenderLayer;
 import com.oscimate.oscimate_soulflame.GameRendererSetting;
+import com.oscimate.oscimate_soulflame.Main;
+import com.sun.tools.jconsole.JConsoleContext;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -24,6 +26,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -68,11 +71,13 @@ public class ChangeFireColorScreen extends Screen {
     private TextFieldWidget blockUnderField;
     private Block blockUnder = Blocks.SHULKER_BOX;
 
-    private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> Block.isFaceFullSquare(block.getOutlineShape(block.getDefaultState(),  EmptyBlockView.INSTANCE, BlockPos.ORIGIN, ShapeContext.absent()), Direction.UP)).toList();
+    private final List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> Block.isFaceFullSquare(block.getOutlineShape(block.getDefaultState(),  EmptyBlockView.INSTANCE, BlockPos.ORIGIN, ShapeContext.absent()), Direction.UP)).toList();
 
     @Override
     protected void init() {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
+        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("SAVE"), button -> save()).dimensions(width / 2 +100, height/2 + windowHeight/2 + 20, 200, 20).build());
+
         textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0], hexBoxCoords[1], wheelRadius, 20, ScreenTexts.DONE);
         blockUnderField = new TextFieldWidget(this.textRenderer, 400, 100, wheelRadius*3, 20, ScreenTexts.DONE);
         this.addDrawableChild(textFieldWidget);
@@ -84,6 +89,9 @@ public class ChangeFireColorScreen extends Screen {
         super.init();
     }
 
+    private void save() {
+        Main.CONFIG_MANAGER.getCurrentBlockFireColors().put(blockUnder.getTranslationKey(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+    }
     private void blockUnderTyped(String blockTag) {
         if (Identifier.tryParse(blockTag) != null) {
             Block block = Registries.BLOCK.get(Identifier.tryParse(blockTag));

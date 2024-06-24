@@ -4,15 +4,30 @@ import com.google.gson.Gson;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.block.Block;
 
 
+import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ConfigManager {
     public FireLogic currentFireLogic;
     public long currentFireHeightSlider;
+
+    public void setCurrentBlockFireColors(HashMap<String, int[]> blockFireColors) {
+        this.blockFireColors = blockFireColors;
+    }
+
+    public HashMap<String, int[]> blockFireColors;
+
+    public HashMap<String, int[]> getCurrentBlockFireColors() {
+        return blockFireColors;
+    }
+
     private static final Gson GSON = new Gson();
     public static Path file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json");
 
@@ -29,7 +44,6 @@ public class ConfigManager {
     public void setCurrentFireHeightSlider(long fireHeightSlider) {
         this.currentFireHeightSlider =  fireHeightSlider;
     }
-
     public Boolean fileExists() {
         return Files.exists(file);
     }
@@ -54,6 +68,12 @@ public class ConfigManager {
             save();
         } else {
             setCurrentFireHeightSlider(jsonOutput.getFireHeightSlider());
+        }
+        if (jsonOutput.getCurrentBlockFireColours() == null) {
+            setCurrentBlockFireColors(new HashMap<String, int[]>());
+            save();
+        } else {
+            setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
         }
     }
 

@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.oscimate.oscimate_soulflame.Main.CONFIG_MANAGER;
+
 public class TestModel implements FabricBakedModel, BakedModel {
 
     BakedModel model;
@@ -163,7 +165,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        if (((FabricBlockView)blockView).getBiomeFabric(pos).getKey().orElseThrow().equals(BiomeKeys.WARPED_FOREST) || ((FabricBlockView)blockView).getBiomeFabric(pos).getKey().orElseThrow().equals(BiomeKeys.BASALT_DELTAS)) {
+        if (CONFIG_MANAGER.getCurrentBlockFireColors().containsKey(MinecraftClient.getInstance().world.getBlockState(pos.down()).getBlock().getTranslationKey())) {
             editModel().emitBlockQuads(blockView, state, pos, randomSupplier, context);
         } else {
             model.emitBlockQuads(blockView, state, pos, randomSupplier, context);

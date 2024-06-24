@@ -13,10 +13,4 @@ public interface RenderLayerAccessor {
     static RenderLayer.MultiPhase callOf(String name, VertexFormat vertexFormat, VertexFormat.DrawMode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, RenderLayer.MultiPhaseParameters phases) {
         return null;
     }
-
-    @Invoker("getTripwirePhaseData")
-    static RenderLayer.MultiPhaseParameters getTripwirePhaseData() {
-        return null;
-    }
-
 }

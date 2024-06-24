@@ -1,24 +1,24 @@
 package com.oscimate.oscimate_soulflame.mixin.fire_overlays.client;
 
 
-import com.oscimate.oscimate_soulflame.OnSoulFireAccessor;
+import com.oscimate.oscimate_soulflame.RenderFireColorAccessor;
 import net.minecraft.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(Entity.class)
-public class ClientEntityMixin implements OnSoulFireAccessor {
+public class ClientEntityMixin implements RenderFireColorAccessor {
     @Unique
-    private boolean renderSoulFire;
+    private int[] renderFireColor;
 
     @Override
-    public boolean isRenderSoulFire() {
-        return renderSoulFire;
+    public int[] getRenderFireColor() {
+        return renderFireColor;
     }
 
     @Override
-    public void setRenderSoulFire(boolean renderSoulFire) {
-        this.renderSoulFire = renderSoulFire;
+    public void setRenderFireColor(int[] renderFireColor) {
+        this.renderFireColor = renderFireColor;
     }
 
 }
