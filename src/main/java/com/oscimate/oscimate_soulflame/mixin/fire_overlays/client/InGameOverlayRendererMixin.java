@@ -53,15 +53,11 @@ public class InGameOverlayRendererMixin {
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShader(Ljava/util/function/Supplier;)V"))
     private static void changeShader(Supplier<ShaderProgram> program, Operation<Void> original, MinecraftClient client, MatrixStack matrices) {
-        boolean isntIn = Main.settingFireColor(client.player);
-        if (!isntIn) {
-            int fireColor = ((RenderFireColorAccessor) client.player).getRenderFireColor()[0];
-            if (fireColor < 1) {
-                original.call((Supplier<ShaderProgram>) GameRendererSetting::getRenderTypeCustomTint);
-            } else {
-                original.call(program);
-            }
-        } else  {
+        Main.settingFireColor(client.player);
+        int fireColor = ((RenderFireColorAccessor) client.player).getRenderFireColor()[0];
+        if (fireColor < 1) {
+            original.call((Supplier<ShaderProgram>) GameRendererSetting::getRenderTypeCustomTint);
+        } else {
             original.call(program);
         }
     }

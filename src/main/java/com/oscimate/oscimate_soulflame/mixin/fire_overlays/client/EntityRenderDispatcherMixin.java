@@ -38,14 +38,12 @@ public class EntityRenderDispatcherMixin {
 
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 0))
     private Sprite getSprite0(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
-        boolean isntIn = Main.settingFireColor(entity);
-        if (!isntIn) {
-            int fireColor = ((RenderFireColorAccessor) entity).getRenderFireColor()[0];
-            if (fireColor < 1) {
-                return Main.BLANK_FIRE_0.get();
-            } else if (fireColor == 1) {
-                return Main.SOUL_FIRE_0.get();
-            }
+        Main.settingFireColor(entity);
+        int fireColor = ((RenderFireColorAccessor) entity).getRenderFireColor()[0];
+        if (fireColor < 1) {
+            return Main.BLANK_FIRE_0.get();
+        } else if (fireColor == 1) {
+            return Main.SOUL_FIRE_0.get();
         }
         return obj.getSprite();
     }

@@ -5,11 +5,15 @@ import com.oscimate.oscimate_soulflame.CustomRenderLayer;
 import com.oscimate.oscimate_soulflame.GameRendererSetting;
 import com.oscimate.oscimate_soulflame.Main;
 import com.sun.tools.jconsole.JConsoleContext;
+import dev.isxander.yacl3.gui.SearchFieldWidget;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.*;
@@ -36,12 +40,8 @@ public class ChangeFireColorScreen extends Screen {
     private Screen parent;
     private boolean clicked = false;
     private boolean sliderClicked = false;
-
     private double clickedX = 95.0;
-
     private double clickedY = 95.0;
-
-
     private String hexCode = "#ffffff";
     public static Color[] pickedColor = {new Color(Color.decode("#ffffff").getRGB(), true), new Color(Color.decode("#ffffff").getRGB(), true)};
     private double hue = 0;
@@ -57,7 +57,6 @@ public class ChangeFireColorScreen extends Screen {
     private final double sliderClickedX = sliderCoords[0] + sliderPadding;
     private final int[] hexBoxCoords = {wheelCoords[0], wheelCoords[1] + wheelRadius*2 + 20};
     private boolean isOverlay = false;
-
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
         this.parent = parent;
@@ -65,38 +64,37 @@ public class ChangeFireColorScreen extends Screen {
     public void onClose() {
         client.setScreen(parent);
     }
-
     private TextFieldWidget textFieldWidget;
-
     private TextFieldWidget blockUnderField;
-    private Block blockUnder = Blocks.SHULKER_BOX;
-
+    private Block blockUnder = Blocks.NETHERRACK;
+    public String input = "";
+    public ChangeFireColorScreen.SearchScreenListWidget searchScreenListWidget;
     private final List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> Block.isFaceFullSquare(block.getOutlineShape(block.getDefaultState(),  EmptyBlockView.INSTANCE, BlockPos.ORIGIN, ShapeContext.absent()), Direction.UP)).toList();
-
     @Override
     protected void init() {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
         this.addDrawableChild(new ButtonWidget.Builder(Text.literal("SAVE"), button -> save()).dimensions(width / 2 +100, height/2 + windowHeight/2 + 20, 200, 20).build());
-
+        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, this.width / 2, this.height - 93, 50, 18);
+        this.addDrawableChild(searchScreenListWidget);
         textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0], hexBoxCoords[1], wheelRadius, 20, ScreenTexts.DONE);
-        blockUnderField = new TextFieldWidget(this.textRenderer, 400, 100, wheelRadius*3, 20, ScreenTexts.DONE);
+        blockUnderField = new CustomTextFieldWidget(this.textRenderer, 400, 100, wheelRadius*3, 20, ScreenTexts.DONE, this);
         this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
-        blockUnderField.setChangedListener(this::blockUnderTyped);
         textFieldWidget.setChangedListener(this::updateCursor);
         updateCursor(this.hexCode);
+
         super.init();
     }
-
     private void save() {
         Main.CONFIG_MANAGER.getCurrentBlockFireColors().put(blockUnder.getTranslationKey(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
     }
-    private void blockUnderTyped(String blockTag) {
-        if (Identifier.tryParse(blockTag) != null) {
-            Block block = Registries.BLOCK.get(Identifier.tryParse(blockTag));
-            if (block != Blocks.AIR && blockUnderList.contains(block)) {
-                blockUnder = block;
+    public void updateBlockUnder(String blockUnderTag) {
+        Identifier id = Identifier.tryParse(blockUnderTag);
+        if (id != null) {
+            Block block = Registries.BLOCK.get(id);
+            if (blockUnderList.contains(block)) {
+                blockUnder = Registries.BLOCK.get(id);
             }
         }
     }
@@ -201,22 +199,6 @@ public class ChangeFireColorScreen extends Screen {
         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
     }
 
-    public static Quaternionf eulerToQuaternion(double roll, double pitch, double yaw) {
-        double cy = Math.cos(yaw * 0.5);
-        double sy = Math.sin(yaw * 0.5);
-        double cp = Math.cos(pitch * 0.5);
-        double sp = Math.sin(pitch * 0.5);
-        double cr = Math.cos(roll * 0.5);
-        double sr = Math.sin(roll * 0.5);
-
-        double w = cr * cp * cy + sr * sp * sy;
-        double x = sr * cp * cy - cr * sp * sy;
-        double y = cr * sp * cy + sr * cp * sy;
-        double z = cr * cp * sy - sr * sp * cy;
-
-        return new Quaternionf(w, x, y, z);
-    }
-
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackgroundTexture(context);
@@ -295,33 +277,70 @@ public class ChangeFireColorScreen extends Screen {
         blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block.getDefaultState(), blockRenderManager.getModel(block.getDefaultState()), pickedColor[0].getRed()/255f, pickedColor[0].getGreen()/255f, pickedColor[0].getBlue()/255f, 1, 1);
 
         context.getVertexConsumers().draw();
-
-
-//        Sprite sprite = Main.BLANK_FIRE_1.get();
-//        RenderSystem.setShaderTexture(0, sprite.getAtlasId());
-//        RenderSystem.setShader(GameRendererSetting::getRenderTypeCustomTint);
-//        Matrix4f matrix4f2 = context.getMatrices().peek().getPositionMatrix();
-//        BufferBuilder bufferBuilder2 = Tessellator.getInstance().getBuffer();
-//        bufferBuilder2.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);
-//        bufferBuilder2.vertex(matrix4f2, (float)200, (float)100, (float)100).color(pickedColor[0].getRed(), pickedColor[0].getGreen(), pickedColor[0].getBlue(), 255).texture(sprite.getMinU(), sprite.getMinV()).next();
-//        bufferBuilder2.vertex(matrix4f2, (float)200, (float)260, (float)100).color(pickedColor[0].getRed(), pickedColor[0].getGreen(), pickedColor[0].getBlue(), 255).texture(sprite.getMinU(), sprite.getMaxV()).next();
-//        bufferBuilder2.vertex(matrix4f2, (float)360, (float)260, (float)100).color(pickedColor[0].getRed(), pickedColor[0].getGreen(), pickedColor[0].getBlue(), 255).texture(sprite.getMaxU(), sprite.getMaxV()).next();
-//        bufferBuilder2.vertex(matrix4f2, (float)360, (float)100, (float)100).color(pickedColor[0].getRed(), pickedColor[0].getGreen(), pickedColor[0].getBlue(), 255).texture(sprite.getMaxU(), sprite.getMinV()).next();
-//        BufferRenderer.drawWithGlobalProgram(bufferBuilder2.end());
-//
-//        Sprite sprite2 = Main.BLANK_FIRE_1_OVERLAY.get();
-//        RenderSystem.setShaderTexture(0, sprite2.getAtlasId());
-//        RenderSystem.setShader(GameRendererSetting::getRenderTypeCustomTint);
-//        Matrix4f matrix4f22 = context.getMatrices().peek().getPositionMatrix();
-//        BufferBuilder bufferBuilder22 = Tessellator.getInstance().getBuffer();
-//        bufferBuilder22.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);
-//        bufferBuilder22.vertex(matrix4f22, (float)200, (float)100, (float)100).color(pickedColor[1].getRed(), pickedColor[1].getGreen(), pickedColor[1].getBlue(), 255).texture(sprite2.getMinU(), sprite2.getMinV()).next();
-//        bufferBuilder22.vertex(matrix4f22, (float)200, (float)260, (float)100).color(pickedColor[1].getRed(), pickedColor[1].getGreen(), pickedColor[1].getBlue(), 255).texture(sprite2.getMinU(), sprite2.getMaxV()).next();
-//        bufferBuilder22.vertex(matrix4f22, (float)360, (float)260, (float)100).color(pickedColor[1].getRed(), pickedColor[1].getGreen(), pickedColor[1].getBlue(), 255).texture(sprite2.getMaxU(), sprite2.getMaxV()).next();
-//        bufferBuilder22.vertex(matrix4f22, (float)360, (float)100, (float)100).color(pickedColor[1].getRed(), pickedColor[1].getGreen(), pickedColor[1].getBlue(), 255).texture(sprite2.getMaxU(), sprite2.getMinV()).next();
-//        BufferRenderer.drawWithGlobalProgram(bufferBuilder22.end());
         RenderSystem.disableBlend();
         RenderSystem.depthMask(true);
         RenderSystem.depthFunc(515);
+    }
+    @Environment(value= EnvType.CLIENT)
+    class SearchScreenListWidget
+            extends AlwaysSelectedEntryListWidget<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
+        private void generateEntries() {
+            blockUnderList.forEach((block) -> {
+                String string = Registries.BLOCK.getId(block).toString();
+                if (string.contains(input)) {
+                    ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
+                    this.addEntry(blockEntry);
+                }
+            });
+            if (this.getSelectedOrNull() != null) {
+                this.centerScrollOn(this.getSelectedOrNull());
+            }
+        }
+        public SearchScreenListWidget(MinecraftClient client, int width, int height, int x, int y) {
+            super(client, width, height, x, y);
+            generateEntries();
+        }
+        public void test() {
+            this.clearEntries();
+            generateEntries();
+        }
+        @Override
+        protected int getScrollbarPositionX() {
+            return super.getScrollbarPositionX() + 20;
+        }
+        @Override
+        public int getRowWidth() {
+            return super.getRowWidth() + 50;
+        }
+        @Environment(value=EnvType.CLIENT)
+        public class BlockEntry
+                extends AlwaysSelectedEntryListWidget.Entry<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
+            private final String languageDefinition;
+
+            public BlockEntry(String languageDefinition) {
+                this.languageDefinition = languageDefinition;
+            }
+
+            @Override
+            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, Text.literal(languageDefinition), ChangeFireColorScreen.SearchScreenListWidget.this.width / 2, y + 1, 0xFFFFFF);
+            }
+
+            @Override
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                this.onPressed();
+                return true;
+            }
+
+            void onPressed() {
+                blockUnderField.setText(this.languageDefinition);
+                updateBlockUnder(this.languageDefinition);
+            }
+
+            @Override
+            public Text getNarration() {
+                return Text.translatable("narrator.select", this.languageDefinition);
+            }
+        }
     }
 }
