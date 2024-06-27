@@ -98,7 +98,7 @@ public class Main implements ClientModInitializer {
         BlockRenderLayerMap.INSTANCE.putBlock(Blocks.FIRE, getCustomTint());
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
-                if (context.id().getPath().contains("block/fire_")) {
+                if (context.id().getPath().contains("block/fire_side") || context.id().getPath().contains("block/fire_floor") || context.id().getPath().contains("block/fire_up") ) {
                     return new TestModel(model);
                 }
                 return model;
