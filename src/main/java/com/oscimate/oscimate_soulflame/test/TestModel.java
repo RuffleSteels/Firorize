@@ -165,7 +165,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        if (CONFIG_MANAGER.getCurrentBlockFireColors().containsKey(MinecraftClient.getInstance().world.getBlockState(pos.down()).getBlock().getTranslationKey())) {
+        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).containsKey(MinecraftClient.getInstance().world.getBlockState(pos.down()).getBlock().getTranslationKey()) || MinecraftClient.getInstance().world.getBlockState(pos.down()).getBlock().getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
             editModel().emitBlockQuads(blockView, state, pos, randomSupplier, context);
         } else {
             model.emitBlockQuads(blockView, state, pos, randomSupplier, context);

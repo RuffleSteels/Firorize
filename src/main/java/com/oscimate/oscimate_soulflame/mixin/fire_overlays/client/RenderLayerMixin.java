@@ -14,7 +14,7 @@ public class RenderLayerMixin {
 
     @ModifyReturnValue(method = "getBlockLayers", at = @At("RETURN"))
     private static List<RenderLayer> addBlockLayer(List<RenderLayer> original) {
-        ImmutableList<RenderLayer> immutableList = ImmutableList.<RenderLayer>builder().add(CustomRenderLayer.getCustomTint()).addAll(original).build();
+        ImmutableList<RenderLayer> immutableList = ImmutableList.<RenderLayer>builder().add(CustomRenderLayer.getCustomTint()).add(CustomRenderLayer.getTriangle()).addAll(original).build();
         return immutableList;
     }
 

@@ -1,15 +1,26 @@
 package com.oscimate.oscimate_soulflame.config;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.logging.LogUtils;
+import com.mojang.serialization.MapCodec;
 import com.oscimate.oscimate_soulflame.CustomRenderLayer;
 import com.oscimate.oscimate_soulflame.GameRendererSetting;
 import com.oscimate.oscimate_soulflame.Main;
+import com.oscimate.oscimate_soulflame.RenderFireColorAccessor;
+import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+import com.sun.jna.platform.KeyboardUtils;
+import com.sun.jna.platform.win32.WinUser;
 import com.sun.tools.jconsole.JConsoleContext;
 import dev.isxander.yacl3.gui.SearchFieldWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.fabricmc.fabric.impl.biome.modification.BuiltInRegistryKeys;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
@@ -19,26 +30,59 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.world.CreateWorldScreen;
 import net.minecraft.client.gui.tab.Tab;
 import net.minecraft.client.gui.tab.TabManager;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.*;
+import net.minecraft.client.input.Input;
+import net.minecraft.client.input.KeyboardInput;
+import net.minecraft.client.network.ClientDynamicRegistryType;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.*;
-import net.minecraft.registry.Registries;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.world.GeneratorOptionsHolder;
+import net.minecraft.data.server.tag.TagProvider;
+import net.minecraft.loot.entry.TagEntry;
+import net.minecraft.registry.*;
+import net.minecraft.registry.entry.RegistryEntryList;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.registry.tag.TagBuilder;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.path.SymlinkValidationException;
 import net.minecraft.world.EmptyBlockView;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.world.biome.source.util.MultiNoiseUtil;
+import net.minecraft.world.level.LevelInfo;
+import net.minecraft.world.level.storage.LevelStorage;
+import net.minecraft.world.level.storage.LevelStorageException;
+import net.minecraft.world.level.storage.LevelSummary;
+import org.apache.commons.collections4.map.ListOrderedMap;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.windows.INPUT;
 
 import java.awt.*;
-import java.util.HashMap;
+import java.io.IOException;
+import java.util.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.oscimate.oscimate_soulflame.config.ConfigScreen.windowHeight;
 
@@ -75,11 +119,11 @@ public class ChangeFireColorScreen extends Screen {
     private TextFieldWidget textFieldWidget;
     private TextFieldWidget blockUnderField;
     private Block blockUnder = Blocks.NETHERRACK;
+    private List<Block> allBlockUnders = new ArrayList<>();
     public String input = "";
     public ChangeFireColorScreen.SearchScreenListWidget searchScreenListWidget;
-//    private final List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> Block.isFaceFullSquare(block.getOutlineShape(block.getDefaultState(),  EmptyBlockView.INSTANCE, BlockPos.ORIGIN, ShapeContext.absent()), Direction.UP)).toList();
-    private final List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP)).toList();
-    private final int[] blockSearchCoords = {400, 10};
+    private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP)).toList();
+    private final int[] blockSearchCoords = {400, 30};
     private final int[] blockSearchDimensions = {300, 300};
     private ButtonWidget[] overlayToggles = new ButtonWidget[2];
     private Block lastBlockUnder = Blocks.NETHERRACK;
@@ -87,6 +131,9 @@ public class ChangeFireColorScreen extends Screen {
     private boolean hasRedo = false;
     private boolean colorRedo = false;
     private ButtonWidget saveButton;
+    private ButtonWidget[] searchOptions = new ButtonWidget[3];
+    private List<TagKey<Block>> blockTags = new ArrayList<>();
+    private List<RegistryKey<Biome>> biomeKeys = new ArrayList<>();
     public void handlePickedColor(Color[] input) {
         if (!buffer) {
             hasRedo = true;
@@ -105,6 +152,7 @@ public class ChangeFireColorScreen extends Screen {
         handlePickedColor(ChangeFireColorScreen.pickedColor);
         ChangeFireColorScreen.pickedColor[index] = pickedColor;
     }
+
     @Override
     protected void init() {
         saveButton = new ButtonWidget.Builder(Text.literal("SAVE"), button -> save()).dimensions(width / 2 +100, height/2 + windowHeight/2 + 20, 200, 20).build();
@@ -127,12 +175,36 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[0] = new ButtonWidget.Builder(Text.literal("Base"), button -> toggle()).dimensions(250, 20, 80, 20).build();
         overlayToggles[1]  = new ButtonWidget.Builder(Text.literal("Overlay"), button -> toggle()).dimensions(300, 20, 80, 20).build();
 
+        searchOptions[0] = new ButtonWidget.Builder(Text.literal("Blocks"), button -> changeSearchOption(0)).dimensions(blockSearchCoords[0], blockSearchCoords[1]-20, blockSearchDimensions[0]/3, 20).build();
+        searchOptions[1]  = new ButtonWidget.Builder(Text.literal("Tags"), button -> changeSearchOption(1)).dimensions(blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1]-20, blockSearchDimensions[0]/3, 20).build();
+        searchOptions[2]  = new ButtonWidget.Builder(Text.literal("Biomes"), button -> changeSearchOption(2)).dimensions(blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1]-20, blockSearchDimensions[0]/3, 20).build();
+
+        this.addDrawableChild(searchOptions[0]);
+        this.addDrawableChild(searchOptions[1]);
+        this.addDrawableChild(searchOptions[2]);
         this.addDrawableChild(overlayToggles[0]);
         this.addDrawableChild(overlayToggles[1]);
         this.addDrawableChild(redoButton);
 
+        if (Main.biomeKeyList == null) {
+            searchOptions[1].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+            searchOptions[1].active = false;
+            searchOptions[2].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+            searchOptions[2].active = false;
+        }
+
         toggle();
+        searchOptions[currentSearchButton].active = false;
         super.init();
+    }
+
+    private int currentSearchButton = 0;
+
+    private void changeSearchOption(int buttonNum) {
+        searchOptions[buttonNum].active = false;
+        searchOptions[currentSearchButton].active = true;
+        currentSearchButton = buttonNum;
+        searchScreenListWidget.test();
     }
     private boolean buffer = false;
     private void redo() {
@@ -165,7 +237,16 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[!isOverlay?1:0].active = true;
     }
     private void save() {
-        Main.CONFIG_MANAGER.getCurrentBlockFireColors().put(blockUnder.getTranslationKey(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+        if (currentSearchButton == 0) {
+            allBlockUnders.forEach(block -> {
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).put(block.getTranslationKey(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+            });
+        } else if (currentSearchButton == 1) {
+            Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).put(blockTags.get(0).id().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+        } else if (currentSearchButton == 2) {
+            Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).put(biomeKeys.get(0).getValue().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+        }
+        this.searchScreenListWidget.test();
     }
     public void updateBlockUnder(String blockUnderTag) {
         Identifier id = Identifier.tryParse(blockUnderTag);
@@ -174,8 +255,8 @@ public class ChangeFireColorScreen extends Screen {
             if (blockUnderList.contains(block)) {
                 lastBlockUnder = blockUnder;
                 blockUnder = Registries.BLOCK.get(id);
-                if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().containsKey(blockUnder.getTranslationKey())) {
-                    int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(blockUnder.getTranslationKey());
+                if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).containsKey(blockUnder.getTranslationKey())) { //help
+                    int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).get(blockUnder.getTranslationKey()); //help
                     int RGB = colorInts[isOverlay ? 1:0];
                     colorRedo = false;
                     setPickedColors(new Color[]{new Color(colorInts[0]), new Color(colorInts[1])});
@@ -213,8 +294,8 @@ public class ChangeFireColorScreen extends Screen {
                 clickedX = x;
                 clickedY = y;
 
-                if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().containsKey(blockUnder.getTranslationKey())) {
-                    int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(blockUnder.getTranslationKey());
+                if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).containsKey(blockUnder.getTranslationKey())) { //help
+                    int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).get(blockUnder.getTranslationKey()); //help
                     saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
                 } else {
                     saveButton.active = !(pickedColor[0].getRGB() == baseColor.getRGB() && pickedColor[1].getRGB() == baseColor.getRGB());
@@ -352,8 +433,8 @@ public class ChangeFireColorScreen extends Screen {
 
         RenderSystem.depthMask(true);
 
-        BlockRenderManager blockRenderManager = MinecraftClient.getInstance().getBlockRenderManager();
-        VertexConsumer consumer = context.getVertexConsumers().getBuffer(RenderLayers.getBlockLayer(blockUnder.getDefaultState()));
+        BlockRenderManager brm = MinecraftClient.getInstance().getBlockRenderManager();
+
 
         Quaternionf q = new Quaternionf();
         q.rotateZ((float) Math.toRadians(180));
@@ -364,14 +445,44 @@ public class ChangeFireColorScreen extends Screen {
         context.getMatrices().scale(-1, 1, 1);
 
         context.getMatrices().translate(-50, 50, 0);
-        context.getMatrices().scale(100, 100, 100);
-        context.getMatrices().translate(5, -3, -1);
+        context.getMatrices().scale(10, 10, 10);
+        context.getMatrices().translate(15, -10, -1);
+
+        for (int i = 0; i < allBlockUnders.size(); i++) {
+            Block block = allBlockUnders.get(i);
+            VertexConsumer c = context.getVertexConsumers().getBuffer(RenderLayers.getBlockLayer(block.getDefaultState()));
+
+            context.getMatrices().translate(1, 0, 0);
+
+            if (block instanceof BlockWithEntity) {
+                BlockEntity blockEntity = ((BlockWithEntity) block).createBlockEntity(BlockPos.ORIGIN, block.getDefaultState());
+                BlockEntityRenderer<BlockEntity> blockEntityRenderer = MinecraftClient.getInstance().getBlockEntityRenderDispatcher().get(blockEntity);
+
+                boolean blockModel = blockEntityRenderer == null;
+                if (!blockModel) blockModel = blockEntityRenderer.rendersOutsideBoundingBox(blockEntity);
+                if (blockModel || block.getDefaultState().getRenderType() == BlockRenderType.MODEL) {
+                    brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 1, 1);
+                } else {
+                    assert blockEntity != null;
+                    blockEntity.setWorld(MinecraftClient.getInstance().world);
+                    MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, context.getMatrices(), context.getVertexConsumers(), 1, OverlayTexture.DEFAULT_UV);
+                }
+            } else {
+                brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 1, 1);
+            }
+        }
+
+        BlockRenderManager blockRenderManager = MinecraftClient.getInstance().getBlockRenderManager();
+        VertexConsumer consumer = context.getVertexConsumers().getBuffer(RenderLayers.getBlockLayer(blockUnder.getDefaultState()));
+
+
+        context.getMatrices().scale(5, 5, 5);
+        context.getMatrices().translate(-1, -5, 0);
 
         if (blockUnder instanceof BlockWithEntity) {
             BlockEntity blockEntity = ((BlockWithEntity) blockUnder).createBlockEntity(BlockPos.ORIGIN, blockUnder.getDefaultState());
             BlockEntityRenderer<BlockEntity> blockEntityRenderer = MinecraftClient.getInstance().getBlockEntityRenderDispatcher().get(blockEntity);
-            System.out.println(blockEntity);
-            System.out.println(blockEntityRenderer);
+
             boolean blockModel = blockEntityRenderer == null;
             if (!blockModel) blockModel = blockEntityRenderer.rendersOutsideBoundingBox(blockEntity);
             if (blockModel || blockUnder.getDefaultState().getRenderType() == BlockRenderType.MODEL) {
@@ -401,13 +512,70 @@ public class ChangeFireColorScreen extends Screen {
     class SearchScreenListWidget
             extends AlwaysSelectedEntryListWidget<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
         private void generateEntries() {
-            blockUnderList.forEach((block) -> {
-                String string = Registries.BLOCK.getId(block).toString();
-                if (string.contains(input)) {
-                    ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
-                    this.addEntry(blockEntry);
-                }
-            });
+            if (currentSearchButton == 0) {
+                List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
+                List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
+                blockUnderList.forEach((block) -> {
+                    String string = Registries.BLOCK.getId(block).toString();
+                    if (string.contains(input)) {
+                        ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
+                        if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).containsKey(block.getTranslationKey())) {
+                            second.add(blockEntry);
+                        }
+                    }
+                });
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).keyList().forEach(string -> {
+                    System.out.println(Registries.BLOCK.get(Identifier.tryParse(string)));
+                    if (blockUnderList.contains(Registries.BLOCK.get(Identifier.tryParse(string)))) {
+                        ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
+                        first.add(blockEntry);
+                        blockEntry.isCustomized = true;
+                    }
+                });
+                System.out.println(first);
+                Stream.concat(first.stream(), second.stream()).toList().forEach(this::addEntry);
+            } else if (currentSearchButton == 1) {
+                List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
+                List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
+                Main.blockTagList.forEach((key) -> {
+                    String string = key.id().toString();
+                    if (string.contains(input)) {
+                        ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
+                        if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(string)) {
+                            second.add(blockEntry);
+                        }
+                    }
+                });
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).keyList().forEach(string -> {
+                    if (Main.blockTagList.contains(BlockTagAccessor.callOf(string))) {
+                        ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
+                        first.add(blockEntry);
+                        blockEntry.isCustomized = true;
+                    }
+                });
+                Stream.concat(first.stream(), second.stream()).toList().forEach(this::addEntry);
+            } else {
+                List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
+                List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
+                Main.biomeKeyList.forEach((key) -> {
+                    String string = key.getValue().toString();
+                    if (string.contains(input)) {
+                        ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
+                        if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(string)) {
+                            second.add(blockEntry);
+                        }
+                    }
+                });
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).keyList().forEach(string -> {
+                    if (Main.biomeKeyList.contains(RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(string)))) {
+                        ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
+                        first.add(blockEntry);
+                        blockEntry.isCustomized = true;
+                    }
+                });
+                Stream.concat(first.stream(), second.stream()).toList().forEach(this::addEntry);
+            }
+
             if (this.getSelectedOrNull() != null) {
                 this.centerScrollOn(this.getSelectedOrNull());
             }
@@ -416,14 +584,11 @@ public class ChangeFireColorScreen extends Screen {
             super(client, width, height, x, y);
             generateEntries();
         }
-
-
         public void test() {
             this.clearEntries();
             generateEntries();
             setScrollAmount(0.0);
         }
-
         public void setEntry(String text) {
             System.out.println(text);
             input = "";
@@ -436,6 +601,31 @@ public class ChangeFireColorScreen extends Screen {
                 }
             }));
         }
+
+        @Override
+        public int getRowWidth() {
+            return this.getWidth();
+        }
+
+        public List<Integer> selected = new ArrayList<>();
+
+        @Override
+        protected boolean isSelectedEntry(int index) {
+            if (selected.contains(index)) {
+                this.getEntry(index).isSelected = true;
+                return true;
+            }
+            return super.isSelectedEntry(index);
+        }
+
+        @Override
+        protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
+            int i = this.getX() + (this.width - entryWidth) / 2;
+            int j = this.getX() + (this.width + entryWidth) / 2;
+            context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
+            context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
+        }
+
         @Override
         protected int getScrollbarPositionX() {
             return super.getScrollbarPositionX() + 20 + blockSearchCoords[0];
@@ -452,44 +642,155 @@ public class ChangeFireColorScreen extends Screen {
                 entry.realSelect = true;
             }
 
-            blockUnderField.setText(entry.languageDefinition);
-            updateBlockUnder(entry.languageDefinition);
+            selected.forEach(index -> this.getEntry(index).isSelected = false);
 
-            super.setSelected(entry);
+            selected.clear();
+            selected.add(this.children().indexOf(entry));
+
+            if (currentSearchButton == 0) {
+                blockUnderField.setText(entry.languageDefinition);
+                updateBlockUnder(entry.languageDefinition);
+                allBlockUnders.clear();
+                allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(entry.languageDefinition)));
+            } else if (currentSearchButton == 1) {
+                TagKey<Block> tag = BlockTagAccessor.callOf(entry.languageDefinition);
+                blockTags.clear();
+                blockTags.add(tag);
+                allBlockUnders = Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).toList();
+            }
+            else if (currentSearchButton == 2) {
+                RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(entry.languageDefinition));
+                biomeKeys.clear();
+                biomeKeys.add(key);
+            }
+        }
+
+        public void moveEntryUp(BlockEntry entry) {
+            int index = this.children().indexOf(entry);
+            if (index > 0) {
+                this.children().set(index, this.children().get(index-1));
+                this.children().set(index-1, entry);
+                selected.clear();
+                selected.add(index-1);
+
+                ListOrderedMap<String, int[]> temp = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(currentSearchButton);
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(currentSearchButton).put(index, temp.get(index-1), temp.getValue(index-1));
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(currentSearchButton).put(index-1, temp.get(index), temp.getValue(index));
+            }
+        }
+
+        public void moveEntryDown(BlockEntry entry) {
+            int index = this.children().indexOf(entry);
+            if (index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(currentSearchButton).size()-1) {
+                this.children().set(index, this.children().get(index+1));
+                this.children().set(index+1, entry);
+                selected.clear();
+                selected.add(index+1);
+
+                ListOrderedMap<String, int[]> temp = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(currentSearchButton);
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(currentSearchButton).put(index, temp.get(index+1), temp.getValue(index+1));
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(currentSearchButton).put(index+1, temp.get(index), temp.getValue(index));
+            }
+        }
+
+        @Override
+        protected void renderEntry(DrawContext context, int mouseX, int mouseY, float delta, int index, int x, int y, int entryWidth, int entryHeight) {
+            BlockEntry entry = this.getEntry(index);
+            entry.x = x;
+            entry.entryHeight = entryHeight;
+            entry.y = y;
+            super.renderEntry(context, mouseX, mouseY, delta, index, x, y, entryWidth, entryHeight);
         }
 
         @Environment(value=EnvType.CLIENT)
         public class BlockEntry
                 extends AlwaysSelectedEntryListWidget.Entry<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
             private final String languageDefinition;
-
             private boolean realSelect = true;
-
-
-
             public BlockEntry(String languageDefinition) {
                 this.languageDefinition = languageDefinition;
             }
-
-
+            private boolean isCustomized = false;
+            private float alpha;
+            private int x;
+            private boolean isSelected = false;
+            private int y;
+            private int entryHeight;
             @Override
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, Text.literal(languageDefinition), ChangeFireColorScreen.SearchScreenListWidget.this.width / 2  + blockSearchCoords[0], y+1, 0xFFFFFF);
-            }
+                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+1, 0xFFFFFF);
+                if (mouseX >= x && mouseX <= x+entryHeight && mouseY >= y && mouseY <= y+entryHeight) {
+                    alpha = 1f;
+                } else {
+                    alpha = 0.5f;
+                }
+                if (!ChangeFireColorScreen.this.searchScreenListWidget.selected.contains(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this)) && !isCustomized && !ChangeFireColorScreen.this.searchScreenListWidget.selected.stream().anyMatch(index2 -> ChangeFireColorScreen.this.searchScreenListWidget.children().get(index2).isCustomized)) {
+                    context.fill(x, y, x+entryHeight, y+entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
+                    context.fill(x+entryHeight/2, y+3, x+entryHeight/2+1, y+entryHeight-3, new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB());
+                    context.fill(x+3, y+entryHeight/2, x+entryHeight-3, y+entryHeight/2+1, new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB());
+                    context.drawBorder(x, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                }
+                if (isCustomized && currentSearchButton != 2) {
+                    context.fill(x, y, x+entryHeight, y+entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
+                    context.fill(x+entryHeight/2, y+3, x+entryHeight/2+1, y+entryHeight-3, new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB());
+                    context.drawBorder(x, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
 
+                    if (InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT)) {
+                        context.fill(x+entryHeight, y+entryHeight, x, y+entryHeight-3, new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB());
+                    } else {
+                        context.fill(x+entryHeight, y, x, y+3, new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB());
+                    }
+                }
+
+            }
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                this.onPressed();
-                return true;
+                if (mouseX >= x && mouseX <= x+entryHeight && mouseY >= y && mouseY <= y+entryHeight) {
+                    System.out.println(isSelected);
+                    System.out.println(isFocused());
+                    if (isCustomized && currentSearchButton != 2) {
+                        if (InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT)) {
+                            ChangeFireColorScreen.this.searchScreenListWidget.moveEntryDown(this);
+                        } else {
+                            ChangeFireColorScreen.this.searchScreenListWidget.moveEntryUp(this);
+                        }
+                    }
+                    else if ((!isFocused() && !isSelected)) {
+                        this.onAddButton();
+                    } else {
+                        ChangeFireColorScreen.this.searchScreenListWidget.selected.forEach(index -> ChangeFireColorScreen.this.searchScreenListWidget.getEntry(index).isSelected = false);
+                        ChangeFireColorScreen.this.searchScreenListWidget.selected.clear();
+                        ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
+                        ChangeFireColorScreen.this.searchScreenListWidget.setSelected(this);
+                        return false;
+                    }
+                    return false;
+                } {
+                    ChangeFireColorScreen.this.searchScreenListWidget.selected.forEach(index -> ChangeFireColorScreen.this.searchScreenListWidget.getEntry(index).isSelected = false);
+                    ChangeFireColorScreen.this.searchScreenListWidget.selected.clear();
+                    ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
+                    ChangeFireColorScreen.this.searchScreenListWidget.setSelected(this);
+                    return false;
+                }
             }
+            void onAddButton() {
+                if (currentSearchButton == 0) {
+                    allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(this.languageDefinition)));
+                } else if (currentSearchButton == 1) {
+                    TagKey<Block> tag = BlockTagAccessor.callOf(this.languageDefinition);
+                    blockTags.add(tag);
+                    List<Block> newBlocks = Registries.BLOCK.getEntryList(tag).get().stream()
+                            .map(entry2 -> entry2.value())
+                            .filter(block -> blockUnderList.contains(block) && !allBlockUnders.contains(block))
+                            .toList();
 
-
-            void onPressed() {
-
-//                blockUnderField.setText(this.languageDefinition);
-//                updateBlockUnder(this.languageDefinition);
+                    allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).toList();
+                } else if (currentSearchButton == 2) {
+                    RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(this.languageDefinition));
+                    biomeKeys.add(key);
+                }
+                ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
             }
-
             @Override
             public Text getNarration() {
                 return Text.translatable("narrator.select", this.languageDefinition);

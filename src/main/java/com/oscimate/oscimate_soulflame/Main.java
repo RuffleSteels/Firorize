@@ -2,6 +2,7 @@ package com.oscimate.oscimate_soulflame;
 
 import com.google.common.base.Suppliers;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
+import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
 import com.oscimate.oscimate_soulflame.test.TestModel;
 import it.unimi.dsi.fastutil.Hash;
 import net.fabricmc.api.ClientModInitializer;
@@ -12,24 +13,33 @@ import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
+import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
 import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.world.CustomizeBuffetLevelScreen;
+import net.minecraft.client.network.ClientDynamicRegistryType;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.crash.CrashReport;
+import net.minecraft.util.math.*;
+import net.minecraft.world.EmptyBlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
+import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.awt.*;
 import java.util.*;
@@ -50,6 +60,8 @@ public class Main implements ClientModInitializer {
     public static final Supplier<Sprite> SOUL_FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0")).getSprite());
     public static final Supplier<Sprite> BLANK_FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_1")).getSprite());
     public static final Supplier<Sprite> BLANK_FIRE_1_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_1")).getSprite());
+    public static List<TagKey<Block>> blockTagList = null;
+    public static List<RegistryKey<Biome>> biomeKeyList = null;
 
     public static void settingFireColor(Entity entity) {
         Box box = entity.getBoundingBox();
@@ -70,8 +82,16 @@ public class Main implements ClientModInitializer {
                     Block blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
                     if (!((float)q + 1f >= box.minY)) continue;
                     if (!entity.isInLava()) {
-                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().containsKey(blockUnder.getTranslationKey()) && block instanceof FireBlock) {
-                            ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(blockUnder.getTranslationKey()));
+                        if (block instanceof FireBlock) {
+                            if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).containsKey(blockUnder.getTranslationKey())) {
+                                ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).get(blockUnder.getTranslationKey()));
+                            } else if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
+                                ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
+                                List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
+                                int[] colors = map.get(tags.get(0).id().toString()).clone();
+                                ((RenderFireColorAccessor) entity).setRenderFireColor(colors);
+                            }
+
                         } else {
                             if (block instanceof SoulFireBlock) {
                                 ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{1});
@@ -95,6 +115,10 @@ public class Main implements ClientModInitializer {
     }
     @Override
     public void onInitializeClient() {
+        CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {
+            biomeKeyList = registries.get(RegistryKeys.BIOME).getKeys().stream().toList();
+            blockTagList = registries.get(RegistryKeys.BLOCK).streamTags().filter(tag -> Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP)).toList().size() > 0).toList();
+        });
         BlockRenderLayerMap.INSTANCE.putBlock(Blocks.FIRE, getCustomTint());
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
@@ -106,10 +130,11 @@ public class Main implements ClientModInitializer {
         });
         ColorProviderRegistry.BLOCK.register(((state, world, pos, tintIndex) -> {
             if (world.hasBiomes()) {
-                HashMap<String, int[]> map = CONFIG_MANAGER.getCurrentBlockFireColors();
-                String blockUnder = world.getBlockState(pos.down()).getBlock().getTranslationKey();
-                if (map.containsKey(blockUnder)) {
-                    int[] colors = map.get(blockUnder).clone();
+                ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
+
+                Block blockUnder = world.getBlockState(pos.down()).getBlock();
+                if (list.get(0).containsKey(blockUnder.getTranslationKey())) {
+                    int[] colors = list.get(0).get(blockUnder.getTranslationKey()).clone();
                     if (tintIndex == 1) {
                         return colors[0];
                     }
@@ -117,25 +142,19 @@ public class Main implements ClientModInitializer {
                         return colors[1];
                     }
                 }
-//                RegistryKey<Biome> biome = world.getBiomeFabric(pos).getKey().orElseThrow();
-//                if (biome.equals(BiomeKeys.WARPED_FOREST)) {
-//                    if (tintIndex == 1) {
-//                        return this.getColorInt(0, 255, 200);
-//                    }
-//                    if (tintIndex == 2) {
-//                        return this.getColorInt(195, 255, 0);
-//                    }
-//                }
-//                else if (biome.equals(BiomeKeys.BASALT_DELTAS)) {
-//                    if (tintIndex == 1) {
-//                        return this.getColorInt(23, 68, 0);
-//                    }
-//                    if (tintIndex == 2) {
-//                        return this.getColorInt(45, 95, 0);
-//                    }
-//                } else {
-//                    return this.getColorInt(0, 0, 0);
-//                }
+                else if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
+                    ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
+                    List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
+                    int[] colors = list.get(1).get(tags.get(0).id().toString()).clone();
+
+                    if (tintIndex == 1) {
+                        return colors[0];
+                    }
+                    if (tintIndex == 2) {
+                        return colors[1];
+                    }
+
+                }
             }
             return this.getColorInt(0, 0, 0);
         }), Blocks.FIRE);

@@ -5,26 +5,29 @@ import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
+import org.apache.commons.collections4.map.ListOrderedMap;
 
 
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ConfigManager {
     public FireLogic currentFireLogic;
     public long currentFireHeightSlider;
 
-    public void setCurrentBlockFireColors(HashMap<String, int[]> blockFireColors) {
+    public void setCurrentBlockFireColors(ArrayList<ListOrderedMap<String, int[]>> blockFireColors) {
         this.blockFireColors = blockFireColors;
     }
 
-    public HashMap<String, int[]> blockFireColors;
+    public ArrayList<ListOrderedMap<String, int[]>> blockFireColors;
 
-    public HashMap<String, int[]> getCurrentBlockFireColors() {
+    public ArrayList<ListOrderedMap<String, int[]>> getCurrentBlockFireColors() {
         return blockFireColors;
     }
 
@@ -69,8 +72,14 @@ public class ConfigManager {
         } else {
             setCurrentFireHeightSlider(jsonOutput.getFireHeightSlider());
         }
-        if (jsonOutput.getCurrentBlockFireColours() == null) {
-            setCurrentBlockFireColors(new HashMap<String, int[]>());
+        System.out.println(jsonOutput.getCurrentBlockFireColours());
+        if (jsonOutput.getCurrentBlockFireColours() == null || jsonOutput.getCurrentBlockFireColours().size() == 0) {
+            System.out.println("AAYYYY");
+            ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
+            temp.add(new ListOrderedMap<String, int[]>());
+            temp.add(new ListOrderedMap<String, int[]>());
+            temp.add(new ListOrderedMap<String, int[]>());
+            setCurrentBlockFireColors(temp);
             save();
         } else {
             setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
