@@ -27,6 +27,16 @@ public class ConfigManager {
 
     public ArrayList<ListOrderedMap<String, int[]>> blockFireColors;
 
+    public ArrayList<Integer> getPriorityOrder() {
+        return priorityOrder;
+    }
+
+    public void setPriorityOrder(ArrayList<Integer> priorityOrder) {
+        this.priorityOrder = priorityOrder;
+    }
+
+    public ArrayList<Integer> priorityOrder;
+
     public ArrayList<ListOrderedMap<String, int[]>> getCurrentBlockFireColors() {
         return blockFireColors;
     }
@@ -72,9 +82,7 @@ public class ConfigManager {
         } else {
             setCurrentFireHeightSlider(jsonOutput.getFireHeightSlider());
         }
-        System.out.println(jsonOutput.getCurrentBlockFireColours());
         if (jsonOutput.getCurrentBlockFireColours() == null || jsonOutput.getCurrentBlockFireColours().size() == 0) {
-            System.out.println("AAYYYY");
             ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
@@ -83,6 +91,16 @@ public class ConfigManager {
             save();
         } else {
             setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
+        }
+        if (jsonOutput.getPriorityOrder() == null || jsonOutput.getPriorityOrder().size() == 0) {
+            ArrayList<Integer> temp = new ArrayList<>();
+            temp.add(0);
+            temp.add(1);
+            temp.add(2);
+            setPriorityOrder(temp);
+            save();
+        } else {
+            setPriorityOrder(jsonOutput.getPriorityOrder());
         }
     }
 

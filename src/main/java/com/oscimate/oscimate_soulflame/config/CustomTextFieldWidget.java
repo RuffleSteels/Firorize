@@ -16,7 +16,6 @@ public class CustomTextFieldWidget extends TextFieldWidget {
     public void write(String text) {
         super.write(text);
         instance.input = this.getText();
-        instance.updateBlockUnder(this.getText());
         instance.searchScreenListWidget.test();
     }
 
@@ -24,7 +23,6 @@ public class CustomTextFieldWidget extends TextFieldWidget {
     public void eraseCharactersTo(int position) {
         super.eraseCharactersTo(position);
         instance.input = this.getText();
-        instance.updateBlockUnder(this.getText());
         instance.searchScreenListWidget.test();
     }
 }

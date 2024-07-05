@@ -17,6 +17,15 @@ public class FireLogicConfig {
     public long fireHeightSlider = Main.CONFIG_MANAGER.getCurrentFireHeightSlider();
     public ArrayList<ListOrderedMap<String, int[]>> blockFireColors = Main.CONFIG_MANAGER.getCurrentBlockFireColors();
 
+    public ArrayList<Integer> getPriorityOrder() {
+        return priorityOrder;
+    }
+
+    public void setPriorityOrder(ArrayList<Integer> priorityOrder) {
+        this.priorityOrder = priorityOrder;
+    }
+
+    public ArrayList<Integer> priorityOrder = Main.CONFIG_MANAGER.getPriorityOrder();
     public FireLogic getFireLogic() {
         return fireLogic;
     }
