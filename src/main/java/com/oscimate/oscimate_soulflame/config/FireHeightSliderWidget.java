@@ -12,8 +12,8 @@ public class FireHeightSliderWidget extends SliderWidget {
         this.applyValue();
     }
 
-    private double getFireHeight() {
-        return -Math.abs(0 - (((double) 1 /20) * Math.sqrt(getSliderValue()) - ((double) 1 /2)));
+    public static double getFireHeight(long value) {
+        return -Math.abs(0 - (((double) 1 /20) * Math.sqrt(value) - ((double) 1 /2)));
     }
     private long getSliderValue() {
         return Math.round(this.value*100);
@@ -22,7 +22,6 @@ public class FireHeightSliderWidget extends SliderWidget {
     @Override
     protected void updateMessage() {
         Main.CONFIG_MANAGER.setCurrentFireHeightSlider(getSliderValue());
-        Main.currentFireHeight = getFireHeight();
     }
 
     @Override

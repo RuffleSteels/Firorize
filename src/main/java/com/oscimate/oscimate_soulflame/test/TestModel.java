@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.model.loading.v1.FabricBakedModelManager;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.client.MinecraftClient;
@@ -16,11 +17,13 @@ import net.minecraft.client.render.model.ModelLoader;
 import net.minecraft.client.render.model.json.ModelOverrideList;
 import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.texture.Sprite;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
 import net.minecraft.world.biome.BiomeKeys;
+import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -165,7 +168,11 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString()) || Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).containsKey(MinecraftClient.getInstance().world.getBlockState(pos.down()).getBlock().getTranslationKey()) || MinecraftClient.getInstance().world.getBlockState(pos.down()).getBlock().getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
+        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
+        Block blockUnder = MinecraftClient.getInstance().world.getBlockState(pos.down()).getBlock();
+        if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString())) ||
+                (MinecraftClient.getInstance().world.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(MinecraftClient.getInstance().world.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
+                list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
             editModel().emitBlockQuads(blockView, state, pos, randomSupplier, context);
         } else {
             model.emitBlockQuads(blockView, state, pos, randomSupplier, context);

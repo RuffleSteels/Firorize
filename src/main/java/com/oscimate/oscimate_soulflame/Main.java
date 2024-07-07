@@ -53,7 +53,6 @@ import static com.oscimate.oscimate_soulflame.CustomRenderLayer.getCustomTint;
 public class Main implements ClientModInitializer {
     public static final String MODID = "oscimate_soulflame";
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
-    public static double currentFireHeight = 0.0;
     public static final Supplier<Sprite> BLANK_FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite());
     public static final Supplier<Sprite> BLANK_FIRE_0_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite());
     public static final Supplier<Sprite> SOUL_FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1")).getSprite());
@@ -86,15 +85,28 @@ public class Main implements ClientModInitializer {
                     if (!((float)q + 1f >= box.minY)) continue;
                     if (!entity.isInLava()) {
                         if (block instanceof FireBlock) {
-                            if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).containsKey(blockUnder.getTranslationKey())) {
-                                ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).get(blockUnder.getTranslationKey()));
-                            } else if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
-                                ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
-                                List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
-                                int[] colors = map.get(tags.get(0).id().toString()).clone();
-                                ((RenderFireColorAccessor) entity).setRenderFireColor(colors);
-                            }
+                            ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
+                            ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
+                            for (int ii = 0; ii < 3; ii++) {
+                                int order = Main.CONFIG_MANAGER.getPriorityOrder().get(ii);
+                                if (order == 0) {
+                                    if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
+                                        ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).get(Registries.BLOCK.getId(blockUnder).toString()));
+                                    }
+                                } else if (order == 1) {
+                                    if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
+                                        ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
+                                        List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
 
+                                        ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(1).get(tags.get(0).id().toString()).clone());
+
+                                    }
+                                } else if (order == 2) {
+                                    if (entity.getWorld().getBiomeFabric(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(entity.getWorld().getBiomeFabric(mutable).getKey().get().getValue().toString())) {
+                                        ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(entity.getWorld().getBiomeFabric(mutable).getKey().get().getValue().toString()).clone());
+                                    }
+                                }
+                            }
                         } else {
                             if (block instanceof SoulFireBlock) {
                                 ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{1});

@@ -9,6 +9,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.oscimate.oscimate_soulflame.GameRendererSetting;
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.RenderFireColorAccessor;
+import com.oscimate.oscimate_soulflame.config.FireHeightSliderWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
@@ -48,7 +49,7 @@ public class InGameOverlayRendererMixin {
         if (fireColor < 1) {
             RenderSystem.setShader(GameRendererSetting::getRenderTypeCustomTint);
         }
-        matrices.translate(0.0, Main.CONFIG_MANAGER.getCurrentFireHeightSlider(), 0.0);
+        matrices.translate(0.0,FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
     }
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShader(Ljava/util/function/Supplier;)V"))
@@ -101,7 +102,7 @@ public class InGameOverlayRendererMixin {
                 float v = 0.5f;
                 float w = -0.5f;
                 matrices.translate((float) (-(r * 2 - 1)) * 0.24f, -0.3f, 0.0f);
-                matrices.translate(0.0, Main.currentFireHeight, 0.0);
+                matrices.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
                 matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) (r * 2 - 1) * 10.0f));
                 Matrix4f matrix4f = matrices.peek().getPositionMatrix();
                 bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);

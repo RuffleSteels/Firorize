@@ -71,7 +71,7 @@ public class ChangeFireHeightScreen extends Screen {
         modelView.loadIdentity();
         RenderSystem.applyModelViewMatrix();
 
-        matrixStack.translate(0.0, Main.currentFireHeight, 0.0);
+        matrixStack.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
 
         for (int r = 0; r < 2; ++r) {
             matrixStack.push();
