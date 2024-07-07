@@ -3,6 +3,7 @@ package com.oscimate.oscimate_soulflame.config;
 import com.google.gson.Gson;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
+import kotlin.Pair;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -20,6 +21,26 @@ import java.util.Map;
 public class ConfigManager {
     public FireLogic currentFireLogic;
     public long currentFireHeightSlider;
+
+    public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> getFireColorPresets() {
+        return fireColorPresets;
+    }
+
+    public String getCurrentPreset() {
+        return currentPreset;
+    }
+
+    public void setCurrentPreset(String currentPreset) {
+        this.currentPreset = currentPreset;
+    }
+
+    public String currentPreset;
+
+    public void setFireColorPresets(HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> fireColorPresets) {
+        this.fireColorPresets = fireColorPresets;
+    }
+
+    public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> fireColorPresets;
 
     public void setCurrentBlockFireColors(ArrayList<ListOrderedMap<String, int[]>> blockFireColors) {
         this.blockFireColors = blockFireColors;
@@ -101,6 +122,31 @@ public class ConfigManager {
             save();
         } else {
             setPriorityOrder(jsonOutput.getPriorityOrder());
+        }
+        if (jsonOutput.getFireColorPresets() == null || jsonOutput.getFireColorPresets().size() == 0) {
+            ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
+            temp.add(new ListOrderedMap<String, int[]>());
+            temp.add(new ListOrderedMap<String, int[]>());
+            temp.add(new ListOrderedMap<String, int[]>());
+            ArrayList<Integer> temp2 = new ArrayList<>();
+            temp2.add(0);
+            temp2.add(1);
+            temp2.add(2);
+
+            HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> map = new HashMap<>();
+            Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>> mapp = new Pair<>(temp, temp2);
+
+            map.put("Initial", mapp);
+            setFireColorPresets(map);
+            save();
+        } else {
+            setFireColorPresets(jsonOutput.getFireColorPresets());
+        }
+        if(jsonOutput.getCurrentPreset() == null || jsonOutput.getCurrentPreset().equals("")) {
+            setCurrentPreset("Initial");
+            save();
+        } else {
+            setCurrentPreset(jsonOutput.getCurrentPreset());
         }
     }
 

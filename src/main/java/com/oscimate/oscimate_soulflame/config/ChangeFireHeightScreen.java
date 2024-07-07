@@ -32,6 +32,7 @@ public class ChangeFireHeightScreen extends Screen {
         this.parent = parent;
     }
     public void onClose() {
+        Main.CONFIG_MANAGER.save();
         client.setScreen(parent);
     }
     @Override

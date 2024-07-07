@@ -9,6 +9,7 @@ import net.minecraft.util.Identifier;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class MoveableButton extends ButtonWidget {
     private final ButtonTextures TEXTURES = new ButtonTextures(new Identifier("widget/button"), new Identifier("widget/button_disabled"), new Identifier("widget/button_highlighted"));
@@ -36,6 +37,8 @@ public class MoveableButton extends ButtonWidget {
         instance.searchOptions[index].setFocused(false);
         instance.searchOptions[index].active = instance.searchOptions[right ? index+1 : index-1].active;
         instance.searchOptions[right ? index+1 : index-1].active = tempB;
+
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(instance.presetListWidget.curPresetID).getSecond(), Main.CONFIG_MANAGER.getPriorityOrder());
     }
 
     @Override

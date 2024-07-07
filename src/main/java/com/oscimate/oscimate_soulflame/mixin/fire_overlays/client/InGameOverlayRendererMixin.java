@@ -48,7 +48,7 @@ public class InGameOverlayRendererMixin {
         if (fireColor < 1) {
             RenderSystem.setShader(GameRendererSetting::getRenderTypeCustomTint);
         }
-        matrices.translate(0.0, Main.currentFireHeight, 0.0);
+        matrices.translate(0.0, Main.CONFIG_MANAGER.getCurrentFireHeightSlider(), 0.0);
     }
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShader(Ljava/util/function/Supplier;)V"))

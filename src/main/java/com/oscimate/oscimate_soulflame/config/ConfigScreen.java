@@ -41,19 +41,19 @@ public class ConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        CyclingButtonWidget<FireLogic> enabledButton = CyclingButtonWidget.builder(FireLogic::getTranslatableName)
-                .values(FireLogic.values())
-                .initially(Main.CONFIG_MANAGER.getCurrentFireLogic())
-                .tooltip(value -> Tooltip.of(Text.literal("Changes the soul fire logic")))
-                .build(this.width / 2 - (buttonWidth/2), height/2 - windowHeight/2 - 20*2, buttonWidth, 20, Text.literal("Fire Logic"), (button, fireLogic) -> {
-                    Main.CONFIG_MANAGER.setCurrentFireLogic((FireLogic) fireLogic);
-                });
-        this.addDrawableChild(enabledButton);
-        renderWindow();
-        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Height"), button -> this.client.setScreen(new ChangeFireHeightScreen(this))).dimensions(width / 2 - buttonWidth/2, (int) (height/2 + (windowHeight/3.5)), buttonWidth, 20).build());
-        this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
-        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Color"), button -> this.client.setScreen(new ChangeFireColorScreen(this))).dimensions(width / 2 - buttonWidth/2, (int) (height/2 + (windowHeight/3.5)), buttonWidth, 40).build());
+//        CyclingButtonWidget<FireLogic> enabledButton = CyclingButtonWidget.builder(FireLogic::getTranslatableName)
+//                .values(FireLogic.values())
+//                .initially(Main.CONFIG_MANAGER.getCurrentFireLogic())
+//                .tooltip(value -> Tooltip.of(Text.literal("Changes the soul fire logic")))
+//                .build(this.width / 2 - (buttonWidth/2), height/2 - windowHeight/2 - 20*2, buttonWidth, 20, Text.literal("Fire Logic"), (button, fireLogic) -> {
+//                    Main.CONFIG_MANAGER.setCurrentFireLogic((FireLogic) fireLogic);
+//                });
+//        this.addDrawableChild(enabledButton);
+//        renderWindow();
+        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Height"), button -> this.client.setScreen(new ChangeFireHeightScreen(this))).dimensions(width / 2 + buttonWidth/2 - 40, height/2 - 15 - 20, buttonWidth, 20).build());
+        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Color"), button -> this.client.setScreen(new ChangeFireColorScreen(this))).dimensions(width / 2 - buttonWidth - buttonWidth/2 + 40, height/2 - 15 - 20, buttonWidth, 20).build());
 
+        this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + 15, 200, 20).build());
         super.init();
     }
 
