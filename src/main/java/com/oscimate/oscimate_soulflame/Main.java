@@ -4,6 +4,7 @@ import com.google.common.base.Suppliers;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
 import com.oscimate.oscimate_soulflame.test.TestModel;
+import com.oscimate.oscimate_soulflame.test.TestierModel;
 import it.unimi.dsi.fastutil.Hash;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -78,7 +79,7 @@ public class Main implements ClientModInitializer {
     public static final Supplier<Sprite> UNDO = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/undo")).getSprite());
     public static List<TagKey<Block>> blockTagList = null;
     public static List<RegistryKey<Biome>> biomeKeyList = null;
-    public static long pointer = 0;
+    public static boolean inConfig = false;
 
     public static void settingFireColor(Entity entity) {
         Box box = entity.getBoundingBox();
@@ -90,7 +91,6 @@ public class Main implements ClientModInitializer {
         int n = MathHelper.ceil(box.maxZ);
         boolean bl2 = false;
         BlockPos.Mutable mutable = new BlockPos.Mutable();
-//        AtlasSourceTypeRegistryImpl
         for (int p = i; p < j; ++p) {
             for (int q = k; q < l; ++q) {
                 for (int r = m; r < n; ++r) {
@@ -154,7 +154,10 @@ public class Main implements ClientModInitializer {
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
                 if (context.id().getPath().contains("block/fire_side") || context.id().getPath().contains("block/fire_floor") || context.id().getPath().contains("block/fire_up") ) {
-                    return new TestModel(model);
+                    return new TestModel(model, Integer.parseInt(context.id().getPath().substring(context.id().getPath().length() - 1)));
+                }
+                if (context.id().getPath().contains("block/soul_fire_side") || context.id().getPath().contains("block/soul_fire_floor") || context.id().getPath().contains("block/soul_fire_up") ) {
+                    return new TestierModel(model);
                 }
                 return model;
             });

@@ -7,6 +7,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.MapCodec;
 import com.oscimate.oscimate_soulflame.*;
+import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BakedModelManagerAccessor;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
 import com.sun.jna.platform.KeyboardUtils;
 import com.sun.jna.platform.win32.WinUser;
@@ -38,6 +39,8 @@ import net.minecraft.client.network.ClientDynamicRegistryType;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.*;
+import net.minecraft.client.render.model.SpriteAtlasManager;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
@@ -53,6 +56,7 @@ import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ColorHelper;
@@ -131,9 +135,9 @@ public class ChangeFireColorScreen extends Screen {
     }
     public void onClose() {
         Main.CONFIG_MANAGER.save();
-        MinecraftClient.getInstance().reloadResources();
         client.setScreen(parent);
     }
+
 
     private TextFieldWidget textFieldWidget;
     private TextFieldWidget blockUnderField;
@@ -178,6 +182,7 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     protected void init() {
+        Main.inConfig = true;
         blockSearchCoords[0] = width - 300 - 20;
         redoButton = new UndoButton(wheelCoords[0] + wheelRadius*2 + sliderDimensions[0], hexBoxCoords[1], 20, 20, button -> redo());
         saveButton = new ButtonWidget.Builder(Text.literal("Apply"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
@@ -231,7 +236,23 @@ public class ChangeFireColorScreen extends Screen {
 
         toggle(true);
 
+        searchScreenListWidget.setSelected(searchScreenListWidget.children().get(0));
+
         super.init();
+    }
+
+    @Override
+    public void removed() {
+        Main.inConfig = false;
+//        Map<Identifier, Identifier> LAYERS_TO_LOADERS = Map.of(
+//                SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE,
+//                new Identifier("blocks")
+//        );
+//
+//        new SpriteAtlasManager(LAYERS_TO_LOADERS, MinecraftClient.getInstance().getTextureManager()).reload(MinecraftClient.getInstance().getResourceManager(), ((BakedModelManagerAccessor)MinecraftClient.getInstance().getBakedModelManager()).getMipmapLevels(), Util.getMainWorkerExecutor());
+
+        MinecraftClient.getInstance().reloadResources();
+        super.removed();
     }
 
     private int currentSearchButton = 0;
@@ -312,20 +333,18 @@ public class ChangeFireColorScreen extends Screen {
         if (currentSearchButton == 0) {
             allBlockUnders.forEach(block -> {
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).put(Registries.BLOCK.getId(block).toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
-                ColorizeMath.create(Arrays.stream(pickedColor).map(Color::getRGB).mapToInt(Integer::intValue).toArray());
-                Main.FIRE_SPRITES.put(Registries.BLOCK.getId(block).toString(), Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/"+ pickedColor[0] + "_" + pickedColor[1])).getSprite()));
             });
             num = allBlockUnders.size();
         } else if (currentSearchButton == 1) {
-            Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).put(blockTags.get(0).id().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
-            ColorizeMath.create(Arrays.stream(pickedColor).map(Color::getRGB).mapToInt(Integer::intValue).toArray());
-            Main.FIRE_SPRITES.put(blockTags.get(0).id().toString(), Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/"+ pickedColor[0] + "_" + pickedColor[1])).getSprite()));
+            blockTags.forEach(tag -> {
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).put(tag.id().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+            });
 
             num = blockTags.size();
         } else if (currentSearchButton == 2) {
-            Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).put(biomeKeys.get(0).getValue().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
-            ColorizeMath.create(Arrays.stream(pickedColor).map(Color::getRGB).mapToInt(Integer::intValue).toArray());
-            Main.FIRE_SPRITES.put(biomeKeys.get(0).getValue().toString(), Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/"+ pickedColor[0] + "_" + pickedColor[1])).getSprite()));
+            biomeKeys.forEach(key -> {
+                Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).put(key.getValue().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+            });
 
             num = biomeKeys.size();
         }
@@ -472,6 +491,11 @@ public class ChangeFireColorScreen extends Screen {
             } else {
                 pickedColor[isOverlay ? 1:0] = new Color(RGB, true);
 
+            }
+            if (pickedColor[0].getRGB() == baseColor.getRGB() && pickedColor[1].getRGB() == baseColor.getRGB()) {
+                saveButton.active = false;
+            } else {
+                saveButton.active = true;
             }
         }
         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
@@ -620,8 +644,10 @@ public class ChangeFireColorScreen extends Screen {
 
         context.getMatrices().translate(-1, 1, 0);
         Block block = Blocks.FIRE;
+        Block block2 = Blocks.SOUL_FIRE;
         consumer = context.getVertexConsumers().getBuffer(CustomRenderLayer.getCustomTint());
         blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block.getDefaultState(), blockRenderManager.getModel(block.getDefaultState()), pickedColor[0].getRed()/255f, pickedColor[0].getGreen()/255f, pickedColor[0].getBlue()/255f, 1, 1);
+        blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block2.getDefaultState(), blockRenderManager.getModel(block2.getDefaultState()), pickedColor[1].getRed()/255f, pickedColor[1].getGreen()/255f, pickedColor[1].getBlue()/255f, 1, 1);
 
         context.getVertexConsumers().draw();
 

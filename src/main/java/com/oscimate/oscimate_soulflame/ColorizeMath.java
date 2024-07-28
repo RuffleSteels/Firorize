@@ -140,6 +140,11 @@ public class ColorizeMath {
         } else {
             thingy = y / 100 + (1 - y / 100) * lightness;
         }
+
+        if (vertexColor[0] == vertexColor[1] && vertexColor[1] == vertexColor[2]) {
+            hue = 0;
+        }
+
         float[] rrr = HSVtoRGB(new float[] {hue, saturation / 100, thingy});
 
         float[] finalColor = {rrr[0], rrr[1], rrr[2], textureColor[3]};

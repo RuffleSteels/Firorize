@@ -7,6 +7,7 @@
     "fire_overlays.client.BlockTagAccessor"
   ],
   "client": [
+    "fire_overlays.client.BakedModelManagerAccessor",
     "fire_overlays.client.BlockModelRendererMixin",
     "fire_overlays.client.BlockRenderManagerMixin",
     "fire_overlays.client.ClientEntityMixin",
