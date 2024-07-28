@@ -1,6 +1,9 @@
 package com.oscimate.oscimate_soulflame.config;
 
+import com.google.common.base.Suppliers;
+import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.oscimate.oscimate_soulflame.ColorizeMath;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 import net.minecraft.client.MinecraftClient;
@@ -15,13 +18,21 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.gui.widget.SliderWidget;
 import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryUtil;
 
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ConfigScreen extends Screen {
     protected static final int buttonWidth = 130;
@@ -89,6 +100,57 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void removed() {
+        long sizeBytes = (long) 16 * 16 * NativeImage.Format.RGBA.getChannelCount();
+
+        long pointer = MemoryUtil.nmemAlloc(sizeBytes);
+
+        GL11.glGetTexImage(MinecraftClient.getInstance().getTextureManager().getTexture(new Identifier("textures/block/fire_0.png")).getGlId(), 0, NativeImage.Format.RGBA.toGl(), GlConst.GL_UNSIGNED_BYTE, pointer);
+
+        ByteBuffer baseBuffer = MemoryUtil.memByteBuffer(pointer, (int) sizeBytes);
+
+//        long overlayPointer = MemoryUtil.nmemAlloc(sizeBytes);
+//
+//        GL11.glGetTexImage(MinecraftClient.getInstance().getTextureManager().getTexture(new Identifier("block/fire_0_overlay")).getGlId(), 0, NativeImage.Format.RGBA.toGl(), GlConst.GL_UNSIGNED_BYTE, overlayPointer);
+//
+//        ByteBuffer overlayBuffer = MemoryUtil.memByteBuffer(overlayPointer, (int) sizeBytes);
+
+        for (int y = 0; y < 16; y++) {
+            for (int x = 0; x < 16; x++) {
+                int index = (y * 16 + x) * 4;
+
+//                int overlayR = overlayBuffer.get(index);
+//                int overlayG = overlayBuffer.get(index + 1);
+//                int overlayB = overlayBuffer.get(index + 2);
+//                int overlayA = overlayBuffer.get(index + 3);
+
+//                float[] colorizedOverlay = ColorizeMath.applyColorization(new float[]{overlayR/255f, overlayG/255f, overlayB/255f, overlayA/255f}, new float[]{255/255f, 0/255f, 0/255f, 1f});
+//
+//                int[] co = ColorizeMath.convert(colorizedOverlay);
+
+                int baseR = baseBuffer.get(index);
+                int baseG = baseBuffer.get(index + 1);
+                int baseB = baseBuffer.get(index + 2);
+                int baseA = baseBuffer.get(index + 3);
+
+                float[] colorizedBase = ColorizeMath.applyColorization(new float[]{baseR/255f, baseG/255f, baseB/255f, baseA/255f}, new float[]{255/255f, 0/255f, 0/255f, 1f});
+
+                int[] cb = ColorizeMath.convert(colorizedBase);
+
+//                int outR = (co[0] * co[3] + cb[0] * (255 - co[3])) / 255;
+//                int outG = (co[1] * co[3] + cb[1] * (255 - co[3])) / 255;
+//                int outB = (co[2] * co[3] + cb[2] * (255 - co[3])) / 255;
+
+                baseBuffer.put(index, (byte) cb[0]);
+                baseBuffer.put(index + 1, (byte) cb[1]);
+                baseBuffer.put(index + 2, (byte) cb[2]);
+                baseBuffer.put(index + 3, (byte) baseA);
+            }
+        }
+
+        GL11.glTexSubImage2D(MinecraftClient.getInstance().getTextureManager().getTexture(new Identifier("textures/block/fire_0.png")).getGlId(), 0, 0, 0, 16, 16, NativeImage.Format.RGBA.toGl(), GlConst.GL_UNSIGNED_BYTE, baseBuffer);
+
+        MemoryUtil.nmemFree(pointer);
+
         Main.CONFIG_MANAGER.save();
     }
 

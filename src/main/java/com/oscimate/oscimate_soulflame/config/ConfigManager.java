@@ -1,11 +1,16 @@
 package com.oscimate.oscimate_soulflame.config;
 
+import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
+import com.oscimate.oscimate_soulflame.ColorizeMath;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 import kotlin.Pair;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.util.Identifier;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 
@@ -112,6 +117,13 @@ public class ConfigManager {
             save();
         } else {
             setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
+//            for (int i = 0; i <2;i++) {
+//                int finalI = i;
+//                jsonOutput.getCurrentBlockFireColours().stream().map(map -> map.keyList().stream().map(key -> Main.FIRE_SPRITES.put(key, Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/fire"+finalI+"_"+ map.get(key)[0] + "_" + map.get(key)[1])).getSprite()))));
+//            }
+//            jsonOutput.getCurrentBlockFireColours().forEach(map -> {
+//                map.valueList().forEach(ColorizeMath::create);
+//            });
         }
         if (jsonOutput.getPriorityOrder() == null || jsonOutput.getPriorityOrder().size() == 0) {
             ArrayList<Integer> temp = new ArrayList<>();

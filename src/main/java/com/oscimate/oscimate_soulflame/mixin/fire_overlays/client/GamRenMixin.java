@@ -2,7 +2,6 @@ package com.oscimate.oscimate_soulflame.mixin.fire_overlays.client;
 
 import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import com.mojang.datafixers.util.Pair;
-import com.oscimate.oscimate_soulflame.CustomRenderLayer;
 import com.oscimate.oscimate_soulflame.GameRendererSetting;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.Camera;

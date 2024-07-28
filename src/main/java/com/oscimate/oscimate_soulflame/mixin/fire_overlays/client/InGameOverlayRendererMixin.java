@@ -45,22 +45,12 @@ public class InGameOverlayRendererMixin {
     @Inject(method = "renderFireOverlay",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;translate(FFF)V"))
     private static void onRenderFireOverlay(MinecraftClient client, MatrixStack matrices, CallbackInfo ci) {
-        int fireColor = ((RenderFireColorAccessor)client.player).getRenderFireColor()[0];
-        if (fireColor < 1) {
-            RenderSystem.setShader(GameRendererSetting::getRenderTypeCustomTint);
-        }
         matrices.translate(0.0,FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
     }
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShader(Ljava/util/function/Supplier;)V"))
     private static void changeShader(Supplier<ShaderProgram> program, Operation<Void> original, MinecraftClient client, MatrixStack matrices) {
         Main.settingFireColor(client.player);
-        int fireColor = ((RenderFireColorAccessor) client.player).getRenderFireColor()[0];
-        if (fireColor < 1) {
-            original.call((Supplier<ShaderProgram>) GameRendererSetting::getRenderTypeCustomTint);
-        } else {
-            original.call(program);
-        }
     }
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;color(FFFF)Lnet/minecraft/client/render/VertexConsumer;"))
@@ -81,7 +71,6 @@ public class InGameOverlayRendererMixin {
         if (fireColor < 1) {
             Color cfc = new Color(((RenderFireColorAccessor) client.player).getRenderFireColor()[1]);
             Sprite sprite = Main.BLANK_FIRE_1_OVERLAY.get();
-            RenderSystem.setShader(GameRendererSetting::getRenderTypeCustomTint);
             float f = sprite.getMinU();
             float g = sprite.getMaxU();
             float h = (f + g) / 2.0f;

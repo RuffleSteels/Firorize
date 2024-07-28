@@ -78,73 +78,26 @@ void main() {
             finalL = true;
         }
 
-//        if (lightness >= 0.5) {
-//            lightness = (lightness-0.5)*2;
-//
-//            float luminance = dot(textureColor.rgb, vec3(0.299, 0.587, 0.114));
-//
-//            float adjustment = pow(luminance, 1-lightness);
-//
-//            vec3 adjustedColor = textureColor.rgb * adjustment;
-//
-//            brightness = (RGBtoHSV(adjustedColor.rgb).z) * 100;
-//        }
+        float h = 74.935+v/50*25.065;
 
-//        if (saturation >= 0) {
-            float h = 74.935+v/50*25.065;
+        float g = ((100-h)/(100-(h/(v/50*0.46 + 1.54))));
 
-            float g = ((100-h)/(100-(h/(v/50*0.46 + 1.54))));
+        float y = (g*brightness) - (100*g) + 100;
+        if (y <= h) {
+            y = (v/50*0.46 + 1.54)*brightness;
+        }
 
-            float y = (g*brightness) - (100*g) + 100;
-            if (y <= h) {
-                y = (v/50*0.46 + 1.54)*brightness;
-            }
+        float saturation = v+50;
 
-            float saturation = v+50;
+        float z = sqrt(pow((-213.806), 2)-pow((192.676-saturation), 2)) - 92.6765;
+        if (brightness > 50) {
+            saturation = (-(z/50)) * brightness + 2*z;
+        } else if (brightness == 100) {
+            saturation = 0;
+        } else {
+            saturation = round(z);
+        }
 
-            float z = sqrt(pow((-213.806), 2)-pow((192.676-saturation), 2)) - 92.6765;
-            if (brightness > 50) {
-                saturation = (-(z/50)) * brightness + 2*z;
-            } else if (brightness == 100) {
-                saturation = 0;
-            } else {
-                saturation = round(z);
-            }
-
-
-//            float z = v/100*69.8;
-//            if (y < 3.4) {
-//                result = (1-v/50) * (2.45*y) + 55 + v/4.95 + z;
-//            } else if (y < 73.733 + v/50*27.28) {
-//                float radiansVal = radians((360.0 / 5.49) * y + 100.0);
-//                float sinVal = sin(radiansVal);
-//                result = ((1-v/50)*(1/y)*sinVal)/0.1 + 65.1 + z + (1-v/50)*(y/130);
-//            } else {
-//                result = (y-100)/((25.44-(v/50)*25.43)/(0-(z+63.5)));
-//            }
-
-//        }
-//        else {
-//            saturation = saturation + 50;
-//            if (brightness > 48.654) {
-//                brightness = brightness/2 + 50.6;
-//            } else {
-//                brightness = brightness*1.54;
-//            }
-//
-//            if (brightness > 74.56) {
-//                result = (brightness-100)/((100-74.56)/(0-(saturation + 65.84)));
-//            } else if (brightness > 72.719) {
-//                result = pow((brightness-74.8)/(-0.3), (1/3.5)) + 64.9 + saturation;
-//            } else if (brightness > 3.4) {
-//                float brightnessInv = 1.0 / brightness;
-//                float radiansVal = radians((360.0 / 5.49) * brightness + 100.0);
-//                float sinVal = sin(radiansVal);
-//                result = (brightnessInv * sinVal / 0.1) + 66.1 + (brightness / 130.0) + saturation;
-//            } else {
-//                result = 2.75*brightness + 55 + saturation;
-//            }
-//        }
         float thingy;
         if (!finalL) {
             thingy =  y/100;

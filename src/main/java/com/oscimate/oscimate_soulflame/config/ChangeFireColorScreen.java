@@ -1,14 +1,12 @@
 package com.oscimate.oscimate_soulflame.config;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.MapCodec;
-import com.oscimate.oscimate_soulflame.CustomRenderLayer;
-import com.oscimate.oscimate_soulflame.GameRendererSetting;
-import com.oscimate.oscimate_soulflame.Main;
-import com.oscimate.oscimate_soulflame.RenderFireColorAccessor;
+import com.oscimate.oscimate_soulflame.*;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
 import com.sun.jna.platform.KeyboardUtils;
 import com.sun.jna.platform.win32.WinUser;
@@ -41,6 +39,7 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.*;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.GeneratorOptionsHolder;
 import net.minecraft.data.server.tag.TagProvider;
@@ -50,6 +49,7 @@ import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.TagBuilder;
 import net.minecraft.registry.tag.TagKey;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -131,6 +131,7 @@ public class ChangeFireColorScreen extends Screen {
     }
     public void onClose() {
         Main.CONFIG_MANAGER.save();
+        MinecraftClient.getInstance().reloadResources();
         client.setScreen(parent);
     }
 
@@ -309,16 +310,23 @@ public class ChangeFireColorScreen extends Screen {
         saveButton.active = false;
         int num = 0;
         if (currentSearchButton == 0) {
-            System.out.println(allBlockUnders);
             allBlockUnders.forEach(block -> {
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).put(Registries.BLOCK.getId(block).toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+                ColorizeMath.create(Arrays.stream(pickedColor).map(Color::getRGB).mapToInt(Integer::intValue).toArray());
+                Main.FIRE_SPRITES.put(Registries.BLOCK.getId(block).toString(), Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/"+ pickedColor[0] + "_" + pickedColor[1])).getSprite()));
             });
             num = allBlockUnders.size();
         } else if (currentSearchButton == 1) {
             Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).put(blockTags.get(0).id().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+            ColorizeMath.create(Arrays.stream(pickedColor).map(Color::getRGB).mapToInt(Integer::intValue).toArray());
+            Main.FIRE_SPRITES.put(blockTags.get(0).id().toString(), Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/"+ pickedColor[0] + "_" + pickedColor[1])).getSprite()));
+
             num = blockTags.size();
         } else if (currentSearchButton == 2) {
             Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).put(biomeKeys.get(0).getValue().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+            ColorizeMath.create(Arrays.stream(pickedColor).map(Color::getRGB).mapToInt(Integer::intValue).toArray());
+            Main.FIRE_SPRITES.put(biomeKeys.get(0).getValue().toString(), Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/"+ pickedColor[0] + "_" + pickedColor[1])).getSprite()));
+
             num = biomeKeys.size();
         }
         this.searchScreenListWidget.num = num;

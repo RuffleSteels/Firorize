@@ -25,6 +25,14 @@ repositories {
 		name 'Xander Maven'
 		url 'https://maven.isxander.dev/releases'
 	}
+	maven {
+		name = "modrinth"
+		url = "https://api.modrinth.com/maven"
+
+		content {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 dependencies {
@@ -41,7 +49,7 @@ dependencies {
 	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.3.6")))
 
 	modImplementation "dev.isxander:yet-another-config-lib:3.4.2+1.20.4-fabric"
-
+//	modImplementation "maven.modrinth:iris:1.7.2+1.20.4"
 	implementation 'org.apache.commons:commons-collections4:4.5.0-M2'
 }
 

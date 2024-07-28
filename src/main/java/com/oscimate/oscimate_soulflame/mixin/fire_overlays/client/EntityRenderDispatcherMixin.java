@@ -3,7 +3,6 @@ package com.oscimate.oscimate_soulflame.mixin.fire_overlays.client;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.oscimate.oscimate_soulflame.CustomRenderLayer;
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.RenderFireColorAccessor;
 import com.sun.tools.jconsole.JConsoleContext;
@@ -60,14 +59,6 @@ public class EntityRenderDispatcherMixin {
         return obj.getSprite();
     }
 
-    @WrapOperation(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumerProvider;getBuffer(Lnet/minecraft/client/render/RenderLayer;)Lnet/minecraft/client/render/VertexConsumer;"))
-    private VertexConsumer setShader(VertexConsumerProvider instance, RenderLayer renderLayer, Operation<VertexConsumer> original, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity, Quaternionf rotation) {
-        if (((RenderFireColorAccessor)entity).getRenderFireColor()[0] < 1) {
-            return original.call(instance, CustomRenderLayer.getCustomTint());
-        }
-        return original.call(instance, renderLayer);
-    }
-
 
     @WrapOperation(method = "drawFireVertex", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;color(IIII)Lnet/minecraft/client/render/VertexConsumer;"))
     private static VertexConsumer changeColor(VertexConsumer instance, int r, int g, int b, int a, Operation<VertexConsumer> original) {
@@ -88,7 +79,7 @@ public class EntityRenderDispatcherMixin {
             float j = 0.0f;
             float k = 0.0f;
             int l = 0;
-            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(CustomRenderLayer.getCustomTint());
+            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getSolid());
             MatrixStack.Entry entry = matrices.peek();
             while (i > 0.0f) {
                 Sprite sprite3 = l % 2 == 0 ? Main.BLANK_FIRE_0_OVERLAY.get() : Main.BLANK_FIRE_1_OVERLAY.get();
