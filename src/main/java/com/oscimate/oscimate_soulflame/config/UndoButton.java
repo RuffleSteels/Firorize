@@ -13,6 +13,6 @@ public class UndoButton  extends ButtonWidget {
 
     @Override
     public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
-        context.drawSprite(getX() + (getWidth() - Main.UNDO.get().getContents().getWidth())/2, getY() + (getHeight() - Main.UNDO.get().getContents().getHeight())/2, 10, Main.UNDO.get().getContents().getWidth(), Main.UNDO.get().getContents().getHeight(), Main.UNDO.get());
+        context.drawSprite(getX() + (getWidth() - Main.UNDO.getContents().getWidth())/2, getY() + (getHeight() - Main.UNDO.getContents().getHeight())/2, 10, Main.UNDO.getContents().getWidth(), Main.UNDO.getContents().getHeight(), Main.UNDO);
     }
 }

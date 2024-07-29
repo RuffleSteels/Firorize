@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ConfigManager {
-    public FireLogic currentFireLogic;
     public long currentFireHeightSlider;
 
     public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> getFireColorPresets() {
@@ -70,15 +69,8 @@ public class ConfigManager {
     private static final Gson GSON = new Gson();
     public static Path file = FabricLoader.getInstance().getConfigDir().resolve("oscimate_soulflame" + ".json");
 
-    public FireLogic getCurrentFireLogic() {
-        return this.currentFireLogic;
-    }
     public long getCurrentFireHeightSlider() {
         return this.currentFireHeightSlider;
-    }
-
-    public void setCurrentFireLogic(FireLogic fireLogic) {
-        this.currentFireLogic = fireLogic;
     }
     public void setCurrentFireHeightSlider(long fireHeightSlider) {
         this.currentFireHeightSlider =  fireHeightSlider;
@@ -96,12 +88,6 @@ public class ConfigManager {
                 System.out.println(e);
             }
         }
-        if(jsonOutput.getFireLogic() == null) {
-            setCurrentFireLogic(FireLogic.PERSISTENT);
-            save();
-        } else {
-            setCurrentFireLogic(jsonOutput.getFireLogic());
-        }
         if(jsonOutput.getFireHeightSlider() > 100 || jsonOutput.getFireHeightSlider() < 0) {
             setCurrentFireHeightSlider(100);
             save();
@@ -117,13 +103,6 @@ public class ConfigManager {
             save();
         } else {
             setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
-//            for (int i = 0; i <2;i++) {
-//                int finalI = i;
-//                jsonOutput.getCurrentBlockFireColours().stream().map(map -> map.keyList().stream().map(key -> Main.FIRE_SPRITES.put(key, Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/fire"+finalI+"_"+ map.get(key)[0] + "_" + map.get(key)[1])).getSprite()))));
-//            }
-//            jsonOutput.getCurrentBlockFireColours().forEach(map -> {
-//                map.valueList().forEach(ColorizeMath::create);
-//            });
         }
         if (jsonOutput.getPriorityOrder() == null || jsonOutput.getPriorityOrder().size() == 0) {
             ArrayList<Integer> temp = new ArrayList<>();

@@ -44,7 +44,7 @@ public class EntityRenderDispatcherMixin {
         if (fireColor < 1) {
             return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_0_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
         } else if (fireColor == 1) {
-            return Main.SOUL_FIRE_0.get();
+            return Main.SOUL_FIRE_0;
         }
         return obj.getSprite();
     }
@@ -56,7 +56,7 @@ public class EntityRenderDispatcherMixin {
         if (fireColor < 1) {
             return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
         } else if (fireColor == 1) {
-            return Main.SOUL_FIRE_1.get();
+            return Main.SOUL_FIRE_1;
         }
         return obj.getSprite();
     }

@@ -64,19 +64,15 @@ public class Main implements ClientModInitializer {
     public static final String MODID = "oscimate_soulflame";
     public static final Identifier FIRE_ATLAS_TEXTURE = new Identifier("textures/atlas/fires.png");
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
-    public static final Supplier<Sprite> FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(FIRE_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:fires/blank_fire_1")).getSprite());
-    public static HashMap<String, Supplier<Sprite>> FIRE_SPRITES;
-    public static final Supplier<Sprite> TEST = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("block/test_fire")).getSprite());
-    public static final Supplier<Sprite> FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(FIRE_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:fires/blank_fire_0")).getSprite());
     public static final Supplier<Sprite> BLANK_FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite());
     public static final Supplier<Sprite> BLANK_FIRE_0_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite());
-    public static final Supplier<Sprite> SOUL_FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1")).getSprite());
-    public static final Supplier<Sprite> SOUL_FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0")).getSprite());
+    public static final Sprite SOUL_FIRE_1 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1")).getSprite();
+    public static final Sprite SOUL_FIRE_0 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0")).getSprite();
     public static final Supplier<Sprite> BLANK_FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_1")).getSprite());
     public static final Supplier<Sprite> BLANK_FIRE_1_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_1")).getSprite());
     public static final Supplier<Sprite> ARROW_RIGHT = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_right")).getSprite());
     public static final Supplier<Sprite> ARROW_LEFT = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_left")).getSprite());
-    public static final Supplier<Sprite> UNDO = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/undo")).getSprite());
+    public static final Sprite UNDO = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/undo")).getSprite();
     public static List<TagKey<Block>> blockTagList = null;
     public static List<RegistryKey<Biome>> biomeKeyList = null;
     public static boolean inConfig = false;
@@ -103,23 +99,31 @@ public class Main implements ClientModInitializer {
                         if (block instanceof FireBlock) {
                             ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
                             ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
+
                             for (int ii = 0; ii < 3; ii++) {
                                 int order = Main.CONFIG_MANAGER.getPriorityOrder().get(ii);
+
                                 if (order == 0) {
+
                                     if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
                                         ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(0).get(Registries.BLOCK.getId(blockUnder).toString()));
+
+                                        break;
                                     }
                                 } else if (order == 1) {
+
                                     if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
                                         ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
                                         List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
 
                                         ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(1).get(tags.get(0).id().toString()).clone());
-
+                                        break;
                                     }
                                 } else if (order == 2) {
-                                    if (entity.getWorld().getBiomeFabric(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(entity.getWorld().getBiomeFabric(mutable).getKey().get().getValue().toString())) {
-                                        ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(entity.getWorld().getBiomeFabric(mutable).getKey().get().getValue().toString()).clone());
+                                    if (entity.getWorld().getBiome(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())) {
+                                        ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString()).clone());
+
+                                        break;
                                     }
                                 }
                             }
@@ -127,6 +131,7 @@ public class Main implements ClientModInitializer {
                             if (block instanceof SoulFireBlock) {
                                 ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{1});
                             } else if (block instanceof FireBlock){
+
                                 ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
                             } else {
                                 if(((RenderFireColorAccessor) entity).getRenderFireColor() == null) {
@@ -147,6 +152,7 @@ public class Main implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
         CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {
             biomeKeyList = registries.get(RegistryKeys.BIOME).getKeys().stream().toList();
             blockTagList = registries.get(RegistryKeys.BLOCK).streamTags().filter(tag -> Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP)).toList().size() > 0).toList();
@@ -162,54 +168,6 @@ public class Main implements ClientModInitializer {
                 return model;
             });
         });
-//        ColorProviderRegistry.BLOCK.register(((state, world, pos, tintIndex) -> {
-////            return this.getColorInt(0, 0, 0);
-//            if (world.hasBiomes()) {
-//                ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
-//
-//                Block blockUnder = world.getBlockState(pos.down()).getBlock();
-//                for (int i = 0; i < 3; i++) {
-//                    int order = Main.CONFIG_MANAGER.getPriorityOrder().get(i);
-//                    if (order == 0) {
-//                        if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
-//                            int[] colors = list.get(0).get(Registries.BLOCK.getId(blockUnder).toString()).clone();
-//                            if (tintIndex == 1) {
-//                                return colors[0];
-//                            }
-//                            if (tintIndex == 2) {
-//                                return colors[1];
-//                            }
-//                        }
-//                    } else if (order == 1) {
-//                        if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
-//                            ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
-//                            List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
-//                            int[] colors = list.get(1).get(tags.get(0).id().toString()).clone();
-//
-//                            if (tintIndex == 1) {
-//                                return colors[0];
-//                            }
-//                            if (tintIndex == 2) {
-//                                return colors[1];
-//                            }
-//
-//                        }
-//                    } else if (order == 2) {
-//                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(world.getBiomeFabric(pos).getKey().get().getValue().toString())) {
-//                            int[] colors = list.get(2).get(world.getBiomeFabric(pos).getKey().get().getValue().toString()).clone();
-//                            if (tintIndex == 1) {
-//                                return colors[0];
-//                            }
-//                            if (tintIndex == 2) {
-//                                return colors[1];
-//                            }
-//                        }
-//                    }
-//                }
-//
-//            }
-//            return this.getColorInt(0, 0, 0);
-//        }), Blocks.FIRE);
 
         if(!CONFIG_MANAGER.fileExists()) {
             CONFIG_MANAGER.save();

@@ -41,6 +41,11 @@ public class TestierModel implements FabricBakedModel, BakedModel {
         this.model = model;
     }
 
+    @Override
+    public boolean isVanillaAdapter() {
+        return Main.inConfig;
+    }
+
     private BakedModel editModel(BlockView blockView, BlockPos pos) {
         return new BakedModel() {
             @Override
