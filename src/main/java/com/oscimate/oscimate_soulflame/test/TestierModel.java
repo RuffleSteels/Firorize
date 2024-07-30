@@ -59,7 +59,7 @@ public class TestierModel implements FabricBakedModel, BakedModel {
                 }
                 for (int n = 0; n < tempList.size(); n++) {
                     int accN = (int) Math.floor(n/2);
-                    Sprite sprite = Main.BLANK_FIRE_0_OVERLAY.get();
+                    Sprite sprite =  new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite();
                     int[] verticesOriginal = beforeTempList.get(accN).getVertexData();
                     int[] verticesNew = new int[32];
                     for (int cornerIndex = 0; cornerIndex < 4; ++cornerIndex) {

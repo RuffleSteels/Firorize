@@ -4,6 +4,9 @@ import com.oscimate.oscimate_soulflame.Main;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -58,8 +61,12 @@ public class MoveableButton extends ButtonWidget {
 
         context.drawGuiTexture(backTexture, x[0], y, getHeight(), height);
         context.drawGuiTexture(frontTexture, x[1], y, getHeight(), height);
-        context.drawSprite(x[1] + ((getHeight()-Main.ARROW_RIGHT.get().getContents().getWidth())/2), y+((height-Main.ARROW_RIGHT.get().getContents().getHeight())/2), 10,Main.ARROW_RIGHT.get().getContents().getWidth(), Main.ARROW_RIGHT.get().getContents().getHeight(), Main.ARROW_RIGHT.get());
-        context.drawSprite(x[0] + ((getHeight()-Main.ARROW_LEFT.get().getContents().getWidth())/2), y+((height-Main.ARROW_LEFT.get().getContents().getHeight())/2), 10,Main.ARROW_LEFT.get().getContents().getWidth(), Main.ARROW_LEFT.get().getContents().getHeight(), Main.ARROW_LEFT.get());
+
+        Sprite ARROW_RIGHT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_right")).getSprite();
+        Sprite ARROW_LEFT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_left")).getSprite();
+
+        context.drawSprite(x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), 10,ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight(), ARROW_RIGHT);
+        context.drawSprite(x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), 10,ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight(), ARROW_LEFT);
     }
 
     @Override

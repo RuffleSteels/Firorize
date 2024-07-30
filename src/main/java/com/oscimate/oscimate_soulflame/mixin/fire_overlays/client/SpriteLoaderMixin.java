@@ -118,8 +118,6 @@ public class SpriteLoaderMixin {
                                     int overlayB = overlayBuffer.get(index + 2) & 0xFF;
                                     int overlayA = overlayBuffer.get(index + 3) & 0xFF;
 
-                                    System.out.println(new Color(overlayR, overlayG, overlayB).getRGB());
-
                                     finalR = (overlayR * overlayA + finalR * (255 - overlayA)) / 255;
                                     finalG = (overlayG * overlayA + finalG * (255 - overlayA)) / 255;
                                     finalB = (overlayB * overlayA + finalB * (255 - overlayA)) / 255;
@@ -141,14 +139,10 @@ public class SpriteLoaderMixin {
                 }
             }
 
-            System.out.println(all);
-
             sprites.set(new ImmutableList.Builder<SpriteContents>()
                     .addAll(sp)
                     .addAll(all)
                     .build());
-
-//            pointers.forEach(MemoryUtil::nmemFree);
         }
     }
 }

@@ -21,6 +21,16 @@ public class FireLogicConfig {
         return fireColorPresets;
     }
 
+    public HashMap<String, int[]> customColorPresets = Main.CONFIG_MANAGER.getCustomColorPresets();
+
+    public HashMap<String, int[]> getCustomColorPresets() {
+        return customColorPresets;
+    }
+
+    public void setCustomColorPresets(HashMap<String, int[]> customColorPresets) {
+        this.customColorPresets = customColorPresets;
+    }
+
     public String getCurrentPreset() {
         return currentPreset;
     }

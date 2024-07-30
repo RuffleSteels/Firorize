@@ -29,6 +29,15 @@ public class ConfigManager {
     public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> getFireColorPresets() {
         return fireColorPresets;
     }
+    public HashMap<String, int[]> customColorPresets;
+
+    public HashMap<String, int[]> getCustomColorPresets() {
+        return customColorPresets;
+    }
+
+    public void setCustomColorPresets(HashMap<String, int[]> customColorPresets) {
+        this.customColorPresets = customColorPresets;
+    }
 
     public String getCurrentPreset() {
         return currentPreset;
@@ -138,6 +147,19 @@ public class ConfigManager {
             save();
         } else {
             setCurrentPreset(jsonOutput.getCurrentPreset());
+        }
+        if(jsonOutput.getCustomColorPresets() == null || jsonOutput.getCustomColorPresets().size() == 0) {
+            HashMap<String, int[]> map = new HashMap<>();
+            map.put("RED", new int[]{-10149847,-7655374});
+            map.put("GRAY", new int[]{-12569022,-11185318});
+            map.put("BLUE", new int[]{-15372685,-13404045});
+            map.put("YELLOW", new int[]{-6584292,-5068772});
+            map.put("PURPLE", new int[]{-12446675,-10870735});
+
+            setCustomColorPresets(map);
+            save();
+        } else {
+            setCustomColorPresets(jsonOutput.getCustomColorPresets());
         }
     }
 

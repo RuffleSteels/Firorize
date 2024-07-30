@@ -15,7 +15,6 @@
     "fire_overlays.client.GameRendererMixin",
     "fire_overlays.client.GamRenMixin",
     "fire_overlays.client.InGameOverlayRendererMixin",
-    "fire_overlays.client.MinecraftClientMixin",
     "fire_overlays.client.NativeImageInvoker",
     "fire_overlays.client.OscimateClientPlayNetworkHandler",
     "fire_overlays.client.RenderLayerAccessor",

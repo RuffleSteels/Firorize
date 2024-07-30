@@ -19,9 +19,6 @@ public class ColorizeMath {
                 Path path = MinecraftClient.getInstance().runDirectory.toPath().toAbsolutePath();
                 Path path2 = TextureUtil.getDebugTexturePath(path);
 
-
-                System.out.println(Paths.get("").toAbsolutePath().toString());
-
                 BufferedImage inputImage = ImageIO.read(new File((Paths.get("").toAbsolutePath().toString() + "/config/oscimate_soulflame/blank_fire_"+i+".png")));
 
                 Color c = new Color(colors[0]);

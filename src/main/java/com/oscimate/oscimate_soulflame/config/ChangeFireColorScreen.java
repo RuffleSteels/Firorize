@@ -20,6 +20,7 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.impl.biome.modification.BuiltInRegistryKeys;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.CommandBlockBlockEntity;
 import net.minecraft.client.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -62,6 +63,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.path.SymlinkValidationException;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.EmptyBlockView;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
@@ -113,7 +115,7 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(x+entryWidth-entryHeight-entryHeight/2 - 1, y+entryHeight/2 + 3, x+entryWidth-entryHeight-entryHeight/2 - 2, y+entryHeight/2 + 2, colorInt);
     }
     private String hexCode = "#ffffff";
-    private final Color baseColor = Color.WHITE;
+    public final Color baseColor = Color.WHITE;
     public static Color[] pickedColor = {new Color(Color.decode("#ffffff").getRGB(), true), new Color(Color.decode("#ffffff").getRGB(), true)};
     public static Color[] lastPickedColor = null;
     private double hue = 0;
@@ -122,13 +124,13 @@ public class ChangeFireColorScreen extends Screen {
     public final int wheelRadius = 100;
     private final int cursorDimensions = 8;
     public final int[] wheelCoords = {42, 42};
-    private final int[] sliderDimensions = {20, wheelRadius*2};
+    public final int[] sliderDimensions = {20, wheelRadius*2};
     private final int[] sliderCoords = {wheelCoords[0] + wheelRadius*2 + 20, wheelCoords[1]};
     private final double sliderPadding = (double) sliderDimensions[0] / 2;
     private double sliderClickedY = sliderCoords[1] + sliderPadding;
     private final double sliderClickedX = sliderCoords[0] + sliderPadding;
-    private final int[] hexBoxCoords = {wheelCoords[0], wheelCoords[1] + wheelRadius*2 + 20};
-    private boolean isOverlay = false;
+    public final int[] hexBoxCoords = {wheelCoords[0], wheelCoords[1] + wheelRadius*2 + 20};
+    public boolean isOverlay = false;
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
         this.parent = parent;
@@ -139,8 +141,9 @@ public class ChangeFireColorScreen extends Screen {
     }
 
 
-    private TextFieldWidget textFieldWidget;
+    public TextFieldWidget textFieldWidget;
     private TextFieldWidget blockUnderField;
+    public ColoredCycleButton cyclicalPresets;
     private Block blockUnder = Blocks.NETHERRACK;
     private List<Block> allBlockUnders = new ArrayList<>();
     public String input = "";
@@ -179,12 +182,28 @@ public class ChangeFireColorScreen extends Screen {
 
     public TextFieldWidget presetNameField;
     public ButtonWidget addButton;
+    public Color[] tempColor;
+    public ButtonWidget addColorButton;
+    public InvisibleTextFieldWidget invisibleTextFieldWidget;
 
     @Override
     protected void init() {
         Main.inConfig = true;
+
+        invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.textRenderer, wheelCoords[0] + 50 + 20, hexBoxCoords[1],wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, ScreenTexts.DONE);
+
+        invisibleTextFieldWidget.visible = false;
+
+        invisibleTextFieldWidget.setPlaceholder(Text.literal("Custom color name:"));
+
+        addColorButton = new ButtonWidget.Builder(Text.literal("+"), button -> cyclicalPresets.addColor()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, hexBoxCoords[1], 20, 20).build();
+
+
+        this.cyclicalPresets = ColoredCycleButton.builder()
+                .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20);
+
         blockSearchCoords[0] = width - 300 - 20;
-        redoButton = new UndoButton(wheelCoords[0] + wheelRadius*2 + sliderDimensions[0], hexBoxCoords[1], 20, 20, button -> redo());
+        redoButton = new UndoButton(hexBoxCoords[0], hexBoxCoords[1], 20, 20, button -> redo());
         saveButton = new ButtonWidget.Builder(Text.literal("Apply"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
         this.addDrawableChild(saveButton);
 
@@ -192,7 +211,7 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
         this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, 15);
         this.addDrawableChild(searchScreenListWidget);
-        textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0], hexBoxCoords[1], 50, 20, ScreenTexts.DONE);
+        textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20, hexBoxCoords[1], 50, 20, ScreenTexts.DONE);
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0], blockSearchCoords[1]+20, blockSearchDimensions[0], 20, ScreenTexts.DONE, this);
         this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
@@ -215,6 +234,7 @@ public class ChangeFireColorScreen extends Screen {
         searchOptions[1]  = new MoveableButton(this, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Tags"), 1);
         searchOptions[2]  = new MoveableButton(this, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Biomes"), 2);
 
+
         this.addDrawableChild(presetListWidget);
         this.addDrawableChild(searchOptions[0]);
         this.addDrawableChild(searchOptions[1]);
@@ -222,6 +242,9 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(overlayToggles[0]);
         this.addDrawableChild(overlayToggles[1]);
         this.addDrawableChild(redoButton);
+        this.addDrawableChild(cyclicalPresets);
+        this.addDrawableChild(addColorButton);
+        this.addDrawableChild(invisibleTextFieldWidget);
 
         if (client.world == null) {
             searchOptions[1].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
@@ -231,7 +254,6 @@ public class ChangeFireColorScreen extends Screen {
             searchOptions[0].active = false;
         } else {
             this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
-
         }
 
         toggle(true);
@@ -370,7 +392,7 @@ public class ChangeFireColorScreen extends Screen {
             updateCursor("#"+Integer.toHexString(RGB).substring(2));
         }
     }
-    private void updateCursor(String hexCode) {
+    public void updateCursor(String hexCode) {
         if (!clicked && !sliderClicked) {
             Pattern pattern = Pattern.compile("^#([A-Fa-f0-9]{6})$");
             if (pattern.matcher(hexCode).matches()) {
@@ -422,7 +444,7 @@ public class ChangeFireColorScreen extends Screen {
             hue = (Math.atan2(dy, dx) / (2 * Math.PI) + 0.25);
 
             int RGB = Color.HSBtoRGB((float) hue, (float) saturation, (float) ((float) lightness == 0 ? lightness+0.01 : lightness));
-
+            cyclicalPresets.setIndex(0);
             textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
             if (click) {
                 colorRedo = true;
@@ -446,22 +468,15 @@ public class ChangeFireColorScreen extends Screen {
     private boolean isClick = false;
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 2) {
-            isOverlay = !isOverlay;
-            int RGB = pickedColor[isOverlay ? 1:0].getRGB();
-            textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
-            updateCursor("#"+Integer.toHexString(RGB).substring(2));
+        double selectSpace = (double) cursorDimensions / 2;
+        if (mouseX >= sliderCoords[0] && mouseX <= sliderCoords[0] + sliderDimensions[0] && mouseY >= sliderCoords[1] + sliderPadding && mouseY <= sliderCoords[1] + sliderDimensions[1] - sliderPadding) {
+            sliderClicked = true;
+            isClick = true;
+            mouseDragged(mouseX, mouseY, button, 0, 0);
+        } else if (mouseX >= clickedX - selectSpace && mouseY >= clickedY - selectSpace && mouseX <= clickedX + selectSpace && mouseY <= clickedY + selectSpace) {
+            clicked = true;
         } else {
-            double selectSpace = (double) cursorDimensions / 2;
-            if (mouseX >= sliderCoords[0] && mouseX <= sliderCoords[0] + sliderDimensions[0] && mouseY >= sliderCoords[1] + sliderPadding && mouseY <= sliderCoords[1] + sliderDimensions[1] - sliderPadding) {
-                sliderClicked = true;
-                isClick = true;
-                mouseDragged(mouseX, mouseY, button, 0, 0);
-            } else if (mouseX >= clickedX - selectSpace && mouseY >= clickedY - selectSpace && mouseX <= clickedX + selectSpace && mouseY <= clickedY + selectSpace) {
-                clicked = true;
-            } else {
-                updateColorPicker(mouseX, mouseY, true);
-            }
+            updateColorPicker(mouseX, mouseY, true);
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -537,7 +552,7 @@ public class ChangeFireColorScreen extends Screen {
         context.drawBorder((int) sliderClickedX - cursorDimensions/2, (int)  sliderClickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, 0x7f222222);
         context.fill((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, (int) sliderClickedX + cursorDimensions/4, (int) sliderClickedY + cursorDimensions/4, Color.BLACK.getRGB());
 
-        context.fill(wheelCoords[0] + 50, hexBoxCoords[1], wheelCoords[0] + wheelRadius*2  + sliderDimensions[0], hexBoxCoords[1] + 20, pickedColor[isOverlay ? 1:0].getRGB());
+//        context.fill(wheelCoords[0] + 50, hexBoxCoords[1], wheelCoords[0] + wheelRadius*2  + sliderDimensions[0], hexBoxCoords[1] + 20, pickedColor[isOverlay ? 1:0].getRGB());
 
         RenderSystem.depthMask(true);
         BlockRenderManager brm = MinecraftClient.getInstance().getBlockRenderManager();
@@ -759,7 +774,6 @@ public class ChangeFireColorScreen extends Screen {
             num = 0;
         }
         public void setEntry(String text) {
-            System.out.println(text);
             input = "";
             test();
             this.children().forEach((blockEntry -> {
@@ -817,6 +831,8 @@ public class ChangeFireColorScreen extends Screen {
 
             selected.clear();
             selected.add(this.children().indexOf(entry));
+
+            cyclicalPresets.setIndex(0);
 
             if (currentSearchButton == 0) {
 
@@ -914,7 +930,8 @@ public class ChangeFireColorScreen extends Screen {
                     alpha = 0.5f;
                 }
                 int colorInt = new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB();
-                if (!ChangeFireColorScreen.this.searchScreenListWidget.selected.contains(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this)) && !isCustomized && ChangeFireColorScreen.this.searchScreenListWidget.selected.stream().noneMatch(index2 -> ChangeFireColorScreen.this.searchScreenListWidget.children().get(index2).isCustomized)) {
+//                if (!ChangeFireColorScreen.this.searchScreenListWidget.selected.contains(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this)) && !isCustomized && ChangeFireColorScreen.this.searchScreenListWidget.selected.stream().noneMatch(index2 -> ChangeFireColorScreen.this.searchScreenListWidget.children().get(index2).isCustomized)) {
+                if (!ChangeFireColorScreen.this.searchScreenListWidget.selected.contains(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this)) && !isCustomized) {
                     context.fill(x, y, x+entryHeight, y+entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
                     context.fill(x+entryHeight/2, y+3, x+entryHeight/2+1, y+entryHeight-3, colorInt);
                     context.fill(x+3, y+entryHeight/2, x+entryHeight-3, y+entryHeight/2+1, colorInt);
@@ -986,11 +1003,15 @@ public class ChangeFireColorScreen extends Screen {
                 return false;
             }
             void onAddButton() {
+                boolean clear = ChangeFireColorScreen.this.searchScreenListWidget.children().get(ChangeFireColorScreen.this.searchScreenListWidget.selected.get(0)).isCustomized;
+
                 ChangeFireColorScreen.this.dist = 0;
                 ChangeFireColorScreen.this.counter = 0;
                 if (currentSearchButton == 0) {
+                    if (clear) allBlockUnders.clear();
                     allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(this.languageDefinition)));
                 } else if (currentSearchButton == 1) {
+                    if (clear) blockTags.clear();
                     TagKey<Block> tag = BlockTagAccessor.callOf(this.languageDefinition);
                     blockTags.add(tag);
                     List<Block> newBlocks = Registries.BLOCK.getEntryList(tag).get().stream()
@@ -1000,10 +1021,20 @@ public class ChangeFireColorScreen extends Screen {
 
                     allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).toList();
                 } else if (currentSearchButton == 2) {
+                    if (clear) biomeKeys.clear();
                     RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(this.languageDefinition));
                     biomeKeys.add(key);
                 }
-                ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
+                if (clear) {
+                    ChangeFireColorScreen.this.save();
+                    BlockEntry entry = ChangeFireColorScreen.this.searchScreenListWidget.children().stream().filter(child -> child.languageDefinition.equals(this.languageDefinition)).findFirst().get();
+                    ChangeFireColorScreen.this.searchScreenListWidget.setSelected(entry);
+                    ChangeFireColorScreen.this.searchScreenListWidget.centerScrollOn(entry);
+                    ChangeFireColorScreen.this.hasRedo = false;
+                    ChangeFireColorScreen.this.redoButton.active = false;
+                } else {
+                    ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
+                }
             }
             @Override
             public Text getNarration() {

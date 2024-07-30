@@ -1,5 +1,6 @@
 package com.oscimate.oscimate_soulflame.config;
 
+import com.oscimate.oscimate_soulflame.Colors;
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
 import kotlin.Pair;
@@ -10,6 +11,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.registry.Registries;
@@ -47,6 +49,7 @@ class PresetListWidget
         });
 
 
+        isConstruct = true;
 
         setSelected(children().get(children().stream().map(entry -> entry.languageDefinition).toList().indexOf(Main.CONFIG_MANAGER.getCurrentPreset())));
     }
@@ -58,6 +61,9 @@ class PresetListWidget
     public int getRowWidth() {
         return this.getWidth();
     }
+
+
+    private boolean isConstruct = false;
 
     public void addPreset() {
         if (this.children().stream().map(entry -> entry.languageDefinition).noneMatch(string -> string.contains(" ") || string.contains("'") || string.contains("\"") || string.equals(instance.presetNameField.getText()))) {
@@ -85,6 +91,7 @@ class PresetListWidget
 
     @Override
     public void setSelected(@Nullable PresetListWidget.PresetEntry entry) {
+
         if (!entry.equals(getSelectedOrNull())) {
             instance.hasRedo = false;
             instance.redoButton.active = false;
@@ -95,7 +102,24 @@ class PresetListWidget
         curPresetID = entry.languageDefinition;
         Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getFirst());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getSecond());
-        instance.searchScreenListWidget.test();
+
+        if (isConstruct) {
+            instance.searchScreenListWidget.test();
+        } else {
+            instance.changeSearchOption(client.world == null ? 0 : Main.CONFIG_MANAGER.getPriorityOrder().get(0));
+            if (client.world == null) {
+                instance.searchOptions[1].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+                instance.searchOptions[1].active = false;
+                instance.searchOptions[2].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+                instance.searchOptions[2].active = false;
+                instance.searchOptions[0].active = false;
+            }
+        }
+        instance.searchScreenListWidget.setSelected(instance.searchScreenListWidget.children().get(0));
+        isConstruct = false;
+        instance.hasRedo = false;
+        instance.redoButton.active = false;
+        instance.cyclicalPresets.setIndex(0);
         super.setSelected(entry);
     }
 

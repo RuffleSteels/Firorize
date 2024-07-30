@@ -11,6 +11,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.model.BakedModelManagerHelper;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
@@ -62,20 +64,12 @@ import static com.oscimate.oscimate_soulflame.CustomRenderLayer.getCustomTint;
 @Environment(EnvType.CLIENT)
 public class Main implements ClientModInitializer {
     public static final String MODID = "oscimate_soulflame";
-    public static final Identifier FIRE_ATLAS_TEXTURE = new Identifier("textures/atlas/fires.png");
+
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
-    public static final Supplier<Sprite> BLANK_FIRE_0 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite());
-    public static final Supplier<Sprite> BLANK_FIRE_0_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite());
-    public static final Sprite SOUL_FIRE_1 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1")).getSprite();
-    public static final Sprite SOUL_FIRE_0 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0")).getSprite();
-    public static final Supplier<Sprite> BLANK_FIRE_1 = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_1")).getSprite());
-    public static final Supplier<Sprite> BLANK_FIRE_1_OVERLAY = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_1")).getSprite());
-    public static final Supplier<Sprite> ARROW_RIGHT = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_right")).getSprite());
-    public static final Supplier<Sprite> ARROW_LEFT = Suppliers.memoize(() -> new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_left")).getSprite());
-    public static final Sprite UNDO = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/undo")).getSprite();
     public static List<TagKey<Block>> blockTagList = null;
     public static List<RegistryKey<Biome>> biomeKeyList = null;
     public static boolean inConfig = false;
+
 
     public static void settingFireColor(Entity entity) {
         Box box = entity.getBoundingBox();
@@ -150,8 +144,25 @@ public class Main implements ClientModInitializer {
         return r << 16 | g << 8 | b;
     }
 
+    int counter = 0;
     @Override
     public void onInitializeClient() {
+
+
+//        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+//            if (counter == 0) {
+//                if (client.world != null) {
+//                    counter++;
+//                    ARROW_RIGHT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_right")).getSprite();
+//                    ARROW_LEFT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_left")).getSprite();
+//                    BLANK_FIRE_0 = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite();
+//                    BLANK_FIRE_0_OVERLAY = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite();
+//                    SOUL_FIRE_1 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1")).getSprite();
+//                    SOUL_FIRE_0 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0")).getSprite();
+//                    UNDO = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/undo")).getSprite();
+//                }
+//            }
+//        });
 
         CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {
             biomeKeyList = registries.get(RegistryKeys.BIOME).getKeys().stream().toList();

@@ -59,7 +59,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
                         tempList.add(g, beforeTempList.get(g));
                     }
 
-                    Sprite sprite = Main.BLANK_FIRE_0.get();
+                    Sprite sprite = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite();
                     if (!Main.inConfig) {
                         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
 
