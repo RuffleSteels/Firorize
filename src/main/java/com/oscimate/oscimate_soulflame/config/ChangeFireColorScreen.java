@@ -9,10 +9,10 @@ import com.mojang.serialization.MapCodec;
 import com.oscimate.oscimate_soulflame.*;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BakedModelManagerAccessor;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.FireBlockInvoker;
 import com.sun.jna.platform.KeyboardUtils;
 import com.sun.jna.platform.win32.WinUser;
 import com.sun.tools.jconsole.JConsoleContext;
-import dev.isxander.yacl3.gui.SearchFieldWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
@@ -63,6 +63,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.path.SymlinkValidationException;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.EmptyBlockView;
 import net.minecraft.world.biome.Biome;
@@ -99,9 +100,9 @@ public class ChangeFireColorScreen extends Screen {
     private Screen parent;
     private boolean clicked = false;
     private boolean sliderClicked = false;
-    private double clickedX = 95.0;
+    public double clickedX = 95.0;
     public List<Integer> lastSelected = new ArrayList<>();
-    private double clickedY = 95.0;
+    public double clickedY = 95.0;
     public void drawX(DrawContext context, int entryWidth, int entryHeight, int y, int x) {
         int colorInt = new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB();
         context.fill(x+entryWidth-entryHeight-entryHeight/2 + 1, y+entryHeight/2 + 1, x+entryWidth-entryHeight-entryHeight/2, y+entryHeight/2, colorInt);
@@ -125,9 +126,9 @@ public class ChangeFireColorScreen extends Screen {
     private final int cursorDimensions = 8;
     public final int[] wheelCoords = {42, 42};
     public final int[] sliderDimensions = {20, wheelRadius*2};
-    private final int[] sliderCoords = {wheelCoords[0] + wheelRadius*2 + 20, wheelCoords[1]};
-    private final double sliderPadding = (double) sliderDimensions[0] / 2;
-    private double sliderClickedY = sliderCoords[1] + sliderPadding;
+    public final int[] sliderCoords = {wheelCoords[0] + wheelRadius*2 + 20, wheelCoords[1]};
+    public final double sliderPadding = (double) sliderDimensions[0] / 2;
+    public double sliderClickedY = sliderCoords[1] + sliderPadding;
     private final double sliderClickedX = sliderCoords[0] + sliderPadding;
     public final int[] hexBoxCoords = {wheelCoords[0], wheelCoords[1] + wheelRadius*2 + 20};
     public boolean isOverlay = false;
@@ -142,14 +143,15 @@ public class ChangeFireColorScreen extends Screen {
 
 
     public TextFieldWidget textFieldWidget;
-    private TextFieldWidget blockUnderField;
+    public TextFieldWidget blockUnderField;
     public ColoredCycleButton cyclicalPresets;
     private Block blockUnder = Blocks.NETHERRACK;
     private List<Block> allBlockUnders = new ArrayList<>();
     public String input = "";
     public ChangeFireColorScreen.SearchScreenListWidget searchScreenListWidget;
     public PresetListWidget presetListWidget;
-    private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP)).toList();
+
+    private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP) || ((FireBlockInvoker)Blocks.FIRE).getBurnChances().containsKey(block)).toList();
     private final int[] blockSearchCoords = {0, 18};
     private final int[] blockSearchDimensions = {300, 320};
     private ButtonWidget[] overlayToggles = new ButtonWidget[2];
@@ -230,9 +232,9 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[0] = new ButtonWidget.Builder(Text.literal("Base"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
         overlayToggles[1]  = new ButtonWidget.Builder(Text.literal("Overlay"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
 
-        searchOptions[0] = new MoveableButton(this, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Blocks"),  0);
-        searchOptions[1]  = new MoveableButton(this, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Tags"), 1);
-        searchOptions[2]  = new MoveableButton(this, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Biomes"), 2);
+        searchOptions[0] = new MoveableButton(this, this.textRenderer, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Blocks"),  0);
+        searchOptions[1]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Tags"), 1);
+        searchOptions[2]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Biomes"), 2);
 
 
         this.addDrawableChild(presetListWidget);
@@ -518,9 +520,15 @@ public class ChangeFireColorScreen extends Screen {
     private int counter = 0;
     private float dist = 0f;
     private boolean forwards = true;
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderBackgroundTexture(context);
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackgroundTexture(context);
+//        this.renderBackgroundTexture(context);
         super.render(context, mouseX, mouseY, delta);
 
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
@@ -605,14 +613,14 @@ public class ChangeFireColorScreen extends Screen {
                 boolean blockModel = blockEntityRenderer == null;
                 if (!blockModel) blockModel = blockEntityRenderer.rendersOutsideBoundingBox(blockEntity);
                 if (blockModel || block.getDefaultState().getRenderType() == BlockRenderType.MODEL) {
-                    brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 1, 1);
+                    brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 15728880, OverlayTexture.DEFAULT_UV);
                 } else {
                     assert blockEntity != null;
                     blockEntity.setWorld(MinecraftClient.getInstance().world);
-                    MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, context.getMatrices(), context.getVertexConsumers(), 1, OverlayTexture.DEFAULT_UV);
+                    MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, context.getMatrices(), context.getVertexConsumers(), 15728880, OverlayTexture.DEFAULT_UV);
                 }
             } else {
-                brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 1, 1);
+                brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 15728880, OverlayTexture.DEFAULT_UV);
             }
 
             context.getMatrices().pop();
@@ -645,14 +653,14 @@ public class ChangeFireColorScreen extends Screen {
             boolean blockModel = blockEntityRenderer == null;
             if (!blockModel) blockModel = blockEntityRenderer.rendersOutsideBoundingBox(blockEntity);
             if (blockModel || blockUnder.getDefaultState().getRenderType() == BlockRenderType.MODEL) {
-                blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, blockUnder.getDefaultState(), blockRenderManager.getModel(blockUnder.getDefaultState()), 0.0f, 0.0f, 0.0f, 1, 1);
+                blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, blockUnder.getDefaultState(), blockRenderManager.getModel(blockUnder.getDefaultState()), 1f, 1f, 1f, 15728880, OverlayTexture.DEFAULT_UV);
             } else {
                 assert blockEntity != null;
                 blockEntity.setWorld(MinecraftClient.getInstance().world);
-                MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, context.getMatrices(), context.getVertexConsumers(), 1, OverlayTexture.DEFAULT_UV);
+                MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, context.getMatrices(), context.getVertexConsumers(), 15728880, OverlayTexture.DEFAULT_UV);
             }
         } else {
-            blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, blockUnder.getDefaultState(), blockRenderManager.getModel(blockUnder.getDefaultState()), 0.0f, 0.0f, 0.0f, 1, 1);
+            blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, blockUnder.getDefaultState(), blockRenderManager.getModel(blockUnder.getDefaultState()), 1f, 1f, 1f, 15728880, OverlayTexture.DEFAULT_UV);
         }
 
         context.getMatrices().scale(-1, 1, 1);
@@ -773,18 +781,6 @@ public class ChangeFireColorScreen extends Screen {
             setScrollAmount(0.0);
             num = 0;
         }
-        public void setEntry(String text) {
-            input = "";
-            test();
-            this.children().forEach((blockEntry -> {
-                if (blockEntry.languageDefinition.equals(text)) {
-                    blockEntry.realSelect = false;
-                    this.centerScrollOn(blockEntry);
-                    setSelected(blockEntry);
-                }
-            }));
-        }
-
         @Override
         public int getRowWidth() {
             return this.getWidth();

@@ -3,7 +3,6 @@ package com.oscimate.oscimate_soulflame.config;
 import com.oscimate.oscimate_soulflame.Colors;
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
-import kotlin.Pair;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
@@ -20,6 +19,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.MultiNoiseBiomeSourceParameterList;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -100,9 +100,11 @@ class PresetListWidget
         }
 
         curPresetID = entry.languageDefinition;
-        Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getFirst());
-        Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getSecond());
-
+        Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft());
+        Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getRight());
+        instance.blockUnderField.setText("");
+        instance.input = instance.blockUnderField.getText();
+        instance.searchScreenListWidget.selected.clear();
         if (isConstruct) {
             instance.searchScreenListWidget.test();
         } else {
@@ -120,6 +122,8 @@ class PresetListWidget
         instance.hasRedo = false;
         instance.redoButton.active = false;
         instance.cyclicalPresets.setIndex(0);
+
+
         super.setSelected(entry);
     }
 

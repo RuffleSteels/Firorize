@@ -2,8 +2,9 @@ package com.oscimate.oscimate_soulflame.config;
 
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
-import kotlin.Pair;
+
 import net.minecraft.block.Block;
+import net.minecraft.util.Pair;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.awt.*;

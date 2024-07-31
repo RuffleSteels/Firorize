@@ -42,10 +42,14 @@ public class ChangeFireHeightScreen extends Screen {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
         super.init();
     }
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderBackgroundTexture(context);
+    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackgroundTexture(context);
+//        this.renderBackgroundTexture(context);
         super.render(context, mouseX, mouseY, delta);
 
         MatrixStack matrixStack = context.getMatrices();

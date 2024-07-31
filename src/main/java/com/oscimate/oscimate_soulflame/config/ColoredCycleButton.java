@@ -66,6 +66,15 @@ public class ColoredCycleButton extends PressableWidget {
 
         context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = this.active ? 16777215 : 10526880;
+        if (mouseX >= this.getX() && mouseY >= this.getY() && mouseX <= this.getX()+this.getWidth() && mouseY <= this.getY() + this.getHeight()) {
+
+            double dx = instance.wheelRadius+instance.wheelCoords[0] - instance.clickedX;
+            double dy = instance.wheelRadius+instance.wheelCoords[0] - instance.clickedY;
+            double saturation = Math.sqrt(dx * dx + dy * dy) / instance.wheelRadius;
+            double lightness = (instance.sliderClickedY - instance.sliderCoords[1] - instance.sliderPadding) / (instance.sliderDimensions[1] - instance.sliderPadding*2);
+            context.drawBorder(this.getX(),this.getY(), this.getWidth(), this.getHeight(), saturation < 0.25 && lightness < 0.25 ? Color.BLACK.getRGB() : Color.white.getRGB());
+            i = 10526880;
+        }
         if (!isAdding) {
             this.drawMessage(context, minecraftClient.textRenderer, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
         }

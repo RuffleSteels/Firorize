@@ -1,6 +1,8 @@
 package com.oscimate.oscimate_soulflame.config;
 
 import com.oscimate.oscimate_soulflame.Main;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -23,13 +25,15 @@ public class MoveableButton extends ButtonWidget {
     private final int[] x;
     private final int height = 13;
     private final int y;
-    protected MoveableButton(ChangeFireColorScreen instance, int x, int y, int width, int height, Text message, int index) {
+    private final TextRenderer textRenderer;
+    protected MoveableButton(ChangeFireColorScreen instance, TextRenderer textRenderer, int x, int y, int width, int height, Text message, int index) {
         super(x, y, width, height, message, null, DEFAULT_NARRATION_SUPPLIER);
         this.index = index;
         this.instance = instance;
 
         this.y = getY() - this.height;
         this.x = new int[]{getX(), getX()+getWidth()-getHeight()};
+        this.textRenderer = textRenderer;
     }
 
     private void move(boolean right) {
@@ -41,7 +45,7 @@ public class MoveableButton extends ButtonWidget {
         instance.searchOptions[index].active = instance.searchOptions[right ? index+1 : index-1].active;
         instance.searchOptions[right ? index+1 : index-1].active = tempB;
 
-        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(instance.presetListWidget.curPresetID).getSecond(), Main.CONFIG_MANAGER.getPriorityOrder());
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(instance.presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
     }
 
     @Override
@@ -67,12 +71,21 @@ public class MoveableButton extends ButtonWidget {
 
         context.drawSprite(x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), 10,ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight(), ARROW_RIGHT);
         context.drawSprite(x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), 10,ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight(), ARROW_LEFT);
+        if (hovered && MinecraftClient.getInstance().world == null && index != 0) {
+            context.drawTooltip(textRenderer, Text.literal("You can only access biomes and block tags once loaded into a world!"), this.getX() + 30, this.getY());
+        }
     }
 
     @Override
     public void onPress() {
+        instance.blockUnderField.setText("");
+        instance.input = instance.blockUnderField.getText();
+        instance.searchScreenListWidget.selected.clear();
+        instance.searchScreenListWidget.test();
         instance.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(index));
     }
+
+
 
 
     @Override

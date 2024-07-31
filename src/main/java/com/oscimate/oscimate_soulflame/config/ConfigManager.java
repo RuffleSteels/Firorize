@@ -5,12 +5,13 @@ import com.google.gson.Gson;
 import com.oscimate.oscimate_soulflame.ColorizeMath;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
-import kotlin.Pair;
+
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 
@@ -136,7 +137,26 @@ public class ConfigManager {
             HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> map = new HashMap<>();
             Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>> mapp = new Pair<>(temp, temp2);
 
+            ListOrderedMap<String, int[]> test = new ListOrderedMap<>();
+            test.put("minecraft:crimson_forest", new int[]{-10417918,-7653869});
+            test.put("minecraft:warped_forest", new int[]{-14190522,-7562173});
+            test.put("minecraft:basalt_deltas", new int[]{-12633022,-11185318});
+            test.put("minecraft:soul_sand_valley", new int[]{-15440279,-14187900});
+
+            ArrayList<Integer> temp22 = new ArrayList<>();
+            temp22.add(2);
+            temp22.add(0);
+            temp22.add(1);
+
+            ArrayList<ListOrderedMap<String, int[]>> eeka = new ArrayList<>();
+            eeka.add(new ListOrderedMap<String, int[]>());
+            eeka.add(new ListOrderedMap<String, int[]>());
+            eeka.add(test);
+            Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>> mapp2 = new Pair<>(eeka, temp22);
+
             map.put("Initial", mapp);
+            map.put("Nether Biomes", mapp2);
+
             setFireColorPresets(map);
             save();
         } else {

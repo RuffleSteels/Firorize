@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "oscimate_soulflame",
-  "version": "${version}",
+  "version": "2.0",
 
-  "name": "Improved Flame Overlays",
-  "description": "This client-side mod fixes Mojang's issue of the blue soul fire having a orange fire overlay when you or any mob steps in it.",
+  "name": "Firorize",
+  "description": "This client side mod allows full color customization over fire, depending on the biome it's in, or even the block it's on! It also has a fire height slider for an easy fix to that painfully large fire overlay. For a bonus, it fixes the bug where the soul fire did not produce a blue overlay!",
   "authors": [
     "RuffleSteels"
   ],
@@ -15,7 +15,7 @@
   },
 
   "license": "MIT License",
-  "icon": "assets/oscimate_soulflame/img.png",
+  "icon": "assets/oscimate_soulflame/Icon.png",
 
   "accessWidener" : "oscimate_soulflame.accesswidener",
   "environment": "*",
@@ -31,14 +31,12 @@
   "mixins": [
     "oscimate_soulflame.mixins.json"
   ],
-
   "depends": {
     "fabricloader": ">=0.14",
     "fabric": "*",
     "minecraft": "~1.20",
-    "java": ">=17"
-  },
-  "suggests": {
-    "another-mod": "*"
+    "java": ">=17",
+    "fabric-api": ">=0.97.1+1.20.4",
+    "modmenu": ">=9.0.0"
   }
 }

@@ -2,11 +2,13 @@ package com.oscimate.oscimate_soulflame.test;
 
 import com.oscimate.oscimate_soulflame.Main;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.FireBlockInvoker;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.FireBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -23,6 +25,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockRenderView;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.EmptyBlockView;
@@ -62,8 +65,21 @@ public class TestModel implements FabricBakedModel, BakedModel {
                     Sprite sprite = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite();
                     if (!Main.inConfig) {
                         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
+                        final Block blockUnder;
+                        if (state.get(FireBlock.NORTH)) {
+                            blockUnder = blockView.getBlockState(pos.north()).getBlock();
+                        } else if (state.get(FireBlock.EAST)) {
+                            blockUnder = blockView.getBlockState(pos.east()).getBlock();
+                        } else if (state.get(FireBlock.SOUTH)) {
+                            blockUnder = blockView.getBlockState(pos.south()).getBlock();
+                        } else if (state.get(FireBlock.WEST)) {
+                            blockUnder = blockView.getBlockState(pos.west()).getBlock();
+                        } else if (state.get(FireBlock.UP)) {
+                            blockUnder = blockView.getBlockState(pos.up()).getBlock();
+                        } else {
+                            blockUnder = blockView.getBlockState(pos.down()).getBlock();
+                        }
 
-                        Block blockUnder = blockView.getBlockState(pos.down()).getBlock();
                         for (int i = 0; i < 3; i++) {
                             int order = Main.CONFIG_MANAGER.getPriorityOrder().get(i);
 
@@ -199,7 +215,20 @@ public class TestModel implements FabricBakedModel, BakedModel {
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
-        Block blockUnder = blockView.getBlockState(pos.down()).getBlock();
+        final Block blockUnder;
+        if (state.get(FireBlock.NORTH)) {
+            blockUnder = blockView.getBlockState(pos.north()).getBlock();
+        } else if (state.get(FireBlock.EAST)) {
+            blockUnder = blockView.getBlockState(pos.east()).getBlock();
+        } else if (state.get(FireBlock.SOUTH)) {
+            blockUnder = blockView.getBlockState(pos.south()).getBlock();
+        } else if (state.get(FireBlock.WEST)) {
+            blockUnder = blockView.getBlockState(pos.west()).getBlock();
+        } else if (state.get(FireBlock.UP)) {
+            blockUnder = blockView.getBlockState(pos.up()).getBlock();
+        } else {
+            blockUnder = blockView.getBlockState(pos.down()).getBlock();
+        }
         if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString())) ||
                 (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
                 list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {

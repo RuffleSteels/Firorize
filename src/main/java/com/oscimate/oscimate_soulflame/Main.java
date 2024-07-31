@@ -3,6 +3,7 @@ package com.oscimate.oscimate_soulflame;
 import com.google.common.base.Suppliers;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.FireBlockInvoker;
 import com.oscimate.oscimate_soulflame.test.TestModel;
 import com.oscimate.oscimate_soulflame.test.TestierModel;
 import it.unimi.dsi.fastutil.Hash;
@@ -87,10 +88,24 @@ public class Main implements ClientModInitializer {
                     double e;
                     mutable.set(p, q, r);
                     Block block = entity.getWorld().getBlockState(mutable).getBlock();
-                    Block blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
+//                    Block blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
                     if (!((float)q + 1f >= box.minY)) continue;
                     if (!entity.isInLava()) {
                         if (block instanceof FireBlock) {
+                            final Block blockUnder;
+                            if (entity.getWorld().getBlockState(mutable).get(FireBlock.NORTH)) {
+                                blockUnder = entity.getWorld().getBlockState(mutable.north()).getBlock();
+                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.EAST)) {
+                                blockUnder = entity.getWorld().getBlockState(mutable.east()).getBlock();
+                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.SOUTH)) {
+                                blockUnder = entity.getWorld().getBlockState(mutable.south()).getBlock();
+                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.WEST)) {
+                                blockUnder = entity.getWorld().getBlockState(mutable.west()).getBlock();
+                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.UP)) {
+                                blockUnder = entity.getWorld().getBlockState(mutable.up()).getBlock();
+                            } else {
+                                blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
+                            }
                             ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
                             ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
 
