@@ -42,10 +42,6 @@ public class ChangeFireHeightScreen extends Screen {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
         super.init();
     }
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackgroundTexture(context);
-    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
@@ -71,8 +67,8 @@ public class ChangeFireHeightScreen extends Screen {
         float j = 1/32F * counter;
 
         var modelView = RenderSystem.getModelViewStack();
-        modelView.push();
-        modelView.loadIdentity();
+        modelView.pushMatrix();
+        modelView.identity();
         RenderSystem.applyModelViewMatrix();
 
         matrixStack.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
@@ -91,7 +87,7 @@ public class ChangeFireHeightScreen extends Screen {
             matrixStack.pop();
         }
 
-        modelView.pop();
+        modelView.popMatrix();
         RenderSystem.applyModelViewMatrix();
 
         RenderSystem.disableBlend();

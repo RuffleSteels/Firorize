@@ -9,9 +9,9 @@
     "RuffleSteels"
   ],
   "contact": {
-    "homepage": "https://github.com/RuffleSteels/Improved-Fire-Overlay",
-    "sources": "https://github.com/RuffleSteels/Improved-Fire-Overlay",
-    "issues": "https://github.com/RuffleSteels/Improved-Fire-Overlay/issues"
+    "homepage": "https://github.com/RuffleSteels/Firorize",
+    "sources": "https://github.com/RuffleSteels/Firorize",
+    "issues": "https://github.com/RuffleSteels/Firorize/issues"
   },
 
   "license": "MIT License",
@@ -35,8 +35,8 @@
     "fabricloader": ">=0.14",
     "fabric": "*",
     "minecraft": "~1.20",
-    "java": ">=17",
-    "fabric-api": ">=0.97.1+1.20.4",
-    "modmenu": ">=9.0.0"
+    "java": ">=21",
+    "fabric-api": ">=0.100.8+1.20.6",
+    "modmenu": ">=10.0.0"
   }
 }

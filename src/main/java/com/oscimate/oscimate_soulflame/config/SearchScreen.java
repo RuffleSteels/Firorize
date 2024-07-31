@@ -31,7 +31,7 @@ public class SearchScreen extends Screen {
     private Screen parent;
     private SearchScreen.SearchScreenListWidget languageSelectionList;
 
-    private final List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> Block.isFaceFullSquare(block.getOutlineShape(block.getDefaultState(),  EmptyBlockView.INSTANCE, BlockPos.ORIGIN, ShapeContext.absent()), Direction.UP)).toList();
+    private final List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> Block.isFaceFullSquare(block.getDefaultState().getOutlineShape(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, ShapeContext.absent()), Direction.UP)).toList();
     final LanguageManager languageManager;
 
     protected SearchScreen(Screen parent, LanguageManager languageManager) {
@@ -66,10 +66,6 @@ public class SearchScreen extends Screen {
         this.client.setScreen(this.parent);
     }
 
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackgroundTexture(context);
-    }
 
     @Environment(value= EnvType.CLIENT)
     class SearchScreenListWidget
@@ -95,9 +91,10 @@ public class SearchScreen extends Screen {
             generateEntries();
         }
         @Override
-        protected int getScrollbarPositionX() {
-            return super.getScrollbarPositionX() + 20;
+        protected int getScrollbarX() {
+            return super.getScrollbarX() - 16;
         }
+
         @Override
         public int getRowWidth() {
             return super.getRowWidth() + 50;

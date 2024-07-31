@@ -100,6 +100,8 @@ class PresetListWidget
         }
 
         curPresetID = entry.languageDefinition;
+        System.out.println(Arrays.toString(Main.CONFIG_MANAGER.getCurrentBlockFireColors().stream().toList().toArray()));
+        System.out.println(Arrays.toString(Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().stream().toList().toArray()));
         Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getRight());
         instance.blockUnderField.setText("");
@@ -136,8 +138,8 @@ class PresetListWidget
     }
 
     @Override
-    protected int getScrollbarPositionX() {
-        return super.getScrollbarPositionX() + 30;
+    protected int getScrollbarX() {
+        return super.getScrollbarX() - 16;
     }
     @Override
     public int getX() {
@@ -146,7 +148,7 @@ class PresetListWidget
 
     @Override
     public int getY() {
-        return instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10;
+        return instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2;
     }
 
     @Override

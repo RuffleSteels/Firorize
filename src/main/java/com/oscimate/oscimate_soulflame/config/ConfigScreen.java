@@ -43,11 +43,6 @@ public class ConfigScreen extends Screen {
     protected int guiTop, guiLeft;
 
 
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackgroundTexture(context);
-    }
-
     protected ConfigScreen(Text title) {
         super(title);
     }

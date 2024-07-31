@@ -521,14 +521,11 @@ public class ChangeFireColorScreen extends Screen {
     private float dist = 0f;
     private boolean forwards = true;
 
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackgroundTexture(context);
-    }
+
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-//        this.renderBackgroundTexture(context);
+        this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
@@ -805,9 +802,13 @@ public class ChangeFireColorScreen extends Screen {
             context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
         }
 
+//        @Override
+//        protected int getScrollbarX() {
+//            return super.getScrollbarX() + 20 + blockSearchCoords[0];
+//        }
         @Override
-        protected int getScrollbarPositionX() {
-            return super.getScrollbarPositionX() + 20 + blockSearchCoords[0];
+        protected int getScrollbarX() {
+            return super.getScrollbarX() - 16;
         }
         @Override
         public int getX() {

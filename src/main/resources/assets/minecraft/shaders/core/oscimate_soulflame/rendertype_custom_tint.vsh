@@ -23,7 +23,7 @@ void main() {
     vec3 pos = Position + ChunkOffset;
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
 
-    vertexDistance = fog_distance(ModelViewMat, pos, FogShape);
+    vertexDistance = fog_distance(pos, FogShape);
     vertexColor = Color;
     texCoord0 = UV0;
     normal = ProjMat * ModelViewMat * vec4(Normal, 0.0);
