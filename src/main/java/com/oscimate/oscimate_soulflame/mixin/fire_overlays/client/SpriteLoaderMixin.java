@@ -69,8 +69,8 @@ public class SpriteLoaderMixin {
             ArrayList<SpriteContents> all = new ArrayList<>();
 
             for(SpriteContents spriteContents : sp) {
-                if (spriteContents.getId().equals(new Identifier("oscimate_soulflame:block/blank_fire_0")) || spriteContents.getId().equals(new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")) || spriteContents.getId().equals(new Identifier("oscimate_soulflame:block/blank_fire_1")) || spriteContents.getId().equals(new Identifier("oscimate_soulflame:block/blank_fire_overlay_1"))) {
-                    boolean isOverlay = spriteContents.getId().equals(new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")) || spriteContents.getId().equals(new Identifier("oscimate_soulflame:block/blank_fire_overlay_1"));
+                if (spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_0")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_1")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_1"))) {
+                    boolean isOverlay = spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_1"));
 
                     ByteBuffer original = MemoryUtil.memByteBuffer((((NativeImageInvoker)(Object)((SpriteContentsInvoker) spriteContents).getImage())).getPointer(), (int) (((NativeImageInvoker)(Object)((SpriteContentsInvoker) spriteContents).getImage())).getSizeBytes());
 
@@ -133,7 +133,7 @@ public class SpriteLoaderMixin {
                         int num = spriteContents.getId().toString().contains("1") ? 1 : 0;
 
                         if (!isOverlay) {
-                            all.add(new SpriteContents((new Identifier("block/fire_"+num+"_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16*32, false, pointer), spriteContents.getMetadata()));
+                            all.add(new SpriteContents((Identifier.of("block/fire_"+num+"_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16*32, false, pointer), spriteContents.getMetadata()));
                         }
                     }
                 }

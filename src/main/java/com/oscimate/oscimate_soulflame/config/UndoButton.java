@@ -17,7 +17,7 @@ public class UndoButton  extends ButtonWidget {
 
     @Override
     public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
-        Sprite UNDO = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/undo")).getSprite();
+        Sprite UNDO = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("oscimate_soulflame:block/undo")).getSprite();
         context.drawSprite(getX() + (getWidth() - UNDO.getContents().getWidth())/2, getY() + (getHeight() - UNDO.getContents().getHeight())/2, 10, UNDO.getContents().getWidth(), UNDO.getContents().getHeight(), UNDO);
     }
 }

@@ -270,7 +270,7 @@ public class ChangeFireColorScreen extends Screen {
         Main.inConfig = false;
 //        Map<Identifier, Identifier> LAYERS_TO_LOADERS = Map.of(
 //                SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE,
-//                new Identifier("blocks")
+//                Identifier.of("blocks")
 //        );
 //
 //        new SpriteAtlasManager(LAYERS_TO_LOADERS, MinecraftClient.getInstance().getTextureManager()).reload(MinecraftClient.getInstance().getResourceManager(), ((BakedModelManagerAccessor)MinecraftClient.getInstance().getBakedModelManager()).getMipmapLevels(), Util.getMainWorkerExecutor());

@@ -14,14 +14,12 @@ import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.model.BakedModelManagerHelper;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.client.rendering.v1.AtlasSourceTypeRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
 import net.fabricmc.fabric.impl.client.rendering.AtlasSourceTypeRegistryImpl;
-import net.fabricmc.fabric.mixin.client.model.loading.ModelLoaderBakerImplMixin;
 import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.world.CustomizeBuffetLevelScreen;
@@ -163,32 +161,16 @@ public class Main implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-
-//        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-//            if (counter == 0) {
-//                if (client.world != null) {
-//                    counter++;
-//                    ARROW_RIGHT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_right")).getSprite();
-//                    ARROW_LEFT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/arrow_left")).getSprite();
-//                    BLANK_FIRE_0 = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_0")).getSprite();
-//                    BLANK_FIRE_0_OVERLAY = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite();
-//                    SOUL_FIRE_1 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_1")).getSprite();
-//                    SOUL_FIRE_0 = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/soul_fire_0")).getSprite();
-//                    UNDO = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("oscimate_soulflame:block/undo")).getSprite();
-//                }
-//            }
-//        });
-
         CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {
             biomeKeyList = registries.get(RegistryKeys.BIOME).getKeys().stream().toList();
             blockTagList = registries.get(RegistryKeys.BLOCK).streamTags().filter(tag -> Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP)).toList().size() > 0).toList();
         });
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
-                if (context.id().getPath().contains("block/fire_side") || context.id().getPath().contains("block/fire_floor") || context.id().getPath().contains("block/fire_up") ) {
-                    return new TestModel(model, Integer.parseInt(context.id().getPath().substring(context.id().getPath().length() - 1)));
+                if (context.resourceId().getPath().contains("block/fire_side") || context.resourceId().getPath().contains("block/fire_floor") || context.resourceId().getPath().contains("block/fire_up") ) {
+                    return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)));
                 }
-                if (context.id().getPath().contains("block/soul_fire_side") || context.id().getPath().contains("block/soul_fire_floor") || context.id().getPath().contains("block/soul_fire_up") ) {
+                if (context.resourceId().getPath().contains("block/soul_fire_side") || context.resourceId().getPath().contains("block/soul_fire_floor") || context.resourceId().getPath().contains("block/soul_fire_up") ) {
                     return new TestierModel(model);
                 }
                 return model;

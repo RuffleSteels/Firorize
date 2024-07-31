@@ -51,7 +51,7 @@ public class ColorizeMath {
                 g.drawImage(img2, 0, 0, null);
 
                 g.dispose();
-                TextureUtil.writeAsPNG(path, new Identifier("oscimate_soulflame:fires/fire"+i+"_"+ Math.abs(colors[0]) + "_" + Math.abs(colors[1])).toUnderscoreSeparatedString(), 0,1, inputImage.getWidth(), inputImage.getHeight());
+                TextureUtil.writeAsPNG(path, Identifier.of("oscimate_soulflame:fires/fire"+i+"_"+ Math.abs(colors[0]) + "_" + Math.abs(colors[1])).toUnderscoreSeparatedString(), 0,1, inputImage.getWidth(), inputImage.getHeight());
 //                ImageIO.write(combined, "png", new File(Paths.get("").toAbsolutePath().toString() + "/config/oscimate_soulflame/fires/fire"+i+"_"+colors[0] + "_" + colors[1] +".png"));
             }
 

@@ -19,7 +19,7 @@ import net.minecraft.util.math.MathHelper;
 @Environment(value= EnvType.CLIENT)
 public class CustomTabWidget
         extends ClickableWidget {
-    private static final ButtonTextures TAB_BUTTON_TEXTURES = new ButtonTextures(new Identifier("widget/tab_selected"), new Identifier("widget/tab"), new Identifier("widget/tab_selected_highlighted"), new Identifier("widget/tab_highlighted"));
+    private static final ButtonTextures TAB_BUTTON_TEXTURES = new ButtonTextures(Identifier.of("widget/tab_selected"), Identifier.of("widget/tab"), Identifier.of("widget/tab_selected_highlighted"), Identifier.of("widget/tab_highlighted"));
     private static final int field_43063 = 3;
     private static final int field_43064 = 1;
     private static final int field_43065 = 1;

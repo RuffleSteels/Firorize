@@ -39,7 +39,7 @@ public class ConfigScreen extends Screen {
     private Screen parent;
     protected static final int windowWidth = 176;
     protected static final int windowHeight = 182;
-    private final Identifier WINDOW = new Identifier("oscimate_soulflame", "textures/gui/info_box.png");
+    private final Identifier WINDOW = Identifier.of("oscimate_soulflame", "textures/gui/info_box.png");
     protected int guiTop, guiLeft;
 
 
