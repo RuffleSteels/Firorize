@@ -170,10 +170,10 @@ public class Main implements ClientModInitializer {
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
                 if (context.topLevelId() == null) {
-                    if (context.topLevelId().id().toString().equals("minecraft:fire")) {
-                        return new TestModel(model, 0);
+                    if (context.resourceId().getPath().contains("block/fire_side") || context.resourceId().getPath().contains("block/fire_floor") || context.resourceId().getPath().contains("block/fire_up") ) {
+                        return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)));
                     }
-                    if (context.topLevelId().id().toString().equals("minecraft:soul_fire")) {
+                    if (context.resourceId().getPath().contains("block/soul_fire_side") || context.resourceId().getPath().contains("block/soul_fire_floor") || context.resourceId().getPath().contains("block/soul_fire_up") ) {
                         return new TestierModel(model);
                     }
                 }
