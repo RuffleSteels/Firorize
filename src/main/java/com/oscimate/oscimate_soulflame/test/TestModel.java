@@ -44,6 +44,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
     BakedModel newModel;
     public TestModel(BakedModel model, int fireNum) {
         this.model = model;
+
         this.fireNum = fireNum;
     }
 
@@ -215,6 +216,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
+        System.out.println("AAAAAAAAAAAAAAA");
         final Block blockUnder;
         if (state.get(FireBlock.NORTH)) {
             blockUnder = blockView.getBlockState(pos.north()).getBlock();

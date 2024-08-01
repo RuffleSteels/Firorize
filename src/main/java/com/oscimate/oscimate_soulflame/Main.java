@@ -25,8 +25,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.world.CustomizeBuffetLevelScreen;
 import net.minecraft.client.network.ClientDynamicRegistryType;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.resource.DefaultClientResourcePackProvider;
 import net.minecraft.client.texture.*;
+import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -167,10 +169,11 @@ public class Main implements ClientModInitializer {
         });
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
-                if (context.resourceId().getPath().contains("block/fire_side") || context.resourceId().getPath().contains("block/fire_floor") || context.resourceId().getPath().contains("block/fire_up") ) {
-                    return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)));
+                if (context.topLevelId() != null && context.topLevelId().id().toString().equals("minecraft:fire")) {
+
+                    return new TestModel(model, 0);
                 }
-                if (context.resourceId().getPath().contains("block/soul_fire_side") || context.resourceId().getPath().contains("block/soul_fire_floor") || context.resourceId().getPath().contains("block/soul_fire_up") ) {
+                if (context.topLevelId() != null && context.topLevelId().id().toString().equals("minecraft:soul_fire")) {
                     return new TestierModel(model);
                 }
                 return model;
