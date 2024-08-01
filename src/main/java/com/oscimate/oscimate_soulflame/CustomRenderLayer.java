@@ -1,6 +1,5 @@
 package com.oscimate.oscimate_soulflame;
 
-import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.RenderLayerAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
