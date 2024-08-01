@@ -100,8 +100,6 @@ class PresetListWidget
         }
 
         curPresetID = entry.languageDefinition;
-        System.out.println(Arrays.toString(Main.CONFIG_MANAGER.getCurrentBlockFireColors().stream().toList().toArray()));
-        System.out.println(Arrays.toString(Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().stream().toList().toArray()));
         Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getRight());
         instance.blockUnderField.setText("");
