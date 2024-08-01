@@ -215,8 +215,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
-        System.out.println("AAAAAAAAAAAAAAA");
+        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();;
         final Block blockUnder;
         if (state.get(FireBlock.NORTH)) {
             blockUnder = blockView.getBlockState(pos.north()).getBlock();

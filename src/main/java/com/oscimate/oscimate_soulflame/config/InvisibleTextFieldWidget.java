@@ -23,7 +23,6 @@ public class InvisibleTextFieldWidget extends TextFieldWidget {
     @Override
     public void setCursor(int cursor, boolean shiftKeyPressed) {
         super.setCursor(cursor, shiftKeyPressed);
-        System.out.println(cursor);
     }
 
     @Override

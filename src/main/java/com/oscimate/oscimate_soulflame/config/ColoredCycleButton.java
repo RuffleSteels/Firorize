@@ -87,7 +87,6 @@ public class ColoredCycleButton extends PressableWidget {
         if (index > 0) {
             removing = true;
             cycle(-1);
-            System.out.println("REMOVED: " + values.get(index+1).getName());
             Main.CONFIG_MANAGER.getCustomColorPresets().remove(values.get(index+1).getName());
             values.remove(index+1);
             Main.CONFIG_MANAGER.save();
