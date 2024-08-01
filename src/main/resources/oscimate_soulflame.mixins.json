@@ -18,7 +18,6 @@
     "fire_overlays.client.InGameOverlayRendererMixin",
     "fire_overlays.client.NativeImageInvoker",
     "fire_overlays.client.OscimateClientPlayNetworkHandler",
-    "fire_overlays.client.RenderLayerAccessor",
     "fire_overlays.client.SpriteContentsInvoker",
     "fire_overlays.client.SpriteLoaderMixin"
   ],
