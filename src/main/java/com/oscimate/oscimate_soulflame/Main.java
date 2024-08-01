@@ -169,12 +169,13 @@ public class Main implements ClientModInitializer {
         });
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
-                if (context.topLevelId() != null && context.topLevelId().id().toString().equals("minecraft:fire")) {
-
-                    return new TestModel(model, 0);
-                }
-                if (context.topLevelId() != null && context.topLevelId().id().toString().equals("minecraft:soul_fire")) {
-                    return new TestierModel(model);
+                if (context.topLevelId() == null) {
+                    if (context.topLevelId().id().toString().equals("minecraft:fire")) {
+                        return new TestModel(model, 0);
+                    }
+                    if (context.topLevelId().id().toString().equals("minecraft:soul_fire")) {
+                        return new TestierModel(model);
+                    }
                 }
                 return model;
             });
