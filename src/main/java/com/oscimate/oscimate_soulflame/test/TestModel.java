@@ -1,7 +1,7 @@
 package com.oscimate.oscimate_soulflame.test;
 
 import com.oscimate.oscimate_soulflame.Main;
-import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.FireBlockInvoker;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
@@ -19,6 +19,7 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
@@ -92,7 +93,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
                             } else if (order == 1) {
                                 if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
                                     ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
-                                    List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
+                                    List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTags::of).toList();
                                     int[] ints = list.get(1).get(tags.get(0).id().toString());
                                     sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_"+fireNum+"_"+Math.abs(ints[0])+"_"+Math.abs(ints[1]))).getSprite();
                                     break;

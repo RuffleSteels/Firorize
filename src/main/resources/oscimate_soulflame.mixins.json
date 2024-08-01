@@ -2,9 +2,8 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.oscimate.oscimate_soulflame.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "fire_overlays.client.BlockTagAccessor",
     "fire_overlays.client.FireBlockInvoker"
   ],
   "client": [
@@ -18,7 +17,6 @@
     "fire_overlays.client.InGameOverlayRendererMixin",
     "fire_overlays.client.NativeImageInvoker",
     "fire_overlays.client.OscimateClientPlayNetworkHandler",
-    "fire_overlays.client.RenderLayerAccessor",
     "fire_overlays.client.SpriteContentsInvoker",
     "fire_overlays.client.SpriteLoaderMixin"
   ],

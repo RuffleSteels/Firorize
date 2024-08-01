@@ -1,7 +1,7 @@
 package com.oscimate.oscimate_soulflame.test;
 
 import com.oscimate.oscimate_soulflame.Main;
-import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.Block;
