@@ -5,5 +5,6 @@ accessible class net/minecraft/client/render/RenderLayer$MultiPhaseParameters
 accessible class net/minecraft/client/render/chunk/ChunkBuilder$BuiltChunk$RebuildTask
 accessible class net/minecraft/client/MinecraftClient$LoadingContext
 
+accessible method net/minecraft/registry/tag/BlockTags of (Ljava/lang/String;)Lnet/minecraft/registry/tag/TagKey;
 accessible method net/minecraft/block/FireBlock isFlammable (Lnet/minecraft/block/BlockState;)Z
 extendable method net/minecraft/client/gui/widget/CyclingButtonWidget <init> (IIIILnet/minecraft/text/Text;Lnet/minecraft/text/Text;ILjava/lang/Object;Lnet/minecraft/client/gui/widget/CyclingButtonWidget$Values;Ljava/util/function/Function;Ljava/util/function/Function;Lnet/minecraft/client/gui/widget/CyclingButtonWidget$UpdateCallback;Lnet/minecraft/client/option/SimpleOption$TooltipFactory;Z)V

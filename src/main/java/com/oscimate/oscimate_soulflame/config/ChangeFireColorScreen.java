@@ -8,7 +8,6 @@ import com.mojang.logging.LogUtils;
 import com.mojang.serialization.MapCodec;
 import com.oscimate.oscimate_soulflame.*;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BakedModelManagerAccessor;
-import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.FireBlockInvoker;
 import com.sun.jna.platform.KeyboardUtils;
 import com.sun.jna.platform.win32.WinUser;
@@ -316,7 +315,7 @@ public class ChangeFireColorScreen extends Screen {
                     if (currentSearchButton == 0) {
                         allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(entry.languageDefinition)));
                     } else if (currentSearchButton == 1) {
-                        TagKey<Block> tag = BlockTagAccessor.callOf(entry.languageDefinition);
+                        TagKey<Block> tag = BlockTags.of(entry.languageDefinition);
                         blockTags.add(tag);
                         List<Block> newBlocks = Registries.BLOCK.getEntryList(tag).get().stream()
                                 .map(entry2 -> entry2.value())
@@ -724,7 +723,7 @@ public class ChangeFireColorScreen extends Screen {
                     }
                 });
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).keyList().forEach(string -> {
-                    if (Main.blockTagList.contains(BlockTagAccessor.callOf(string))) {
+                    if (Main.blockTagList.contains(BlockTags.of(string))) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         first.add(blockEntry);
                         blockEntry.isCustomized = true;
@@ -841,7 +840,7 @@ public class ChangeFireColorScreen extends Screen {
                 updateBlockUnder(entry.languageDefinition);
             } else if (currentSearchButton == 1) {
 
-                TagKey<Block> tag = BlockTagAccessor.callOf(entry.languageDefinition);
+                TagKey<Block> tag = BlockTags.of(entry.languageDefinition);
                 blockTags = new ArrayList<>();
                 blockTags.add(tag);
                 allBlockUnders = Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).toList();
@@ -1011,7 +1010,7 @@ public class ChangeFireColorScreen extends Screen {
                     allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(this.languageDefinition)));
                 } else if (currentSearchButton == 1) {
                     if (clear) blockTags.clear();
-                    TagKey<Block> tag = BlockTagAccessor.callOf(this.languageDefinition);
+                    TagKey<Block> tag = BlockTags.of(this.languageDefinition);
                     blockTags.add(tag);
                     List<Block> newBlocks = Registries.BLOCK.getEntryList(tag).get().stream()
                             .map(entry2 -> entry2.value())

@@ -2,7 +2,7 @@ package com.oscimate.oscimate_soulflame.config;
 
 import com.oscimate.oscimate_soulflame.Colors;
 import com.oscimate.oscimate_soulflame.Main;
-import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;

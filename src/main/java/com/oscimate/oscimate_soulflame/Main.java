@@ -2,7 +2,7 @@ package com.oscimate.oscimate_soulflame;
 
 import com.google.common.base.Suppliers;
 import com.oscimate.oscimate_soulflame.config.ConfigManager;
-import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.BlockTagAccessor;
+
 import com.oscimate.oscimate_soulflame.mixin.fire_overlays.client.FireBlockInvoker;
 import com.oscimate.oscimate_soulflame.test.TestModel;
 import com.oscimate.oscimate_soulflame.test.TestierModel;
@@ -123,7 +123,7 @@ public class Main implements ClientModInitializer {
 
                                     if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
                                         ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
-                                        List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTagAccessor::callOf).toList();
+                                        List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTags::of).toList();
 
                                         ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(1).get(tags.get(0).id().toString()).clone());
                                         break;
