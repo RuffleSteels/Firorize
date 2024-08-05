@@ -17,6 +17,7 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -41,7 +42,7 @@ public class ColoredCycleButton extends PressableWidget {
         this.instance = instance;
         this.index = 0;
         values = new ArrayList<Colors>();
-        values.add(new Colors("CUSTOM", new int[]{Color.WHITE.getRGB(), Color.WHITE.getRGB()}));
+        values.add(new Colors("CUSTOM", Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()));
 //        values.add(new Colors("GREEN", new int[]{Color.GREEN.getRGB(), Color.GREEN.getRGB()}));
 //        values.add(new Colors("BLUE", new int[]{Color.BLUE.getRGB(), Color.BLUE.getRGB()}));
         for (Map.Entry<String, int[]> entry : Main.CONFIG_MANAGER.getCustomColorPresets().entrySet()) {
@@ -143,7 +144,7 @@ public class ColoredCycleButton extends PressableWidget {
             }
             removing = false;
             if (this.index == 0 && !isWhite) {
-                ChangeFireColorScreen.pickedColor = instance.tempColor == null ? new Color[]{instance.baseColor, instance.baseColor} : instance.tempColor;
+                ChangeFireColorScreen.pickedColor = instance.tempColor == null ? new Color[]{instance.baseColor[0], instance.baseColor[1]} : instance.tempColor;
             } else {
                 isWhite = false;
                 ChangeFireColorScreen.pickedColor = new Color[]{new Color(this.values.get(index).getColors()[0]), new Color(this.values.get(index).getColors()[1])};

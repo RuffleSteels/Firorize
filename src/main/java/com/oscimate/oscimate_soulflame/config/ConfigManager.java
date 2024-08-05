@@ -1,7 +1,9 @@
 package com.oscimate.oscimate_soulflame.config;
 
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.oscimate.oscimate_soulflame.ColorizeMath;
 import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
@@ -11,23 +13,21 @@ import net.minecraft.block.Block;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
 import org.apache.commons.collections4.map.ListOrderedMap;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ConfigManager {
-    public long currentFireHeightSlider;
+    public long currentFireHeightSlider = -1;
 
-    public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> getFireColorPresets() {
+    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
         return fireColorPresets;
     }
     public HashMap<String, int[]> customColorPresets;
@@ -50,17 +50,17 @@ public class ConfigManager {
 
     public String currentPreset;
 
-    public void setFireColorPresets(HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> fireColorPresets) {
+    public void setFireColorPresets(HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets) {
         this.fireColorPresets = fireColorPresets;
     }
 
-    public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> fireColorPresets;
+    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets;
 
-    public void setCurrentBlockFireColors(ArrayList<ListOrderedMap<String, int[]>> blockFireColors) {
+    public void setCurrentBlockFireColors(Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors) {
         this.blockFireColors = blockFireColors;
     }
 
-    public ArrayList<ListOrderedMap<String, int[]>> blockFireColors;
+    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors;
 
     public ArrayList<Integer> getPriorityOrder() {
         return priorityOrder;
@@ -72,7 +72,7 @@ public class ConfigManager {
 
     public ArrayList<Integer> priorityOrder;
 
-    public ArrayList<ListOrderedMap<String, int[]>> getCurrentBlockFireColors() {
+    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColors() {
         return blockFireColors;
     }
 
@@ -83,6 +83,7 @@ public class ConfigManager {
         return this.currentFireHeightSlider;
     }
     public void setCurrentFireHeightSlider(long fireHeightSlider) {
+        System.out.println("SET TO " + fireHeightSlider);
         this.currentFireHeightSlider =  fireHeightSlider;
     }
     public Boolean fileExists() {
@@ -98,18 +99,34 @@ public class ConfigManager {
                 System.out.println(e);
             }
         }
+        System.out.println(jsonOutput.getFireHeightSlider());
         if(jsonOutput.getFireHeightSlider() > 100 || jsonOutput.getFireHeightSlider() < 0) {
             setCurrentFireHeightSlider(100);
             save();
         } else {
             setCurrentFireHeightSlider(jsonOutput.getFireHeightSlider());
         }
-        if (jsonOutput.getCurrentBlockFireColours() == null || jsonOutput.getCurrentBlockFireColours().size() == 0) {
+        if(jsonOutput.getCustomColorPresets() == null || jsonOutput.getCustomColorPresets().size() == 0) {
+            HashMap<String, int[]> map = new HashMap<>();
+            map.put("RED", new int[]{-10149847,-7655374});
+            map.put("ORANGE", new int[]{-6267112,-4682209});
+            map.put("GRAY", new int[]{-12569022,-11185318});
+            map.put("BLUE", new int[]{-15372685,-13404045});
+            map.put("YELLOW", new int[]{-6584292,-5068772});
+            map.put("PURPLE", new int[]{-12446675,-10870735});
+
+            setCustomColorPresets(map);
+            save();
+        } else {
+            setCustomColorPresets(jsonOutput.getCustomColorPresets());
+        }
+        if (jsonOutput.getCurrentBlockFireColours() == null || jsonOutput.getCurrentBlockFireColours().getLeft().isEmpty()) {
             ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
+
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
-            setCurrentBlockFireColors(temp);
+            setCurrentBlockFireColors(Pair.of(temp, new int[]{-6267112,-4682209}));
             save();
         } else {
             setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
@@ -126,7 +143,10 @@ public class ConfigManager {
         }
         if (jsonOutput.getFireColorPresets() == null || jsonOutput.getFireColorPresets().size() == 0) {
             ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
-            temp.add(new ListOrderedMap<String, int[]>());
+            ListOrderedMap<String, int[]> soulStuff = new ListOrderedMap<>();
+            soulStuff.put("minecraft:soul_sand", new int[]{-15372685,-13404045});
+            soulStuff.put("minecraft:soul_soil", new int[]{-15372685,-13404045});
+            temp.add(soulStuff);
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
             ArrayList<Integer> temp2 = new ArrayList<>();
@@ -134,8 +154,8 @@ public class ConfigManager {
             temp2.add(1);
             temp2.add(2);
 
-            HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> map = new HashMap<>();
-            Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>> mapp = new Pair<>(temp, temp2);
+            HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> map = new HashMap<>();
+            Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp = Pair.of(temp, new int[]{-6267112,-4682209});
 
             ListOrderedMap<String, int[]> test = new ListOrderedMap<>();
             test.put("minecraft:crimson_forest", new int[]{-10417918,-7653869});
@@ -152,10 +172,10 @@ public class ConfigManager {
             eeka.add(new ListOrderedMap<String, int[]>());
             eeka.add(new ListOrderedMap<String, int[]>());
             eeka.add(test);
-            Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>> mapp2 = new Pair<>(eeka, temp22);
+            Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp2 = Pair.of(eeka,  new int[]{-6267112,-4682209});
 
-            map.put("Initial", mapp);
-            map.put("Nether Biomes", mapp2);
+            map.put("Initial", Pair.of(mapp, temp22));
+            map.put("Nether Biomes", Pair.of(mapp2, temp22));
 
             setFireColorPresets(map);
             save();
@@ -167,19 +187,6 @@ public class ConfigManager {
             save();
         } else {
             setCurrentPreset(jsonOutput.getCurrentPreset());
-        }
-        if(jsonOutput.getCustomColorPresets() == null || jsonOutput.getCustomColorPresets().size() == 0) {
-            HashMap<String, int[]> map = new HashMap<>();
-            map.put("RED", new int[]{-10149847,-7655374});
-            map.put("GRAY", new int[]{-12569022,-11185318});
-            map.put("BLUE", new int[]{-15372685,-13404045});
-            map.put("YELLOW", new int[]{-6584292,-5068772});
-            map.put("PURPLE", new int[]{-12446675,-10870735});
-
-            setCustomColorPresets(map);
-            save();
-        } else {
-            setCustomColorPresets(jsonOutput.getCustomColorPresets());
         }
     }
 

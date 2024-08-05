@@ -1,24 +1,20 @@
 package com.oscimate.oscimate_soulflame.config;
 
-import com.oscimate.oscimate_soulflame.FireLogic;
 import com.oscimate.oscimate_soulflame.Main;
 
-import net.minecraft.block.Block;
-import net.minecraft.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class FireLogicConfig {
 
     public long fireHeightSlider = Main.CONFIG_MANAGER.getCurrentFireHeightSlider();
-    public ArrayList<ListOrderedMap<String, int[]>> blockFireColors = Main.CONFIG_MANAGER.getCurrentBlockFireColors();
+    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors = Main.CONFIG_MANAGER.getCurrentBlockFireColors();
 
-    public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> getFireColorPresets() {
+    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
         return fireColorPresets;
     }
 
@@ -27,7 +23,6 @@ public class FireLogicConfig {
     public HashMap<String, int[]> getCustomColorPresets() {
         return customColorPresets;
     }
-
     public void setCustomColorPresets(HashMap<String, int[]> customColorPresets) {
         this.customColorPresets = customColorPresets;
     }
@@ -42,11 +37,11 @@ public class FireLogicConfig {
 
     public String currentPreset = Main.CONFIG_MANAGER.getCurrentPreset();
 
-    public void setFireColorPresets(HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> fireColorPresets) {
+    public void setFireColorPresets(HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets) {
         this.fireColorPresets = fireColorPresets;
     }
 
-    public HashMap<String, Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>>> fireColorPresets = Main.CONFIG_MANAGER.getFireColorPresets();
+    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets = Main.CONFIG_MANAGER.getFireColorPresets();
 
     public ArrayList<Integer> getPriorityOrder() {
         return priorityOrder;
@@ -62,5 +57,5 @@ public class FireLogicConfig {
         return fireHeightSlider;
     }
 
-    public ArrayList<ListOrderedMap<String, int[]>> getCurrentBlockFireColours() {return blockFireColors;}
+    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColours() {return blockFireColors;}
 }

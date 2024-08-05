@@ -19,7 +19,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.MultiNoiseBiomeSourceParameterList;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -65,33 +65,47 @@ class PresetListWidget
 
     private boolean isConstruct = false;
 
+    public void addProfile(String presetName, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
+        PresetEntry entry = new PresetEntry(presetName);
+        addEntry(entry);
+
+        Main.CONFIG_MANAGER.getFireColorPresets().put(presetName, newProfile);
+
+        setSelected(entry);
+    }
+
     public void addPreset() {
-        if (this.children().stream().map(entry -> entry.languageDefinition).noneMatch(string -> string.contains(" ") || string.contains("'") || string.contains("\"") || string.equals(instance.presetNameField.getText()))) {
-            PresetEntry entry = new PresetEntry(instance.presetNameField.getText());
-            this.addEntry(entry);
-
-
-
-            ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
-            temp.add(new ListOrderedMap<String, int[]>());
-            temp.add(new ListOrderedMap<String, int[]>());
-            temp.add(new ListOrderedMap<String, int[]>());
-            ArrayList<Integer> temp2 = new ArrayList<>();
-            temp2.add(0);
-            temp2.add(1);
-            temp2.add(2);
-
-            Pair<ArrayList<ListOrderedMap<String, int[]>>, ArrayList<Integer>> mapp = new Pair<>(temp, temp2);
-
-            Main.CONFIG_MANAGER.getFireColorPresets().put(entry.languageDefinition, mapp);
-
-            setSelected(entry);
-        }
+        instance.isPresetAdd = true;
+        client.setScreen(new AddProfileScreen(instance));
+//        if (this.children().stream().map(entry -> entry.languageDefinition).noneMatch(string -> string.contains(" ") || string.contains("'") || string.contains("\"") || string.equals(instance.presetNameField.getText()))) {
+//            PresetEntry entry = new PresetEntry(instance.presetNameField.getText());
+//            this.addEntry(entry);
+//
+//
+//
+//            ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
+//            ListOrderedMap<String, int[]> soulStuff = new ListOrderedMap<>();
+//            soulStuff.put("minecraft:soul_sand", new int[]{-15372685,-13404045});
+//            soulStuff.put("minecraft:soul_soil", new int[]{-15372685,-13404045});
+//            temp.add(soulStuff);
+//            temp.add(new ListOrderedMap<String, int[]>());
+//            temp.add(new ListOrderedMap<String, int[]>());
+//            ArrayList<Integer> temp2 = new ArrayList<>();
+//            temp2.add(0);
+//            temp2.add(1);
+//            temp2.add(2);
+//
+//            Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp = Pair.of(temp, new int[]{-6267112,-4682209});
+//
+//            Main.CONFIG_MANAGER.getFireColorPresets().put(entry.languageDefinition, Pair.of(mapp, temp2));
+//
+//            setSelected(entry);
+//        }
     }
 
     @Override
     public void setSelected(@Nullable PresetListWidget.PresetEntry entry) {
-
+        System.out.println(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0] + "A");
         if (!entry.equals(getSelectedOrNull())) {
             instance.hasRedo = false;
             instance.redoButton.active = false;
@@ -100,7 +114,9 @@ class PresetListWidget
         }
 
         curPresetID = entry.languageDefinition;
-        Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft());
+        int[] list = Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().getRight();
+        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, list.length);
+        Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().getLeft());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getRight());
         instance.blockUnderField.setText("");
         instance.input = instance.blockUnderField.getText();
@@ -117,12 +133,13 @@ class PresetListWidget
                 instance.searchOptions[0].active = false;
             }
         }
+        System.out.println(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]+"B");
         instance.searchScreenListWidget.setSelected(instance.searchScreenListWidget.children().get(0));
         isConstruct = false;
         instance.hasRedo = false;
         instance.redoButton.active = false;
         instance.cyclicalPresets.setIndex(0);
-
+        System.out.println(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]+"C");
 
         super.setSelected(entry);
     }
@@ -154,7 +171,7 @@ class PresetListWidget
         super.renderWidget(context, mouseX, mouseY, delta);
         context.getMatrices().push();
         context.getMatrices().scale(1.5f, 1.5f, 1.5f);
-        context.drawTextWithShadow(textRenderer, Text.literal("Presets"), getX() - 14, (getY()-125), Color.WHITE.getRGB());
+        context.drawTextWithShadow(textRenderer, Text.literal("Profiles"), getX() - 14, (getY()-125), Color.WHITE.getRGB());
         context.getMatrices().pop();
     }
 

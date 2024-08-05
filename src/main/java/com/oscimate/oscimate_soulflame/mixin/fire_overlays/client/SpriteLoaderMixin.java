@@ -23,9 +23,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mixin(SpriteLoader.class)
 public class SpriteLoaderMixin {
@@ -52,17 +54,35 @@ public class SpriteLoaderMixin {
     @Inject(method = "stitch", at = @At("HEAD"))
     private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
         if (id.equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)) {
-            List<int[]> ints = Main.CONFIG_MANAGER.getCurrentBlockFireColors().stream()
-                    .flatMap(map -> map.values().stream())
-                    .distinct()
-                    .collect(Collectors.toMap(
-                            arr -> arr[0] + "-" + arr[1],
-                            arr -> arr,
-                            (existing, replacement) -> existing
-                    ))
-                    .values()
-                    .stream()
-                    .toList();
+//            List<int[]> ints = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
+//                    .flatMap(map -> map.values().stream())
+//                    .distinct()
+//                    .collect(Collectors.toMap(
+//                            arr -> arr[0] + "-" + arr[1],
+//                            arr -> arr,
+//                            (existing, replacement) -> existing
+//                    ))
+//                    .values()
+//                    .stream()
+//                    .toList();
+
+            List<int[]> ints = Stream.concat(
+                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
+                            .flatMap(map -> map.values().stream())
+                            .distinct()
+                            .collect(Collectors.toMap(
+                                    arr -> arr[0] + "-" + arr[1],
+                                    arr -> arr,
+                                    (existing, replacement) -> existing
+                            ))
+                            .values()
+                            .stream(),
+                    Stream.of(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight())
+                            .filter(newArr -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
+                                    .flatMap(map -> map.values().stream())
+                                    .distinct()
+                                    .noneMatch(arr -> Arrays.equals(arr, newArr)))
+            ).toList();
 
             ArrayList<Long> pointers = new ArrayList<>();
 

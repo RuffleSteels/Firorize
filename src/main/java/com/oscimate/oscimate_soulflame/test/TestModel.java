@@ -42,11 +42,14 @@ import static com.oscimate.oscimate_soulflame.Main.CONFIG_MANAGER;
 public class TestModel implements FabricBakedModel, BakedModel {
     BakedModel model;
     int fireNum;
+    boolean soulFire;
+    String endBit;
     BakedModel newModel;
-    public TestModel(BakedModel model, int fireNum) {
+    public TestModel(BakedModel model, int fireNum, boolean soulFire, String endBit) {
         this.model = model;
-
+        this.soulFire = soulFire;
         this.fireNum = fireNum;
+        this.endBit = endBit;
     }
 
     @Override
@@ -54,7 +57,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
         return Main.inConfig;
     }
 
-    private BakedModel editModel(BlockView blockView, BlockPos pos) {
+    private BakedModel editModel(BlockView blockView, BlockPos pos, boolean isBaseFire) {
         return new BakedModel() {
             @Override
             public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
@@ -64,49 +67,65 @@ public class TestModel implements FabricBakedModel, BakedModel {
                         tempList.add(g, beforeTempList.get(g));
                     }
 
-                    Sprite sprite = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("oscimate_soulflame:block/blank_fire_0")).getSprite();
-                    if (!Main.inConfig) {
-                        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();
-                        final Block blockUnder;
-                        if (state.get(FireBlock.NORTH)) {
-                            blockUnder = blockView.getBlockState(pos.north()).getBlock();
-                        } else if (state.get(FireBlock.EAST)) {
-                            blockUnder = blockView.getBlockState(pos.east()).getBlock();
-                        } else if (state.get(FireBlock.SOUTH)) {
-                            blockUnder = blockView.getBlockState(pos.south()).getBlock();
-                        } else if (state.get(FireBlock.WEST)) {
-                            blockUnder = blockView.getBlockState(pos.west()).getBlock();
-                        } else if (state.get(FireBlock.UP)) {
-                            blockUnder = blockView.getBlockState(pos.up()).getBlock();
-                        } else {
-                            blockUnder = blockView.getBlockState(pos.down()).getBlock();
-                        }
+                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("oscimate_soulflame:block/blank_fire_0")).getSprite();
+                    if (!isBaseFire) {
+                        if (!Main.inConfig) {
+                            ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
+                            final Block blockUnder;
+                            if (!soulFire) {
+                                if (state.get(FireBlock.NORTH)) {
+                                    blockUnder = blockView.getBlockState(pos.north()).getBlock();
+                                } else if (state.get(FireBlock.EAST)) {
+                                    blockUnder = blockView.getBlockState(pos.east()).getBlock();
+                                } else if (state.get(FireBlock.SOUTH)) {
+                                    blockUnder = blockView.getBlockState(pos.south()).getBlock();
+                                } else if (state.get(FireBlock.WEST)) {
+                                    blockUnder = blockView.getBlockState(pos.west()).getBlock();
+                                } else if (state.get(FireBlock.UP)) {
+                                    blockUnder = blockView.getBlockState(pos.up()).getBlock();
+                                } else {
+                                    blockUnder = blockView.getBlockState(pos.down()).getBlock();
+                                }
+                            } else {
+                                blockUnder = blockView.getBlockState(pos.down()).getBlock();
+                            }
 
-                        for (int i = 0; i < 3; i++) {
-                            int order = Main.CONFIG_MANAGER.getPriorityOrder().get(i);
+                            if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
+                                    (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
+                                    list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
+                                for (int i = 0; i < 3; i++) {
+                                    int order = Main.CONFIG_MANAGER.getPriorityOrder().get(i);
 
-                            if (order == 0) {
-                                if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
-                                    int[] ints = list.get(0).get(Registries.BLOCK.getId(blockUnder).toString());
-                                    sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_"+fireNum+"_"+Math.abs(ints[0])+"_"+Math.abs(ints[1]))).getSprite();
-                                    break;
+                                    if (order == 0) {
+                                        if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
+                                            int[] ints = list.get(0).get(Registries.BLOCK.getId(blockUnder).toString());
+                                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
+                                            break;
+                                        }
+                                    } else if (order == 1) {
+                                        if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString()))) {
+                                            ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1);
+                                            List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get()).toList();
+                                            int[] ints = list.get(1).get(tags.get(0).id().toString());
+                                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
+                                            break;
+                                        }
+                                    } else if (order == 2) {
+                                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) {
+                                            int[] ints = list.get(2).get(String.valueOf(blockView.getBiomeFabric(pos).getKey().get().getValue().toString()));
+                                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
+                                            break;
+                                        }
+                                    }
                                 }
-                            } else if (order == 1) {
-                                if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString()))) {
-                                    ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1);
-                                    List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(BlockTags::of).toList();
-                                    int[] ints = list.get(1).get(tags.get(0).id().toString());
-                                    sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_"+fireNum+"_"+Math.abs(ints[0])+"_"+Math.abs(ints[1]))).getSprite();
-                                    break;
-                                }
-                            } else if (order == 2) {
-                                if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) {
-                                    int[] ints = list.get(2).get(String.valueOf(blockView.getBiomeFabric(pos).getKey().get().getValue().toString()));
-                                    sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_"+fireNum+"_"+Math.abs(ints[0])+"_"+Math.abs(ints[1]))).getSprite();
-                                    break;
-                                }
+                            } else {
+                                int[] ints = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+                                sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
                             }
                         }
+                    } else {
+                        int[] ints = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+                        sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
                     }
 
                     for (int n = 0; n < tempList.size(); n++) {
@@ -176,7 +195,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
-        return editModel(EmptyBlockView.INSTANCE, BlockPos.ORIGIN).getQuads(state, face, random);
+        return editModel(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, false).getQuads(state, face, random);
     }
 
     @Override
@@ -216,27 +235,41 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors();;
-        final Block blockUnder;
-        if (state.get(FireBlock.NORTH)) {
-            blockUnder = blockView.getBlockState(pos.north()).getBlock();
-        } else if (state.get(FireBlock.EAST)) {
-            blockUnder = blockView.getBlockState(pos.east()).getBlock();
-        } else if (state.get(FireBlock.SOUTH)) {
-            blockUnder = blockView.getBlockState(pos.south()).getBlock();
-        } else if (state.get(FireBlock.WEST)) {
-            blockUnder = blockView.getBlockState(pos.west()).getBlock();
-        } else if (state.get(FireBlock.UP)) {
-            blockUnder = blockView.getBlockState(pos.up()).getBlock();
+        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
+        if (soulFire) {
+            if (Main.inConfig) editModel(blockView, pos, false).emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            else {
+                Block blockUnder = blockView.getBlockState(pos.down()).getBlock();
+                if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
+                        (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
+                        list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
+                    editModel(blockView, pos, false).emitBlockQuads(blockView, state, pos, randomSupplier, context);
+                } else {
+                    editModel(blockView, pos, true).emitBlockQuads(blockView, state, pos, randomSupplier, context);
+                }
+            }
         } else {
-            blockUnder = blockView.getBlockState(pos.down()).getBlock();
-        }
-        if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(1).containsKey(tag.id().toString())) ||
-                (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
-                list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
-            editModel(blockView, pos).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-        } else {
-            model.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            final Block blockUnder;
+            if (state.get(FireBlock.NORTH)) {
+                blockUnder = blockView.getBlockState(pos.north()).getBlock();
+            } else if (state.get(FireBlock.EAST)) {
+                blockUnder = blockView.getBlockState(pos.east()).getBlock();
+            } else if (state.get(FireBlock.SOUTH)) {
+                blockUnder = blockView.getBlockState(pos.south()).getBlock();
+            } else if (state.get(FireBlock.WEST)) {
+                blockUnder = blockView.getBlockState(pos.west()).getBlock();
+            } else if (state.get(FireBlock.UP)) {
+                blockUnder = blockView.getBlockState(pos.up()).getBlock();
+            } else {
+                blockUnder = blockView.getBlockState(pos.down()).getBlock();
+            }
+//            if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
+//                    (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getLeft().get().getRight().toString())) ||
+//                    list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
+                editModel(blockView, pos, false).emitBlockQuads(blockView, state, pos, randomSupplier, context);
+//            } else {
+//                model.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+//            }
         }
     }
 }
