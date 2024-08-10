@@ -32,6 +32,9 @@ public class ChangeFireHeightScreen extends Screen {
         this.parent = parent;
     }
     public void onClose() {
+        int e = client.getWindow().calculateScaleFactor(client.options.getGuiScale().getValue(), client.forcesUnicodeFont());
+        client.getWindow().setScaleFactor((double)e);
+        resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
         Main.CONFIG_MANAGER.save();
         client.setScreen(parent);
     }
@@ -42,6 +45,24 @@ public class ChangeFireHeightScreen extends Screen {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + windowHeight/2 + 20, 200, 20).build());
         super.init();
     }
+    @Override
+    public void close() {
+        onClose();
+    }
+    @Override
+    public void resize(MinecraftClient client, int width, int height) {
+        int e = client.getWindow().calculateScaleFactor(4, client.forcesUnicodeFont());
+        client.getWindow().setScaleFactor((double)e);
+        super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+    }
+
+//    @Override
+//    public void removed() {
+//        int e = client.getWindow().calculateScaleFactor(client.options.getGuiScale().getValue(), client.forcesUnicodeFont());
+//        client.getWindow().setScaleFactor((double)e);
+//        resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+//        super.removed();
+//    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {

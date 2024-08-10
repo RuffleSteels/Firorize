@@ -27,7 +27,7 @@ import java.util.*;
 public class ConfigManager {
     public long currentFireHeightSlider = -1;
 
-    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
+    public HashMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
         return fireColorPresets;
     }
     public HashMap<String, int[]> customColorPresets;
@@ -50,17 +50,17 @@ public class ConfigManager {
 
     public String currentPreset;
 
-    public void setFireColorPresets(HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets) {
+    public void setFireColorPresets(HashMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets) {
         this.fireColorPresets = fireColorPresets;
     }
 
-    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets;
+    public HashMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets;
 
-    public void setCurrentBlockFireColors(Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors) {
+    public void setCurrentBlockFireColors(KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors) {
         this.blockFireColors = blockFireColors;
     }
 
-    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors;
+    public KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors;
 
     public ArrayList<Integer> getPriorityOrder() {
         return priorityOrder;
@@ -72,7 +72,7 @@ public class ConfigManager {
 
     public ArrayList<Integer> priorityOrder;
 
-    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColors() {
+    public KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColors() {
         return blockFireColors;
     }
 
@@ -126,7 +126,7 @@ public class ConfigManager {
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
-            setCurrentBlockFireColors(Pair.of(temp, new int[]{-6267112,-4682209}));
+            setCurrentBlockFireColors(KeyValuePair.of(temp, new int[]{-6267112,-4682209}));
             save();
         } else {
             setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
@@ -154,8 +154,8 @@ public class ConfigManager {
             temp2.add(1);
             temp2.add(2);
 
-            HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> map = new HashMap<>();
-            Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp = Pair.of(temp, new int[]{-6267112,-4682209});
+            HashMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> map = new HashMap<>();
+            KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp = KeyValuePair.of(temp, new int[]{-6267112,-4682209});
 
             ListOrderedMap<String, int[]> test = new ListOrderedMap<>();
             test.put("minecraft:crimson_forest", new int[]{-10417918,-7653869});
@@ -172,10 +172,10 @@ public class ConfigManager {
             eeka.add(new ListOrderedMap<String, int[]>());
             eeka.add(new ListOrderedMap<String, int[]>());
             eeka.add(test);
-            Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp2 = Pair.of(eeka,  new int[]{-6267112,-4682209});
+            KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp2 = KeyValuePair.of(eeka,  new int[]{-6267112,-4682209});
 
-            map.put("Initial", Pair.of(mapp, temp22));
-            map.put("Nether Biomes", Pair.of(mapp2, temp22));
+            map.put("Initial", KeyValuePair.of(mapp, temp22));
+            map.put("Nether Biomes", KeyValuePair.of(mapp2, temp22));
 
             setFireColorPresets(map);
             save();

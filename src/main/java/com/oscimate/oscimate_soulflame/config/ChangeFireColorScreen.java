@@ -88,6 +88,7 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -142,6 +143,12 @@ public class ChangeFireColorScreen extends Screen {
         this.parent = parent;
     }
     public void onClose() {
+        Main.inConfig = false;
+
+        if (!isPresetAdd) MinecraftClient.getInstance().reloadResources();
+        int e = client.getWindow().calculateScaleFactor(client.options.getGuiScale().getValue(), client.forcesUnicodeFont());
+        client.getWindow().setScaleFactor((double)e);
+
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
         Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
@@ -199,9 +206,10 @@ public class ChangeFireColorScreen extends Screen {
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
     public ButtonWidget shareProfileButton;
 
+
+
     @Override
     protected void init() {
-        System.out.println(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]);
         Main.inConfig = true;
 
         invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.textRenderer, wheelCoords[0] + 50 + 20, hexBoxCoords[1],wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, ScreenTexts.DONE);
@@ -239,7 +247,7 @@ public class ChangeFireColorScreen extends Screen {
         updateCursor(this.hexCode);
 
         redoButton.active = false;
-        overlayToggles[0] = new ButtonWidget.Builder(Text.literal("Base"), button -> toggle(false)).dimensions(width/2 - (3*100 + 3*15), height/2-10, 100, 20).build();
+        overlayToggles[0] = new ButtonWidget.Builder(Text.literal("Base"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
         overlayToggles[1]  = new ButtonWidget.Builder(Text.literal("Overlay"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
 
         searchOptions[0] = new MoveableButton(this, this.textRenderer, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Blocks"),  0);
@@ -269,6 +277,11 @@ public class ChangeFireColorScreen extends Screen {
             this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
         }
 
+        shareProfileButton.setTooltip(Tooltip.of(Text.literal("Click to copy a code to share this current fire profile with friends")));
+        shareProfileButton.setTooltipDelay(Duration.ofSeconds(1));
+        addButton.setTooltip(Tooltip.of(Text.literal("Click to create a new fire profile")));
+        addButton.setTooltipDelay(Duration.ofSeconds(1));
+
         toggle(true);
 
         searchScreenListWidget.setSelected(searchScreenListWidget.children().get(0));
@@ -291,7 +304,7 @@ public class ChangeFireColorScreen extends Screen {
 
     public boolean isPresetAdd = false;
 
-    public static String serializeToString(Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> pair) throws IOException {
+    public static String serializeToString(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> pair) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(baos)) {
             oos.writeObject(pair);
@@ -301,11 +314,19 @@ public class ChangeFireColorScreen extends Screen {
     }
 
 
+//    @Override
+//    public void resize(MinecraftClient client, int width, int height) {
+//        int e = client.getWindow().calculateScaleFactor(4, client.forcesUnicodeFont());
+//        client.getWindow().setScaleFactor((double)e);
+//        super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+//    }
+
+
 
     private void saveProfile() {
 
         try {
-            MinecraftClient.getInstance().keyboard.setClipboard(serializeToString(Pair.of(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getPriorityOrder())));
+            MinecraftClient.getInstance().keyboard.setClipboard(serializeToString(KeyValuePair.of(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getPriorityOrder())));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -317,11 +338,24 @@ public class ChangeFireColorScreen extends Screen {
     public void removed() {
         Main.inConfig = false;
 
-        if (!isPresetAdd) MinecraftClient.getInstance().reloadResources();
-
+//        if (!isPresetAdd) MinecraftClient.getInstance().reloadResources();
+//        int e = client.getWindow().calculateScaleFactor(client.options.getGuiScale().getValue(), client.forcesUnicodeFont());
+//        client.getWindow().setScaleFactor((double)e);
+//        resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
         super.removed();
     }
 
+    @Override
+    public void close() {
+        onClose();
+    }
+
+    @Override
+    public void resize(MinecraftClient client, int width, int height) {
+        int e = client.getWindow().calculateScaleFactor(4, client.forcesUnicodeFont());
+        client.getWindow().setScaleFactor((double)e);
+        super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+    }
     private int currentSearchButton = 0;
 
     public void changeSearchOption(int buttonNum) {
@@ -587,7 +621,12 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+//        int e = client.getWindow().calculateScaleFactor(4, client.forcesUnicodeFont());
+//        client.getWindow().setScaleFactor((double)e);
+//        resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
         this.renderBackground(context, mouseX, mouseY, delta);
+        context.getMatrices().push();
+
         super.render(context, mouseX, mouseY, delta);
 
         context.getMatrices().push();
@@ -747,7 +786,7 @@ public class ChangeFireColorScreen extends Screen {
         if (tooltipTimer > 0) {
             context.drawTooltip(this.textRenderer, Text.literal("Profile code copied to clipboard"), shareProfileButton.getX() - 100, shareProfileButton.getY() - 10);
         }
-
+        context.getMatrices().pop();
     }
 
 

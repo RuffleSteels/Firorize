@@ -65,7 +65,7 @@ class PresetListWidget
 
     private boolean isConstruct = false;
 
-    public void addProfile(String presetName, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
+    public void addProfile(String presetName, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
         PresetEntry entry = new PresetEntry(presetName);
         addEntry(entry);
 

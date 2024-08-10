@@ -71,9 +71,9 @@ public class MoveableButton extends ButtonWidget {
 
         context.drawSprite(x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), 10,ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight(), ARROW_RIGHT);
         context.drawSprite(x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), 10,ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight(), ARROW_LEFT);
-        if (hovered && MinecraftClient.getInstance().world == null && index != 0) {
-            context.drawTooltip(textRenderer, Text.literal("You can only access biomes and block tags once loaded into a world!"), this.getX() + 30, this.getY());
-        }
+//        if (hovered && MinecraftClient.getInstance().world == null && index != 0) {
+//            context.drawTooltip(textRenderer, Text.literal("You can only access biomes and block tags once loaded into a world!"), this.getX() + 30, this.getY());
+//        }
     }
 
     @Override

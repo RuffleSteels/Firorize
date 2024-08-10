@@ -12,9 +12,9 @@ import java.util.Map;
 public class FireLogicConfig {
 
     public long fireHeightSlider = Main.CONFIG_MANAGER.getCurrentFireHeightSlider();
-    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors = Main.CONFIG_MANAGER.getCurrentBlockFireColors();
+    public KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> blockFireColors = Main.CONFIG_MANAGER.getCurrentBlockFireColors();
 
-    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
+    public HashMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
         return fireColorPresets;
     }
 
@@ -37,11 +37,11 @@ public class FireLogicConfig {
 
     public String currentPreset = Main.CONFIG_MANAGER.getCurrentPreset();
 
-    public void setFireColorPresets(HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets) {
+    public void setFireColorPresets(HashMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets) {
         this.fireColorPresets = fireColorPresets;
     }
 
-    public HashMap<String, Pair<Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets = Main.CONFIG_MANAGER.getFireColorPresets();
+    public HashMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> fireColorPresets = Main.CONFIG_MANAGER.getFireColorPresets();
 
     public ArrayList<Integer> getPriorityOrder() {
         return priorityOrder;
@@ -57,5 +57,5 @@ public class FireLogicConfig {
         return fireHeightSlider;
     }
 
-    public Pair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColours() {return blockFireColors;}
+    public KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColours() {return blockFireColors;}
 }
