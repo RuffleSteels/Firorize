@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "oscimate_soulflame",
+  "id": "firorize",
   "version": "2.0",
 
   "name": "Firorize",
@@ -21,11 +21,11 @@
   "environment": "*",
   "entrypoints": {
     "modmenu": [
-      "com.oscimate.oscimate_soulflame.config.ModMenuApiImpl"
+      "com.oscimate.firorize.config.ModMenuApiImpl"
     ],
     "preLaunch": [ "com.llamalad7.mixinextras.MixinExtrasBootstrap::init" ],
     "client": [
-      "com.oscimate.oscimate_soulflame.Main"
+      "com.oscimate.firorize.Main"
     ]
   },
   "mixins": [
