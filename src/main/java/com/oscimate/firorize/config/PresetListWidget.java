@@ -102,9 +102,9 @@ class PresetListWidget
         } else {
             instance.changeSearchOption(client.world == null ? 0 : Main.CONFIG_MANAGER.getPriorityOrder().get(0));
             if (client.world == null) {
-                instance.searchOptions[1].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+                instance.searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrows")));
                 instance.searchOptions[1].active = false;
-                instance.searchOptions[2].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+                instance.searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrows")));
                 instance.searchOptions[2].active = false;
                 instance.searchOptions[0].active = false;
             }
@@ -151,7 +151,7 @@ class PresetListWidget
         super.renderWidget(context, mouseX, mouseY, delta);
         context.getMatrices().push();
         context.getMatrices().scale(1.5f, 1.5f, 1.5f);
-        context.drawTextWithShadow(textRenderer, Text.literal("Profiles"), getX() - 14, (getY()-125), Color.WHITE.getRGB());
+        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), getX() - 14, (getY()-125), Color.WHITE.getRGB());
         context.getMatrices().pop();
     }
 

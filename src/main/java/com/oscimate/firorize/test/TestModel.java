@@ -38,30 +38,27 @@ public class TestModel implements FabricBakedModel, BakedModel {
     int fireNum;
     boolean soulFire;
     String endBit;
-    BakedModel newModel;
     public TestModel(BakedModel model, int fireNum, boolean soulFire, String endBit) {
         this.model = model;
         this.soulFire = soulFire;
         this.fireNum = fireNum;
         this.endBit = endBit;
     }
-
     @Override
     public boolean isVanillaAdapter() {
         return Main.inConfig;
     }
-
     private BakedModel editModel(BlockView blockView, BlockPos pos, boolean isBaseFire) {
         return new BakedModel() {
             @Override
             public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
-                    List<BakedQuad> beforeTempList = model.getQuads(state, face, random); // get blockstate here
+                    List<BakedQuad> beforeTempList = model.getQuads(state, face, random);
                     List<BakedQuad> tempList = new ArrayList<>();
                     for(int g = 0; g < beforeTempList.size(); g++) {
                         tempList.add(g, beforeTempList.get(g));
                     }
 
-                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("oscimate_soulflame:block/blank_fire_overlay_0")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("oscimate_soulflame:block/blank_fire_0")).getSprite();
+                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_overlay_0")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_0")).getSprite();
                     if (!isBaseFire) {
                         if (!Main.inConfig) {
                             ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
@@ -243,27 +240,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
                 }
             }
         } else {
-            final Block blockUnder;
-            if (state.get(FireBlock.NORTH)) {
-                blockUnder = blockView.getBlockState(pos.north()).getBlock();
-            } else if (state.get(FireBlock.EAST)) {
-                blockUnder = blockView.getBlockState(pos.east()).getBlock();
-            } else if (state.get(FireBlock.SOUTH)) {
-                blockUnder = blockView.getBlockState(pos.south()).getBlock();
-            } else if (state.get(FireBlock.WEST)) {
-                blockUnder = blockView.getBlockState(pos.west()).getBlock();
-            } else if (state.get(FireBlock.UP)) {
-                blockUnder = blockView.getBlockState(pos.up()).getBlock();
-            } else {
-                blockUnder = blockView.getBlockState(pos.down()).getBlock();
-            }
-//            if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
-//                    (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getLeft().get().getRight().toString())) ||
-//                    list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
-                editModel(blockView, pos, false).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-//            } else {
-//                model.emitBlockQuads(blockView, state, pos, randomSupplier, context);
-//            }
+            editModel(blockView, pos, false).emitBlockQuads(blockView, state, pos, randomSupplier, context);
         }
     }
 }

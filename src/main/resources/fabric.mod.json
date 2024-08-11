@@ -15,9 +15,9 @@
   },
 
   "license": "MIT License",
-  "icon": "assets/oscimate_soulflame/Icon.png",
+  "icon": "assets/firorize/Icon.png",
 
-  "accessWidener" : "oscimate_soulflame.accesswidener",
+  "accessWidener" : "firorize.accesswidener",
   "environment": "*",
   "entrypoints": {
     "modmenu": [
@@ -29,7 +29,7 @@
     ]
   },
   "mixins": [
-    "oscimate_soulflame.mixins.json"
+    "firorize.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.14",

@@ -3,10 +3,10 @@
     {
       "apply": [
         {
-          "model": "oscimate_soulflame:block/blank_fire_floor0"
+          "model": "firorize:block/blank_fire_floor0"
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_floor1"
+          "model": "firorize:block/blank_fire_floor1"
         }
       ],
       "when": {
@@ -20,16 +20,16 @@
     {
       "apply": [
         {
-          "model": "oscimate_soulflame:block/blank_fire_side0"
+          "model": "firorize:block/blank_fire_side0"
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side1"
+          "model": "firorize:block/blank_fire_side1"
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt0"
+          "model": "firorize:block/blank_fire_side_alt0"
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt1"
+          "model": "firorize:block/blank_fire_side_alt1"
         }
       ],
       "when": {

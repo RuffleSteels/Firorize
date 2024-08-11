@@ -44,7 +44,7 @@ public class ColoredCycleButton extends PressableWidget {
             values.add(new Colors(key, value));
         }
 
-        this.setMessage(Text.literal("Color: " + values.get(index).getName()));
+        this.setMessage(Text.translatable("firorize.config.title.color").append(": " + values.get(index).getName()));
 
     }
 
@@ -125,6 +125,7 @@ public class ColoredCycleButton extends PressableWidget {
         } else {
             this.cycle(1);
         }
+        instance.setRedo(false);
     }
 
     private void cycle(int amount) {
@@ -159,15 +160,15 @@ public class ColoredCycleButton extends PressableWidget {
 
     public void setIndex(int index) {
         if (index == 0) {
-            instance.addColorButton.setTooltip(Tooltip.of(Text.literal("Click to create a custom fire color preset from this current fire color")));
-            instance.addColorButton.setTooltipDelay(Duration.ofSeconds(750L));
+            instance.addColorButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addColorPresetButton")));
+            instance.addColorButton.setTooltipDelay(Duration.ofMillis(750L));
             instance.addColorButton.setMessage(Text.literal("+"));
         } else {
-            instance.addColorButton.setTooltip(Tooltip.of(Text.literal("Click to delete this fire color preset")));
-            instance.addColorButton.setTooltipDelay(Duration.ofSeconds(750L));
+            instance.addColorButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.removeColorPresetButton")));
+            instance.addColorButton.setTooltipDelay(Duration.ofMillis(750L));
             instance.addColorButton.setMessage(Text.literal("x"));
         }
-        this.setMessage(Text.literal("Color: " + this.values.get(index).getName()));
+        this.setMessage(Text.translatable("firorize.config.title.color").append(": " + this.values.get(index).getName()));
         this.index = index;
     }
 

@@ -118,7 +118,6 @@ public class ChangeFireColorScreen extends Screen {
 
         client.setScreen(parent);
     }
-
     private boolean onBaseColor = true;
     public TextFieldWidget textFieldWidget;
     public TextFieldWidget blockUnderField;
@@ -157,16 +156,14 @@ public class ChangeFireColorScreen extends Screen {
         handlePickedColor(ChangeFireColorScreen.pickedColor);
         ChangeFireColorScreen.pickedColor[index] = pickedColor;
     }
-
     public ButtonWidget addButton;
     public Color[] tempColor;
     public ButtonWidget addColorButton;
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
     public ButtonWidget shareProfileButton;
     public ButtonWidget resetProfileButton;
-
     private final KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>> comparedCurrentFire;
-
+    public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
     @Override
     protected void init() {
         Main.inConfig = true;
@@ -175,17 +172,16 @@ public class ChangeFireColorScreen extends Screen {
 
         invisibleTextFieldWidget.visible = false;
 
-        invisibleTextFieldWidget.setPlaceholder(Text.literal("Custom color name:"));
+        invisibleTextFieldWidget.setPlaceholder(Text.translatable("firorize.config.placeholder.newColorPresetField"));
 
         addColorButton = new ButtonWidget.Builder(Text.literal("+"), button -> cyclicalPresets.addColor()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, hexBoxCoords[1], 20, 20).build();
-
 
         this.cyclicalPresets = ColoredCycleButton.builder()
                 .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20);
 
         blockSearchCoords[0] = width - 300 - 20;
         redoButton = new UndoButton(hexBoxCoords[0], hexBoxCoords[1], 20, 20, button -> redo());
-        saveButton = new ButtonWidget.Builder(Text.literal("Apply"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
+        saveButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.applyButton"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
         this.addDrawableChild(saveButton);
 
         saveButton.active = false;
@@ -207,13 +203,28 @@ public class ChangeFireColorScreen extends Screen {
         textFieldWidget.setChangedListener(this::updateCursor);
         updateCursor(this.hexCode);
 
-        overlayToggles[0] = new ButtonWidget.Builder(Text.literal("Base"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
-        overlayToggles[1]  = new ButtonWidget.Builder(Text.literal("Overlay"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
+        overlayToggles[0] = new ButtonWidget.Builder(Text.translatable("firorize.config.button.baseButton"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
+        overlayToggles[1]  = new ButtonWidget.Builder(Text.translatable("firorize.config.button.overlayButton"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
 
-        searchOptions[0] = new MoveableButton(this, this.textRenderer, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Blocks"),  0);
-        searchOptions[1]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Tags"), 1);
-        searchOptions[2]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.literal("Biomes"), 2);
+        searchOptions[0] = new MoveableButton(this, this.textRenderer, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.blocks"),  0);
+        searchOptions[1]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.tags"), 1);
+        searchOptions[2]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.biomes"), 2);
 
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 2; j++) {
+                if (2*i+j != 0 && 2*i+j != 5) {
+                    int finalJ = j;
+                    MoveableButton button = ((MoveableButton) searchOptions[i]);
+                    movableArrowButtons[2 * i + j] = new ButtonWidget.Builder(Text.literal(""), buttonn -> button.move(finalJ != 0)).dimensions(button.getXX()[j], button.getYY(), button.getHeight(), 13).build();
+                    this.addDrawableChild(movableArrowButtons[2 * i + j]);
+
+                    movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
+                    movableArrowButtons[2 * i + j].setTooltipDelay(Duration.ofMillis(750L));
+                }
+            }
+        }
+//        movableArrowButtons[0].active = false;
+//        movableArrowButtons[5].active = false;
 
         this.addDrawableChild(presetListWidget);
         this.addDrawableChild(shareProfileButton);
@@ -229,29 +240,29 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(resetProfileButton);
 
         if (client.world == null) {
-            searchOptions[1].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+            searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
             searchOptions[1].active = false;
-            searchOptions[2].setTooltip(Tooltip.of(Text.literal("You must be loaded in a world to customize with this")));
+            searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
             searchOptions[2].active = false;
             searchOptions[0].active = false;
         } else {
             this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
         }
 
-        shareProfileButton.setTooltip(Tooltip.of(Text.literal("Click to copy a code used to share this fire profile with friends")));
+        shareProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
         shareProfileButton.setTooltipDelay(Duration.ofMillis(750L));
-        addButton.setTooltip(Tooltip.of(Text.literal("Click to create a new fire profile")));
-        addButton.setTooltipDelay(Duration.ofSeconds(750L));
-        resetProfileButton.setTooltip(Tooltip.of(Text.literal("Click to reset this fire profile back to default")));
-        resetProfileButton.setTooltipDelay(Duration.ofSeconds(750L));
-        overlayToggles[0].setTooltip(Tooltip.of(Text.literal("Edit the base color of the fire")));
-        overlayToggles[0].setTooltipDelay(Duration.ofSeconds(750L));
-        overlayToggles[1].setTooltip(Tooltip.of(Text.literal("Edit the overlay color of the fire")));
-        overlayToggles[1].setTooltipDelay(Duration.ofSeconds(750L));
-        saveButton.setTooltip(Tooltip.of(Text.literal("Click to apply the current fire color to the selected")));
-        saveButton.setTooltipDelay(Duration.ofSeconds(750L));
-        redoButton.setTooltip(Tooltip.of(Text.literal("Click to undo")));
-        redoButton.setTooltipDelay(Duration.ofSeconds(750L));
+        addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
+        addButton.setTooltipDelay(Duration.ofMillis(750L));
+        resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
+        resetProfileButton.setTooltipDelay(Duration.ofMillis(750L));
+        overlayToggles[0].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.baseToggle")));
+        overlayToggles[0].setTooltipDelay(Duration.ofMillis(750L));
+        overlayToggles[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.overlayToggle")));
+        overlayToggles[1].setTooltipDelay(Duration.ofMillis(750L));
+        saveButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.applyButton")));
+        saveButton.setTooltipDelay(Duration.ofMillis(750L));
+        redoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.undoButton")));
+        redoButton.setTooltipDelay(Duration.ofMillis(750L));
 
         toggle(true);
 
@@ -776,9 +787,8 @@ public class ChangeFireColorScreen extends Screen {
 
         context.getMatrices().pop();
 
-
         if (tooltipTimer > 0) {
-            context.drawTooltip(this.textRenderer, Text.literal("Profile code copied to clipboard"), shareProfileButton.getX() + 50, shareProfileButton.getY() - 10);
+            context.drawTooltip(this.textRenderer, Text.translatable("firorize.config.tooltip.copied"), shareProfileButton.getX() + 50, shareProfileButton.getY() - 10);
         }
         context.getMatrices().pop();
     }
@@ -790,7 +800,7 @@ public class ChangeFireColorScreen extends Screen {
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
 
-            BlockEntry base = new BlockEntry("Base Fire Color");
+            BlockEntry base = new BlockEntry(Text.translatable("firorize.config.baseFire").getString());
             base.isCustomized = true;
             first.add(base);
 
@@ -1064,7 +1074,7 @@ public class ChangeFireColorScreen extends Screen {
                         context.fill(x+entryWidth-entryHeight-10, y, x+entryWidth-10, y + entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
                         drawX(context, entryWidth, entryHeight, y, x);
                     } else {
-                        int[] test = this.languageDefinition.equals("Base Fire Color") ? Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(): Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(this.languageDefinition);
+                        int[] test = this.languageDefinition.equals(Text.translatable("firorize.config.baseFire").getString()) ? Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(): Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(this.languageDefinition);
                         context.fill(x + entryWidth - entryHeight - 10, y, x + entryWidth - 10, y + entryHeight, test[0]);
                         context.fill(x + entryWidth - entryHeight - 7, y + 3, x + entryWidth - 13, y + entryHeight - 3, test[1]);
                     }

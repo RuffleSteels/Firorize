@@ -1,15 +1,22 @@
 package com.oscimate.firorize.config;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.systems.VertexSorter;
+import com.oscimate.firorize.GameRendererSetting;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.RotatingCubeMapRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.render.*;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import org.apache.commons.collections4.map.ListOrderedMap;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -20,13 +27,11 @@ public class AddProfileScreen extends Screen {
     protected AddProfileScreen(ChangeFireColorScreen parent) {
         super(Text.translatable("options.videoTitle"));
         this.parent = parent;
-
     }
     public  ButtonWidget fromExistingButton;
     public ButtonWidget fromNewButton;
     public  ButtonWidget fromCodeButton;
     public TextFieldWidget presetNameField;
-
     private String[] profileNameTooltips = new String[]{"Please enter your desired profile name", "This profile name already exists"};
     private String profileNameTooltip = "";
     private int profileNameTooltipTime = 0;
@@ -35,9 +40,9 @@ public class AddProfileScreen extends Screen {
     protected void init() {
         parent.isPresetAdd = false;
         this.presetNameField = new TextFieldWidget(this.textRenderer, width/2 - 50, height/2  +30, 100, 20, ScreenTexts.DONE);
-        this.fromExistingButton = new ButtonWidget.Builder(Text.literal("From Existing"), button -> addFromExisting()).dimensions(width/2 - (3*100 + 3*15)/2, height/2-10, 100, 20).build();
-        this.fromNewButton = new ButtonWidget.Builder(Text.literal("From New"), button ->  addFromNew()).dimensions(width/2 - (3*100 + 3*15)/2 + 115, height/2-10, 100, 20).build();
-        this.fromCodeButton = new ButtonWidget.Builder(Text.literal("From Code"), button ->  fromCode()).dimensions(width/2 - (3*100 + 3*15)/2 + 230, height/2-10, 100, 20).build();
+        this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting()).dimensions(width/2 - (3*100 + 3*15)/2, height/2-10, 100, 20).build();
+        this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button ->  addFromNew()).dimensions(width/2 - (3*100 + 3*15)/2 + 115, height/2-10, 100, 20).build();
+        this.fromCodeButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCodeButton1"), button ->  fromCode()).dimensions(width/2 - (3*100 + 3*15)/2 + 230, height/2-10, 100, 20).build();
 
         presetNameField.setMaxLength(Integer.MAX_VALUE);
         this.addDrawableChild(presetNameField);
@@ -45,6 +50,7 @@ public class AddProfileScreen extends Screen {
         this.addDrawableChild(fromNewButton);
         this.addDrawableChild(fromCodeButton);
         super.init();
+        Main.inConfig = true;
     }
 
     private int tooltipTime = 0;
@@ -60,17 +66,16 @@ public class AddProfileScreen extends Screen {
         }
     }
 
-
     private boolean pasteTime = false;
 
     private void fromCode()  {
         if (!pasteTime) {
-            fromCodeButton.setMessage(Text.literal("Click again to paste"));
+            fromCodeButton.setMessage(Text.translatable("firorize.config.button.profileFromCodeButton2"));
             pasteTime = true;
         } else {
             pasteTime = false;
             KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile = deserializeFromString(MinecraftClient.getInstance().keyboard.getClipboard());
-            fromCodeButton.setMessage(Text.literal("From Code"));
+            fromCodeButton.setMessage(Text.translatable("firorize.config.button.profileFromCodeButton1"));
             if (newProfile == null) {
                 tooltipTime = 30;
             } else {
@@ -90,7 +95,6 @@ public class AddProfileScreen extends Screen {
     public void addFromNew() {
         addProfile(Main.CONFIG_MANAGER.getDefaultProfile());
     }
-
 
     @Override
     public void close() {
@@ -145,20 +149,23 @@ public class AddProfileScreen extends Screen {
     }
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
         this.applyBlur(delta);
+        context.getMatrices().push();
+        context.getMatrices().translate(0, 0, 1000);
         this.renderDarkening(context);
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        parent.render(context, 0, 0, delta);
         super.render(context, mouseX, mouseY, delta);
         if (tooltipTime > 0) {
-            context.drawTooltip(textRenderer, Text.literal("Invalid code"), fromCodeButton.getX() + 10, fromCodeButton.getY() - 5);
+            context.drawTooltip(textRenderer, Text.translatable("firorize.config.tooltip.invalidCode"), fromCodeButton.getX() + 10, fromCodeButton.getY() - 5);
         }
         if (profileNameTooltipTime > 0) {
             context.drawTooltip(textRenderer, Text.literal(profileNameTooltip), presetNameField.getX() + 10, presetNameField.getY() + presetNameField.getHeight() + 5);
         }
+
+        context.getMatrices().pop();
     }
 }

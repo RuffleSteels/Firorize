@@ -18,10 +18,10 @@ import java.util.function.Consumer;
 public abstract class GamRenMixin {
     @ModifyReceiver(method = "loadPrograms", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
     private List<Pair<ShaderProgram, Consumer<ShaderProgram>>> addShaderPrograms(List<Pair<ShaderProgram, Consumer<ShaderProgram>>> instance, Object e, ResourceFactory factory) throws IOException {
-        instance.add(Pair.of(new ShaderProgram(factory, "oscimate_soulflame/rendertype_custom_tint", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL), program -> {
+        instance.add(Pair.of(new ShaderProgram(factory, "firorize/rendertype_custom_tint", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL), program -> {
             GameRendererSetting.renderTypeCustomTint = program;
         }));
-        instance.add(Pair.of(new ShaderProgram(factory, "oscimate_soulflame/rendertype_color_wheel", VertexFormats.POSITION_TEXTURE_COLOR), program -> {
+        instance.add(Pair.of(new ShaderProgram(factory, "firorize/rendertype_color_wheel", VertexFormats.POSITION_TEXTURE_COLOR), program -> {
             GameRendererSetting.renderTypeColorWheel = program;
         }));
         return instance;

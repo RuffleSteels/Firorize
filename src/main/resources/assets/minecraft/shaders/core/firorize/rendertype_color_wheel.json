@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "oscimate_soulflame/rendertype_color_wheel",
-  "fragment": "oscimate_soulflame/rendertype_color_wheel",
+  "vertex": "firorize/rendertype_color_wheel",
+  "fragment": "firorize/rendertype_color_wheel",
   "attributes": [
     "Position",
     "Color",

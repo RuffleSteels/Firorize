@@ -24,7 +24,7 @@ public class Colors implements StringIdentifiable {
     }
 
     public Text getTranslatableName() {
-        return Text.literal("Color: " + this.name);
+        return Text.translatable("firorize.config.title.color").append(": " + this.name);
     }
 
     public Text getInfo() {

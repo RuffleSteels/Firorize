@@ -30,7 +30,7 @@ public class FireHeightSliderWidget extends SliderWidget {
         Text text = sliderValue == 0   ? Text.translatable(Main.MODID+".config.fireHeight.min") :
                 sliderValue == 50 ? Text.translatable(Main.MODID+".config.fireHeight.middle") :
                         sliderValue == 100 ? Text.translatable(Main.MODID+".config.fireHeight.max") :
-                                Text.literal("Height: " + sliderValue);
+                                Text.translatable("firorize.config.title.height").append(": " + sliderValue);
         this.setMessage(text);
     }
 }

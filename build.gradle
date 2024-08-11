@@ -4,7 +4,7 @@ plugins {
 }
 
 loom {
-	accessWidenerPath = file("src/main/resources/oscimate_soulflame.accesswidener")
+	accessWidenerPath = file("src/main/resources/firorize.accesswidener")
 }
 
 version = project.mod_version

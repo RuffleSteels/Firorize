@@ -8,11 +8,11 @@ public enum FireLogic {
     CONSISTENT;
 
     public Text getTranslatableName() {
-        return Text.translatable("oscimate_soulflame.config." + this.name());
+        return Text.translatable("firorize.config." + this.name());
     }
 
     public Tooltip getTranslatableTooltip() {
-        return Tooltip.of(Text.translatable("oscimate_soulflame.config." + name() + ".tooltip"));
+        return Tooltip.of(Text.translatable("firorize.config." + name() + ".tooltip"));
     }
 
 

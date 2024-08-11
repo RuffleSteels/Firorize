@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "oscimate_soulflame/rendertype_custom_tint",
-  "fragment": "oscimate_soulflame/rendertype_custom_tint",
+  "vertex": "firorize/rendertype_custom_tint",
+  "fragment": "firorize/rendertype_custom_tint",
   "attributes": [
     "Color",
     "UV0",

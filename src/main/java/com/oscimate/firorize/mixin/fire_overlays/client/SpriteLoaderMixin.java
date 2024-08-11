@@ -48,18 +48,6 @@ public class SpriteLoaderMixin {
     @Inject(method = "stitch", at = @At("HEAD"))
     private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
         if (id.equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)) {
-//            List<int[]> ints = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
-//                    .flatMap(map -> map.values().stream())
-//                    .distinct()
-//                    .collect(Collectors.toMap(
-//                            arr -> arr[0] + "-" + arr[1],
-//                            arr -> arr,
-//                            (existing, replacement) -> existing
-//                    ))
-//                    .values()
-//                    .stream()
-//                    .toList();
-
             List<int[]> ints = Stream.concat(
                     Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
                             .flatMap(map -> map.values().stream())
@@ -83,8 +71,8 @@ public class SpriteLoaderMixin {
             ArrayList<SpriteContents> all = new ArrayList<>();
 
             for(SpriteContents spriteContents : sp) {
-                if (spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_0")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_1")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_1"))) {
-                    boolean isOverlay = spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("oscimate_soulflame:block/blank_fire_overlay_1"));
+                if (spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_0")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_1")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_1"))) {
+                    boolean isOverlay = spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_1"));
 
                     ByteBuffer original = MemoryUtil.memByteBuffer((((NativeImageInvoker)(Object)((SpriteContentsInvoker) spriteContents).getImage())).getPointer(), (int) (((NativeImageInvoker)(Object)((SpriteContentsInvoker) spriteContents).getImage())).getSizeBytes());
 
@@ -152,7 +140,6 @@ public class SpriteLoaderMixin {
                     }
                 }
             }
-
             sprites.set(new ImmutableList.Builder<SpriteContents>()
                     .addAll(sp)
                     .addAll(all)

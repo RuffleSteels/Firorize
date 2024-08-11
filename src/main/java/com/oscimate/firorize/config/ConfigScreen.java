@@ -13,11 +13,11 @@ public class ConfigScreen extends Screen {
     private final Screen parent;
     protected static final int windowWidth = 176;
     protected static final int windowHeight = 182;
-    private final Identifier WINDOW = Identifier.of("oscimate_soulflame", "textures/gui/info_box.png");
+    private final Identifier WINDOW = Identifier.of("firorize", "textures/gui/info_box.png");
     protected int guiTop, guiLeft;
 
     protected ConfigScreen(Screen parent) {
-        super(Text.translatable("ImprovedFireOverlay"));
+        super(Text.literal(""));
         this.parent = parent;
     }
 
@@ -25,8 +25,8 @@ public class ConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Height"), button -> doStuff(new ChangeFireHeightScreen(this))).dimensions(width / 2 + buttonWidth/2 - 40, height/2 - 15 - 20, buttonWidth, 20).build());
-        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("Change Fire Color"), button -> doStuff(new ChangeFireColorScreen(this))).dimensions(width / 2 - buttonWidth - buttonWidth/2 + 40, height/2 - 15 - 20, buttonWidth, 20).build());
+        this.addDrawableChild(new ButtonWidget.Builder(Text.translatable("firorize.config.button.changeFireHeightScreen"), button -> doStuff(new ChangeFireHeightScreen(this))).dimensions(width / 2 + buttonWidth/2 - 40, height/2 - 15 - 20, buttonWidth, 20).build());
+        this.addDrawableChild(new ButtonWidget.Builder(Text.translatable("firorize.config.button.changeFireColorScreen"), button -> doStuff(new ChangeFireColorScreen(this))).dimensions(width / 2 - buttonWidth - buttonWidth/2 + 40, height/2 - 15 - 20, buttonWidth, 20).build());
 
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + 15, 200, 20).build());
         super.init();

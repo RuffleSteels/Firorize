@@ -16,6 +16,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.*;
 import net.minecraft.world.EmptyBlockView;
 import net.minecraft.world.biome.Biome;
@@ -28,13 +29,10 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 public class Main implements ClientModInitializer {
     public static final String MODID = "firorize";
-
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
     public static List<TagKey<Block>> blockTagList = null;
     public static List<RegistryKey<Biome>> biomeKeyList = null;
     public static boolean inConfig = false;
-
-
     public static void settingFireColor(Entity entity) {
         Box box = entity.getBoundingBox();
         int i = MathHelper.floor(box.minX);
@@ -51,9 +49,7 @@ public class Main implements ClientModInitializer {
                     double e;
                     mutable.set(p, q, r);
                     Block block = entity.getWorld().getBlockState(mutable).getBlock();
-//                    Block blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
                     if (!((float)q + 1f >= box.minY)) continue;
-//                    if (!entity.isInLava()) {
                         if (block instanceof AbstractFireBlock) {
                             final Block blockUnder;
                             if (block instanceof FireBlock) {
@@ -116,14 +112,8 @@ public class Main implements ClientModInitializer {
             }
         }
     }
-    public int getColorInt(int r, int g, int b) {
-        return r << 16 | g << 8 | b;
-    }
-
-    int counter = 0;
     @Override
     public void onInitializeClient() {
-
         CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {
             biomeKeyList = registries.get(RegistryKeys.BIOME).getKeys().stream().toList();
             blockTagList = registries.get(RegistryKeys.BLOCK).streamTags().filter(tag -> Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP) || ((FireBlockInvoker)Blocks.FIRE).getBurnChances().containsKey(block)).toList().size() > 0).toList();
