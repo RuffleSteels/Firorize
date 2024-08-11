@@ -50,19 +50,19 @@
     {
       "apply": [
         {
-          "model": "oscimate_soulflame:block/blank_fire_side0",
+          "model": "firorize:block/blank_fire_side0",
           "y": 90
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side1",
+          "model": "firorize:block/blank_fire_side1",
           "y": 90
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt0",
+          "model": "firorize:block/blank_fire_side_alt0",
           "y": 90
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt1",
+          "model": "firorize:block/blank_fire_side_alt1",
           "y": 90
         }
       ],
@@ -84,19 +84,19 @@
     {
       "apply": [
         {
-          "model": "oscimate_soulflame:block/blank_fire_side0",
+          "model": "firorize:block/blank_fire_side0",
           "y": 180
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side1",
+          "model": "firorize:block/blank_fire_side1",
           "y": 180
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt0",
+          "model": "firorize:block/blank_fire_side_alt0",
           "y": 180
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt1",
+          "model": "firorize:block/blank_fire_side_alt1",
           "y": 180
         }
       ],
@@ -118,19 +118,19 @@
     {
       "apply": [
         {
-          "model": "oscimate_soulflame:block/blank_fire_side0",
+          "model": "firorize:block/blank_fire_side0",
           "y": 270
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side1",
+          "model": "firorize:block/blank_fire_side1",
           "y": 270
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt0",
+          "model": "firorize:block/blank_fire_side_alt0",
           "y": 270
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_side_alt1",
+          "model": "firorize:block/blank_fire_side_alt1",
           "y": 270
         }
       ],
@@ -152,16 +152,16 @@
     {
       "apply": [
         {
-          "model": "oscimate_soulflame:block/blank_fire_up0"
+          "model": "firorize:block/blank_fire_up0"
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_up1"
+          "model": "firorize:block/blank_fire_up1"
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_up_alt0"
+          "model": "firorize:block/blank_fire_up_alt0"
         },
         {
-          "model": "oscimate_soulflame:block/blank_fire_up_alt1"
+          "model": "firorize:block/blank_fire_up_alt1"
         }
       ],
       "when": {

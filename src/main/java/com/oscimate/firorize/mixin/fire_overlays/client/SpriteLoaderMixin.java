@@ -25,12 +25,9 @@ import java.util.stream.Stream;
 
 @Mixin(SpriteLoader.class)
 public class SpriteLoaderMixin {
-
     @Shadow @Final private Identifier id;
-
     @Unique
     public ByteBuffer deepCopy(ByteBuffer source, ByteBuffer target) {
-
         int sourceP = source.position();
         int sourceL = source.limit();
 
