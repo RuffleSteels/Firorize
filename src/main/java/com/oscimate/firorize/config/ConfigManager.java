@@ -80,8 +80,8 @@ public class ConfigManager {
     public KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> getDefaultProfile() {
         ArrayList<ListOrderedMap<String, int[]>> temp = new ArrayList<ListOrderedMap<String, int[]>>();
         ListOrderedMap<String, int[]> soulStuff = new ListOrderedMap<>();
-        soulStuff.put("minecraft:soul_sand", new int[]{-15372685,-13404045});
-        soulStuff.put("minecraft:soul_soil", new int[]{-15372685,-13404045});
+        soulStuff.put("minecraft:soul_sand", new int[]{-15171708,-14766934});
+        soulStuff.put("minecraft:soul_soil", new int[]{-15171708,-14766934});
         temp.add(soulStuff);
         temp.add(new ListOrderedMap<String, int[]>());
         temp.add(new ListOrderedMap<String, int[]>());
@@ -90,7 +90,7 @@ public class ConfigManager {
         temp2.add(1);
         temp2.add(2);
 
-        return KeyValuePair.of(KeyValuePair.of(temp, new int[]{-6267112,-4682209}), temp2);
+        return KeyValuePair.of(KeyValuePair.of(temp, new int[]{-7456000,-6456034}), temp2);
     }
 
     public void getStartupConfig() {
@@ -112,9 +112,9 @@ public class ConfigManager {
         if(jsonOutput.getCustomColorPresets() == null || jsonOutput.getCustomColorPresets().size() == 0) {
             ListOrderedMap<String, int[]> map = new ListOrderedMap<>();
             map.put("RED", new int[]{-10149847,-7655374});
-            map.put("ORANGE", new int[]{-6267112,-4682209});
+            map.put("ORANGE", new int[]{-7456000,-6456034});
             map.put("GRAY", new int[]{-12569022,-11185318});
-            map.put("BLUE", new int[]{-15372685,-13404045});
+            map.put("BLUE", new int[]{-15171708,-14766934});
             map.put("YELLOW", new int[]{-6584292,-5068772});
             map.put("PURPLE", new int[]{-12446675,-10870735});
 
@@ -129,7 +129,7 @@ public class ConfigManager {
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
             temp.add(new ListOrderedMap<String, int[]>());
-            setCurrentBlockFireColors(KeyValuePair.of(temp, new int[]{-6267112,-4682209}));
+            setCurrentBlockFireColors(KeyValuePair.of(temp, new int[]{-7456000,-6456034}));
             save();
         } else {
             setCurrentBlockFireColors(jsonOutput.getCurrentBlockFireColours());
@@ -153,7 +153,7 @@ public class ConfigManager {
             test.put("minecraft:crimson_forest", new int[]{-10417918,-7653869});
             test.put("minecraft:warped_forest", new int[]{-14190522,-7562173});
             test.put("minecraft:basalt_deltas", new int[]{-12633022,-11185318});
-            test.put("minecraft:soul_sand_valley", new int[]{-15440279,-14187900});
+            test.put("minecraft:soul_sand_valley", new int[]{-15171708,-14766934});
 
             ArrayList<Integer> temp22 = new ArrayList<>();
             temp22.add(2);
@@ -164,7 +164,7 @@ public class ConfigManager {
             eeka.add(new ListOrderedMap<String, int[]>());
             eeka.add(new ListOrderedMap<String, int[]>());
             eeka.add(test);
-            KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp2 = KeyValuePair.of(eeka,  new int[]{-6267112,-4682209});
+            KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp2 = KeyValuePair.of(eeka,  new int[]{-7456000,-6456034});
 
             map.put("Initial", getDefaultProfile());
             map.put("Nether Biomes", KeyValuePair.of(mapp2, temp22));

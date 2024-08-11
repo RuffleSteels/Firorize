@@ -127,6 +127,8 @@ public class TestModel implements FabricBakedModel, BakedModel {
                         }
                     }
 
+
+
                     for (int n = 0; n < tempList.size(); n++) {
                         int[] verticesOriginal = tempList.get(n).getVertexData();
                         int[] verticesNew = new int[32];

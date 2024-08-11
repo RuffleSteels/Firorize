@@ -10,10 +10,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class ColorizeMath {
     public static float[] applyColorization(float[] textureColor, float[] vertexColor) {
         float[] initialHSV = RGBtoHSV(vertexColor);
+
+        if (initialHSV[1] == 1.0F) {
+            initialHSV[1] = 0.99F;
+        }
 
         float v = initialHSV[1] * 100 - 50;
         float hue = initialHSV[0];
