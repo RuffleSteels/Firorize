@@ -24,50 +24,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Environment(EnvType.CLIENT)
 @Mixin(InGameOverlayRenderer.class)
 public class InGameOverlayRendererMixin {
-
     @Inject(method = "renderFireOverlay",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;translate(FFF)V"))
     private static void onRenderFireOverlay(MinecraftClient client, MatrixStack matrices, CallbackInfo ci) {
         matrices.translate(0.0,FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
     }
-//
+
     @Inject(method = "renderFireOverlay", at = @At("HEAD"))
     private static void changeShader(MinecraftClient client, MatrixStack matrices, CallbackInfo ci) {
         Main.settingFireColor(client.player);
     }
-
-//    @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;color(FFFF)Lnet/minecraft/client/render/VertexConsumer;"))
-//    private static VertexConsumer changeColor(VertexConsumer instance, float red, float green, float blue, float alpha, Operation<VertexConsumer> original, MinecraftClient client, MatrixStack matrices) {
-//        int fireColor = ((RenderFireColorAccessor)client.player).getRenderFireColor()[0];
-//        if (fireColor < 1) {
-//            Color cfc = new Color(((RenderFireColorAccessor) client.player).getRenderFireColor()[0]);
-//            return original.call(instance, cfc.getRed()/255f, cfc.getGreen()/255f, cfc.getBlue()/255f, 1f).light(0);
-//        } else {
-//            return original.call(instance, red, green, blue, alpha);
-//        }
-//    }
-
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;"))
     private static Sprite renderOverlay(SpriteIdentifier instance, Operation<Sprite> original, MinecraftClient client, MatrixStack matrices) {
         int fireColor = ((RenderFireColorAccessor)client.player).getRenderFireColor()[0];
         if (fireColor < 1) {
             return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)client.player).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)client.player).getRenderFireColor()[1]))).getSprite();
-        } else if (fireColor == 1) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/soul_fire_1")).getSprite();
+        } else if (fireColor == 2) {
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1")).getSprite();
         }
         return original.call(instance);
     }
-
-//    @Redirect(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;"))
-//    private static Sprite getSprite(SpriteIdentifier obj, MinecraftClient client) {
-//        int fireColor = ((RenderFireColorAccessor)client.player).getRenderFireColor()[0];
-
-//        if (fireColor < 1) {
-//            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_"+Math.abs(((RenderFireColorAccessor)client.player).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)client.player).getRenderFireColor()[1]))).getSprite();
-//        } else if (fireColor == 1) {
-//            return Main.SOUL_FIRE_1.get();
-//        }
-//        return obj.getSprite();
-//    }
 }

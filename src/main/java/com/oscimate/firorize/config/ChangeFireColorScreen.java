@@ -89,24 +89,47 @@ public class ChangeFireColorScreen extends Screen {
     private final double sliderClickedX = sliderCoords[0] + sliderPadding;
     public final int[] hexBoxCoords = {wheelCoords[0], wheelCoords[1] + wheelRadius*2 + 20};
     public boolean isOverlay = false;
+
+    public static KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> deepClone(
+            KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> originalPair) {
+
+        int[] originalArray = originalPair.getRight();
+        int[] clonedArray = originalArray.clone();
+
+        ArrayList<ListOrderedMap<String, int[]>> originalList = originalPair.getLeft();
+        ArrayList<ListOrderedMap<String, int[]>> clonedList = new ArrayList<>();
+
+        for (ListOrderedMap<String, int[]> originalMap : originalList) {
+            ListOrderedMap<String, int[]> clonedMap = new ListOrderedMap<>();
+
+            for (Map.Entry<String, int[]> entry : originalMap.entrySet()) {
+                int[] originalMapArray = entry.getValue();
+                int[] clonedMapArray = originalMapArray.clone();
+
+                clonedMap.put(entry.getKey(), clonedMapArray);
+            }
+            clonedList.add(clonedMap);
+        }
+        return new KeyValuePair<>(clonedList, clonedArray);
+    }
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
-        this.comparedCurrentFire = KeyValuePair.of(KeyValuePair.of(new ArrayList<>(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft()), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone()), new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder()));
+        this.comparedCurrentFire = deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors());
         this.parent = parent;
     }
     public void onClose() {
         Main.inConfig = false;
-
-        if (!isPresetAdd && !(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().size() == comparedCurrentFire.getLeft().getLeft().size() &&
+        if (!isPresetAdd && !(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().size() == comparedCurrentFire.getLeft().size() &&
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream().allMatch(map1 ->
-                        comparedCurrentFire.getLeft().getLeft().stream().anyMatch(map2 ->
+                        comparedCurrentFire.getLeft().stream().anyMatch(map2 ->
                                 map1.size() == map2.size() &&
                                         map1.keySet().equals(map2.keySet()) &&
                                         map1.keySet().stream().allMatch(key ->
                                                 Arrays.equals(map1.get(key), map2.get(key))
                                         )
                         )
-                ) && CollectionUtils.isEqualCollection(Main.CONFIG_MANAGER.getPriorityOrder(), comparedCurrentFire.getRight()) && Arrays.equals(comparedCurrentFire.getLeft().getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()))) MinecraftClient.getInstance().reloadResources();
+                ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()))) {
+            MinecraftClient.getInstance().reloadResources();  }
         client.getWindow().setScaleFactor(2);
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
@@ -162,7 +185,7 @@ public class ChangeFireColorScreen extends Screen {
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
     public ButtonWidget shareProfileButton;
     public ButtonWidget resetProfileButton;
-    private final KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>> comparedCurrentFire;
+    private final KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> comparedCurrentFire;
     public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
     @Override
     protected void init() {

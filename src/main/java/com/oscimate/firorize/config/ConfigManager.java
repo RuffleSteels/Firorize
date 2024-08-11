@@ -17,13 +17,13 @@ public class ConfigManager {
     public ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
         return fireColorPresets;
     }
-    public HashMap<String, int[]> customColorPresets;
+    public ListOrderedMap<String, int[]> customColorPresets;
 
-    public HashMap<String, int[]> getCustomColorPresets() {
+    public ListOrderedMap<String, int[]> getCustomColorPresets() {
         return customColorPresets;
     }
 
-    public void setCustomColorPresets(HashMap<String, int[]> customColorPresets) {
+    public void setCustomColorPresets(ListOrderedMap<String, int[]> customColorPresets) {
         this.customColorPresets = customColorPresets;
     }
 
@@ -110,7 +110,7 @@ public class ConfigManager {
             setCurrentFireHeightSlider(jsonOutput.getFireHeightSlider());
         }
         if(jsonOutput.getCustomColorPresets() == null || jsonOutput.getCustomColorPresets().size() == 0) {
-            HashMap<String, int[]> map = new HashMap<>();
+            ListOrderedMap<String, int[]> map = new ListOrderedMap<>();
             map.put("RED", new int[]{-10149847,-7655374});
             map.put("ORANGE", new int[]{-6267112,-4682209});
             map.put("GRAY", new int[]{-12569022,-11185318});

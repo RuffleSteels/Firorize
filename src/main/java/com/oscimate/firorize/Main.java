@@ -67,45 +67,48 @@ public class Main implements ClientModInitializer {
                         } else {
                             blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
                         }
-                        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
-                        if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
-                                (entity.getWorld().getBiomeFabric(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiomeFabric(mutable).getKey().get().getValue().toString())) ||
-                                list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
 
-                            ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
+                        if (!blockUnder.equals(Blocks.AIR)) {
+                            ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
+                            if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
+                                    (entity.getWorld().getBiomeFabric(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiomeFabric(mutable).getKey().get().getValue().toString())) ||
+                                    list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
 
-                            for (int ii = 0; ii < 3; ii++) {
-                                int order = Main.CONFIG_MANAGER.getPriorityOrder().get(ii);
+                                ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
 
-                                if (order == 0) {
+                                for (int ii = 0; ii < 3; ii++) {
+                                    int order = Main.CONFIG_MANAGER.getPriorityOrder().get(ii);
 
-                                    if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
-                                        ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).get(Registries.BLOCK.getId(blockUnder).toString()));
-
-                                        break;
-                                    }
-                                } else if (order == 1) {
-
-                                    if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString()))) {
-                                        ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1);
-                                        List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get()).toList();
-
-                                        ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(1).get(tags.get(0).id().toString()).clone());
-                                        break;
-                                    }
-                                } else if (order == 2) {
-                                    if (entity.getWorld().getBiome(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())) {
-                                        ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString()).clone());
-
-                                        break;
+                                    if (order == 0) {
+                                        if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
+                                            ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).get(Registries.BLOCK.getId(blockUnder).toString()));
+                                            return;
+                                        }
+                                    } else if (order == 1) {
+                                        if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString()))) {
+                                            ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1);
+                                            List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get()).toList();
+                                            ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(1).get(tags.get(0).id().toString()).clone());
+                                            return;
+                                        }
+                                    } else if (order == 2) {
+                                        if (entity.getWorld().getBiome(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())) {
+                                            ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString()).clone());
+                                            return;
+                                        }
                                     }
                                 }
+                            } else {
+                                ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
                             }
-                        } else {
-                            ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
                         }
                     } else {
-                        ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
+                        if (entity.isInLava()) {
+                            ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
+                        }
+                        else if (((RenderFireColorAccessor) entity).getRenderFireColor() == null) {
+                            ((RenderFireColorAccessor) entity).setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
+                        }
                     }
                 }
             }

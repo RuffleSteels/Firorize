@@ -35,8 +35,7 @@ public class ColoredCycleButton extends PressableWidget {
         this.index = 0;
         values = new ArrayList<Colors>();
         values.add(new Colors("CUSTOM", Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()));
-//        values.add(new Colors("GREEN", new int[]{Color.GREEN.getRGB(), Color.GREEN.getRGB()}));
-//        values.add(new Colors("BLUE", new int[]{Color.BLUE.getRGB(), Color.BLUE.getRGB()}));
+        System.out.println(Arrays.toString(Main.CONFIG_MANAGER.getCustomColorPresets().keyList().toArray()));
         for (Map.Entry<String, int[]> entry : Main.CONFIG_MANAGER.getCustomColorPresets().entrySet()) {
             String key = entry.getKey();
             int[] value = entry.getValue();

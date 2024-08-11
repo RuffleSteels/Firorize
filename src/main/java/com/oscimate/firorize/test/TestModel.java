@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.FireBlock;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -28,6 +29,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -44,6 +46,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
         this.fireNum = fireNum;
         this.endBit = endBit;
     }
+    Block unique = null;
     @Override
     public boolean isVanillaAdapter() {
         return Main.inConfig;
@@ -62,7 +65,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
                     if (!Main.inConfig) {
                         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
-                        final Block blockUnder;
+                        Block blockUnder;
                         if (!soulFire) {
                             if (state.get(FireBlock.NORTH)) {
                                 blockUnder = blockView.getBlockState(pos.north()).getBlock();
@@ -81,39 +84,45 @@ public class TestModel implements FabricBakedModel, BakedModel {
                             blockUnder = blockView.getBlockState(pos.down()).getBlock();
                         }
 
-                        if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
+                        int[] ints;
+                        if ((blockUnder.equals(Blocks.AIR) && unique != null)|| (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
                                 (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
                                 list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
-//                            System.out.println("GETS PAST");
                             for (int i = 0; i < 3; i++) {
                                 int order = Main.CONFIG_MANAGER.getPriorityOrder().get(i);
                                 if (order == 0) {
+                                    if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
+                                        blockUnder = unique;
+                                    }
                                     if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
-//                                        System.out.println("BLOCKS");
-                                        int[] ints = list.get(0).get(Registries.BLOCK.getId(blockUnder).toString());
+                                        unique = blockUnder;
+                                        ints = list.get(0).get(Registries.BLOCK.getId(blockUnder).toString());
                                         sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
-//                                        System.out.println("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]));
                                         break;
                                     }
                                 } else if (order == 1) {
+                                    if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
+                                        blockUnder = unique;
+                                    }
                                     if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString()))) {
+                                        unique = blockUnder;
                                         ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1);
-                                        List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get()).toList();
-                                        int[] ints = list.get(1).get(tags.get(0).id().toString());
+                                        Block finalBlockUnder = blockUnder;
+                                        List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> finalBlockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get()).toList();
+                                        ints = list.get(1).get(tags.get(0).id().toString());
                                         sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
                                         break;
                                     }
                                 } else if (order == 2) {
                                     if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) {
-                                        int[] ints = list.get(2).get(String.valueOf(blockView.getBiomeFabric(pos).getKey().get().getValue().toString()));
+                                        ints = list.get(2).get(String.valueOf(blockView.getBiomeFabric(pos).getKey().get().getValue().toString()));
                                         sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
                                         break;
                                     }
                                 }
                             }
                         } else {
-//                            System.out.println("USE BASE");
-                            int[] ints = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+                            ints = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
                             sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
                         }
                     }

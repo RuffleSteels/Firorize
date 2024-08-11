@@ -16,8 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -41,6 +40,14 @@ public class SpriteLoaderMixin {
         source.limit(sourceL);
         return target;
     }
+
+    @Unique
+    ArrayList<Identifier> validIds = new ArrayList<>(List.of(
+            Identifier.of("firorize:block/blank_fire_overlay_0"),
+            Identifier.of("firorize:block/blank_fire_overlay_1"),
+            Identifier.of("firorize:block/blank_fire_0"),
+            Identifier.of("firorize:block/blank_fire_1")
+    ));
 
     @Inject(method = "stitch", at = @At("HEAD"))
     private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
@@ -67,72 +74,76 @@ public class SpriteLoaderMixin {
 
             ArrayList<SpriteContents> all = new ArrayList<>();
 
-            for(SpriteContents spriteContents : sp) {
-                if (spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_0")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_1")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_1"))) {
-                    boolean isOverlay = spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_0")) || spriteContents.getId().equals(Identifier.of("firorize:block/blank_fire_overlay_1"));
+            for (int z = 0; z < 4; z++) {
+                for (SpriteContents spriteContents : sp) {
+                    if (validIds.contains(spriteContents.getId())) {
+                        if (spriteContents.getId().equals(validIds.get(z))) {
+                            boolean isOverlay = validIds.subList(0, 2).contains(spriteContents.getId());
 
-                    ByteBuffer original = MemoryUtil.memByteBuffer((((NativeImageInvoker)(Object)((SpriteContentsInvoker) spriteContents).getImage())).getPointer(), (int) (((NativeImageInvoker)(Object)((SpriteContentsInvoker) spriteContents).getImage())).getSizeBytes());
+                            ByteBuffer original = MemoryUtil.memByteBuffer((((NativeImageInvoker) (Object) ((SpriteContentsInvoker) spriteContents).getImage())).getPointer(), (int) (((NativeImageInvoker) (Object) ((SpriteContentsInvoker) spriteContents).getImage())).getSizeBytes());
 
-                    for (int i = 0; i < ints.size(); i++) {
-                        long pointer = MemoryUtil.nmemAlloc(original.capacity());
+                            for (int i = 0; i < ints.size(); i++) {
+                                long pointer = MemoryUtil.nmemAlloc(original.capacity());
 
-                        pointers.add(pointer);
+                                pointers.add(pointer);
 
-                        ByteBuffer baseBuffer = MemoryUtil.memByteBuffer(pointer, original.capacity());
+                                ByteBuffer baseBuffer = MemoryUtil.memByteBuffer(pointer, original.capacity());
 
-                        deepCopy(original, baseBuffer);
+                                deepCopy(original, baseBuffer);
 
-                        ByteBuffer overlayBuffer = null;
-
-                        if (!isOverlay) {
-                            overlayBuffer = MemoryUtil.memByteBuffer(pointers.get(i), original.capacity());
-                        }
-
-                        Color c = new Color(ints.get(i)[0]);
-
-                        if (isOverlay) {
-                            c = new Color(ints.get(i)[1]);
-                        }
-
-                        float[] vertexColor = new float[]{c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, 1f};
-
-                        for (int y = 0; y < 16 * 32; y++) {
-                            for (int x = 0; x < 16; x++) {
-                                int index = (y * 16 + x) * 4;
-
-                                int baseR = baseBuffer.get(index) & 0xFF;
-                                int baseG = baseBuffer.get(index + 1) & 0xFF;
-                                int baseB = baseBuffer.get(index + 2) & 0xFF;
-                                int baseA = baseBuffer.get(index + 3) & 0xFF;
-
-                                float[] cb = ColorizeMath.applyColorization(new float[]{baseR / 255f, baseG / 255f, baseB / 255f, 1f}, vertexColor);
-
-                                int finalR = (Math.round(cb[0] * 255) & 0xFF);
-                                int finalG = (Math.round(cb[1] * 255) & 0xFF);
-                                int finalB = (Math.round(cb[2] * 255) & 0xFF);
+                                ByteBuffer overlayBuffer = null;
 
                                 if (!isOverlay) {
-                                    int overlayR = overlayBuffer.get(index) & 0xFF;
-                                    int overlayG = overlayBuffer.get(index + 1) & 0xFF;
-                                    int overlayB = overlayBuffer.get(index + 2) & 0xFF;
-                                    int overlayA = overlayBuffer.get(index + 3) & 0xFF;
-
-                                    finalR = (overlayR * overlayA + finalR * (255 - overlayA)) / 255;
-                                    finalG = (overlayG * overlayA + finalG * (255 - overlayA)) / 255;
-                                    finalB = (overlayB * overlayA + finalB * (255 - overlayA)) / 255;
+                                    overlayBuffer = MemoryUtil.memByteBuffer(pointers.get(i), original.capacity());
                                 }
 
-                                baseBuffer.put(index, (byte) finalR);
-                                baseBuffer.put(index + 1, (byte) finalG);
-                                baseBuffer.put(index + 2, (byte) finalB);
-                                baseBuffer.put(index + 3, (byte) (baseA & 0xFF));
+                                Color c = new Color(ints.get(i)[0]);
+
+                                if (isOverlay) {
+                                    c = new Color(ints.get(i)[1]);
+                                }
+
+                                float[] vertexColor = new float[]{c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, 1f};
+
+                                for (int y = 0; y < 16 * 32; y++) {
+                                    for (int x = 0; x < 16; x++) {
+                                        int index = (y * 16 + x) * 4;
+
+                                        int baseR = baseBuffer.get(index) & 0xFF;
+                                        int baseG = baseBuffer.get(index + 1) & 0xFF;
+                                        int baseB = baseBuffer.get(index + 2) & 0xFF;
+                                        int baseA = baseBuffer.get(index + 3) & 0xFF;
+
+                                        float[] cb = ColorizeMath.applyColorization(new float[]{baseR / 255f, baseG / 255f, baseB / 255f, 1f}, vertexColor);
+
+                                        int finalR = (Math.round(cb[0] * 255) & 0xFF);
+                                        int finalG = (Math.round(cb[1] * 255) & 0xFF);
+                                        int finalB = (Math.round(cb[2] * 255) & 0xFF);
+
+                                        if (!isOverlay) {
+                                            int overlayR = overlayBuffer.get(index) & 0xFF;
+                                            int overlayG = overlayBuffer.get(index + 1) & 0xFF;
+                                            int overlayB = overlayBuffer.get(index + 2) & 0xFF;
+                                            int overlayA = overlayBuffer.get(index + 3) & 0xFF;
+
+                                            finalR = (overlayR * overlayA + finalR * (255 - overlayA)) / 255;
+                                            finalG = (overlayG * overlayA + finalG * (255 - overlayA)) / 255;
+                                            finalB = (overlayB * overlayA + finalB * (255 - overlayA)) / 255;
+                                        }
+
+                                        baseBuffer.put(index, (byte) finalR);
+                                        baseBuffer.put(index + 1, (byte) finalG);
+                                        baseBuffer.put(index + 2, (byte) finalB);
+                                        baseBuffer.put(index + 3, (byte) (baseA & 0xFF));
+                                    }
+                                }
+
+                                int num = spriteContents.getId().toString().contains("1") ? 1 : 0;
+
+                                if (!isOverlay) {
+                                    all.add(new SpriteContents((Identifier.of("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer), spriteContents.getMetadata()));
+                                }
                             }
-                        }
-
-                        int num = spriteContents.getId().toString().contains("1") ? 1 : 0;
-
-                        if (!isOverlay) {
-                            all.add(new SpriteContents((Identifier.of("block/fire_"+num+"_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16*32, false, pointer), spriteContents.getMetadata()));
                         }
                     }
                 }
