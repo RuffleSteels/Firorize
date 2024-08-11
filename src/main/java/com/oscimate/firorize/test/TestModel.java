@@ -61,7 +61,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
                         tempList.add(g, beforeTempList.get(g));
                     }
 
-                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_overlay_0")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_0")).getSprite();
+                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_overlay_0")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_1")).getSprite();
 
                     if (!Main.inConfig) {
                         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
@@ -191,6 +191,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
             public ModelOverrideList getOverrides() {
                 return model.getOverrides();
             }
+
         };
     }
 
@@ -236,11 +237,6 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        if (soulFire) {
-            if (Main.inConfig) editModel(blockView, pos).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-            else editModel(blockView, pos).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-        } else {
             editModel(blockView, pos).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-        }
     }
 }

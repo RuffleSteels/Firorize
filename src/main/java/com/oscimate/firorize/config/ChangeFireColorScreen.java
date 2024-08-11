@@ -459,6 +459,7 @@ public class ChangeFireColorScreen extends Screen {
         }
         this.searchScreenListWidget.num = num;
         this.searchScreenListWidget.test();
+        this.saveButton.active = false;
     }
     public void updateBlockUnder(String blockUnderTag) {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;
@@ -501,7 +502,9 @@ public class ChangeFireColorScreen extends Screen {
                 sliderClickedY = ((1 - HSB[2]) * (sliderDimensions[1] - sliderPadding*2)) + sliderCoords[1] + sliderPadding;
                 clickedX = x;
                 clickedY = y;
-
+                if (!onBaseColor) {
+                    saveButton.active = false;
+                }
                 if (onBaseColor) {
                     int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(); //help
                     saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
@@ -514,9 +517,7 @@ public class ChangeFireColorScreen extends Screen {
                         saveButton.active = !(pickedColor[0].getRGB() == baseColor[0].getRGB() && pickedColor[1].getRGB() == baseColor[1].getRGB());
                     }
                 }
-                if (allBlockUnders.isEmpty() && !onBaseColor) {
-                    saveButton.active = false;
-                }
+
             }
         }
     }
@@ -1120,7 +1121,7 @@ public class ChangeFireColorScreen extends Screen {
                     if (isCustomized && currentSearchButton == 1) {
                         int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
                         boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT);
-                        if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size())) {
+                        if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() + 1)) {
                             ChangeFireColorScreen.this.searchScreenListWidget.moveEntryDown(this);
                         } if ((!shiftPressed && index > 1)) {
                             ChangeFireColorScreen.this.searchScreenListWidget.moveEntryUp(this);

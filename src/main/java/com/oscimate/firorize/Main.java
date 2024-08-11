@@ -71,7 +71,7 @@ public class Main implements ClientModInitializer {
                         if (!blockUnder.equals(Blocks.AIR)) {
                             ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
                             if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
-                                    (entity.getWorld().getBiomeFabric(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiomeFabric(mutable).getKey().get().getValue().toString())) ||
+                                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString()) ||
                                     list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
 
                                 ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
@@ -92,8 +92,8 @@ public class Main implements ClientModInitializer {
                                             return;
                                         }
                                     } else if (order == 2) {
-                                        if (entity.getWorld().getBiome(mutable) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())) {
-                                            ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString()).clone());
+                                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())) {
+                                            ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(String.valueOf(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())).clone());
                                             return;
                                         }
                                     }
@@ -114,6 +114,7 @@ public class Main implements ClientModInitializer {
             }
         }
     }
+
     @Override
     public void onInitializeClient() {
         CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {

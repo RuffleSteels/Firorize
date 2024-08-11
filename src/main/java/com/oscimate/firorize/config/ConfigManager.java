@@ -111,7 +111,7 @@ public class ConfigManager {
         }
         if(jsonOutput.getCustomColorPresets() == null || jsonOutput.getCustomColorPresets().size() == 0) {
             ListOrderedMap<String, int[]> map = new ListOrderedMap<>();
-            map.put("RED", new int[]{-10149847,-7655374});
+            map.put("RED", new int[]{-9628645,-7655374});
             map.put("ORANGE", new int[]{-7456000,-6456034});
             map.put("GRAY", new int[]{-12569022,-11185318});
             map.put("BLUE", new int[]{-15171708,-14766934});
@@ -150,7 +150,7 @@ public class ConfigManager {
             ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> map = new ListOrderedMap<>();
 
             ListOrderedMap<String, int[]> test = new ListOrderedMap<>();
-            test.put("minecraft:crimson_forest", new int[]{-10417918,-7653869});
+            test.put("minecraft:crimson_forest", new int[]{-10154472,-7650023});
             test.put("minecraft:warped_forest", new int[]{-14190522,-7562173});
             test.put("minecraft:basalt_deltas", new int[]{-12633022,-11185318});
             test.put("minecraft:soul_sand_valley", new int[]{-15171708,-14766934});
@@ -161,7 +161,10 @@ public class ConfigManager {
             temp22.add(1);
 
             ArrayList<ListOrderedMap<String, int[]>> eeka = new ArrayList<>();
-            eeka.add(new ListOrderedMap<String, int[]>());
+            ListOrderedMap<String, int[]> soulStuff = new ListOrderedMap<>();
+            soulStuff.put("minecraft:soul_sand", new int[]{-15171708,-14766934});
+            soulStuff.put("minecraft:soul_soil", new int[]{-15171708,-14766934});
+            eeka.add(soulStuff);
             eeka.add(new ListOrderedMap<String, int[]>());
             eeka.add(test);
             KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> mapp2 = KeyValuePair.of(eeka,  new int[]{-7456000,-6456034});
