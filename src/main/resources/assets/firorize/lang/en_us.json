@@ -19,6 +19,10 @@
   "firorize.config.button.profileFromCodeButton1": "From Code",
   "firorize.config.button.profileFromCodeButton2": "Click again to paste",
   "firorize.config.placeholder.newColorPresetField": "Custom color name:",
+  "firorize.config.placeholder.newProfileNameField": "New profile name:",
+  "firorize.config.tooltip.profileFromCurrentButton": "Click to create a duplicate of the currently selected profile",
+  "firorize.config.tooltip.profileFromNewButton": "Click to create a completely new profile",
+  "firorize.config.tooltip.profileFromCodeButton": "Click to create a profile from a code a friend has shared with you",
   "firorize.config.tooltip.shareProfileButton": "Click to copy a code used to share this fire profile with friends",
   "firorize.config.tooltip.priorityArrow": "Change the priority of block/block tags/biomes to make some more important then the others",
   "firorize.config.tooltip.movableButton": "You must be loaded in a world to customize with this",
@@ -31,5 +35,7 @@
   "firorize.config.tooltip.addColorPresetButton": "Click to create a custom fire color preset from this current fire color",
   "firorize.config.tooltip.removeColorPresetButton": "Click to delete this fire color preset",
   "firorize.config.tooltip.copied": "Profile code copied to clipboard",
-  "firorize.config.tooltip.invalidCode": "Invalid code"
+  "firorize.config.tooltip.invalidCode": "Invalid code",
+  "firorize.config.tooltip.exists": "This name already exists",
+  "firorize.config.tooltip.empty": "Please enter a name"
 }

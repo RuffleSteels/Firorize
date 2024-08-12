@@ -11,17 +11,25 @@ import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
 import net.minecraft.block.*;
+
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.VideoMode;
 import net.minecraft.entity.Entity;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.*;
 import net.minecraft.world.EmptyBlockView;
 import net.minecraft.world.biome.Biome;
 import org.apache.commons.collections4.map.ListOrderedMap;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
+import java.nio.IntBuffer;
 import java.util.*;
 import java.util.List;
 
@@ -33,6 +41,42 @@ public class Main implements ClientModInitializer {
     public static List<TagKey<Block>> blockTagList = null;
     public static List<RegistryKey<Biome>> biomeKeyList = null;
     public static boolean inConfig = false;
+    private static int[] getNextResolution(int width, int height) {
+        // Calculate the scaling factor for width and height
+        double widthScale = Math.ceil((double) width / 1920);
+        double heightScale = Math.ceil((double) height / 1080);
+
+        // Determine the scaling factor to use
+        double scale = Math.max(widthScale, heightScale);
+
+        // Calculate the next multiple dimensions
+        int nextWidth = (int) (1920 * scale);
+        int nextHeight = (int) (1080 * scale);
+
+        return new int[]{nextWidth, nextHeight};
+    }
+    public static void setScale(int width, int height, MinecraftClient client) {
+
+//        System.out.println(client.getWindow().getFramebufferWidth());
+//
+//        System.out.println(client.getWindow().getFramebufferHeight());
+
+        int[] stuffs = getNextResolution(client.getWindow().getFramebufferWidth(), client.getWindow().getFramebufferHeight());
+
+        int widthh = client.getWindow().getFramebufferWidth();
+        int heightt = client.getWindow().getFramebufferHeight();
+
+//        System.out.println(stuffs[0]);
+//        System.out.println(stuffs[1] );
+
+        if (Math.round((float) widthh / 16) < Math.round((float) heightt / 9)) {
+            System.out.println("EE");
+            client.getWindow().setScaleFactor((double) widthh / stuffs[0] * 2);
+        } else{
+            System.out.println("ZZ");
+            client.getWindow().setScaleFactor((double)2*heightt/ stuffs[1]);
+        }
+    }
     public static void settingFireColor(Entity entity) {
         Box box = entity.getBoundingBox();
         int i = MathHelper.floor(box.minX);
@@ -128,7 +172,12 @@ public class Main implements ClientModInitializer {
                         return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)), false, context.resourceId().getPath().split("_")[1]);
                     }
                     if (context.resourceId().getPath().contains("block/soul_fire_side") || context.resourceId().getPath().contains("block/soul_fire_floor") || context.resourceId().getPath().contains("block/soul_fire_up") ) {
-                        return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)), true, context.resourceId().getPath().split("_")[2]);
+
+                        if (Main.inConfig) {
+                            return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)), true, context.resourceId().getPath().split("_")[2]);
+                        } else {
+                            return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)), true, context.resourceId().getPath().split("_")[2]);
+                        }
                     }
                 }
                 return model;

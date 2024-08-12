@@ -61,7 +61,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
                         tempList.add(g, beforeTempList.get(g));
                     }
 
-                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_overlay_0")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_1")).getSprite();
+                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_overlay_1_config")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_1_config")).getSprite();
 
                     if (!Main.inConfig) {
                         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();

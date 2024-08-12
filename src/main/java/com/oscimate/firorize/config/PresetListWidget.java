@@ -60,6 +60,7 @@ class PresetListWidget
         instance.isReset = true;
         setSelected(children().stream().filter(thing -> thing.languageDefinition.equalsIgnoreCase(curPresetID)).findFirst().get());
         instance.resetBuffer = false;
+        instance.resetProfileButton.setFocused(false);
     }
 
     public void addProfile(String presetName, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
@@ -102,9 +103,9 @@ class PresetListWidget
         } else {
             instance.changeSearchOption(client.world == null ? 0 : Main.CONFIG_MANAGER.getPriorityOrder().get(0));
             if (client.world == null) {
-                instance.searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrows")));
+                instance.searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
                 instance.searchOptions[1].active = false;
-                instance.searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrows")));
+                instance.searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
                 instance.searchOptions[2].active = false;
                 instance.searchOptions[0].active = false;
             }
@@ -150,8 +151,8 @@ class PresetListWidget
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         super.renderWidget(context, mouseX, mouseY, delta);
         context.getMatrices().push();
-        context.getMatrices().scale(1.5f, 1.5f, 1.5f);
-        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), getX() - 14, (getY()-125), Color.WHITE.getRGB());
+        context.getMatrices().scale(2f, 2f, 2f);
+        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
         context.getMatrices().pop();
     }
 

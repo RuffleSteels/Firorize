@@ -33,7 +33,7 @@ public class ConfigScreen extends Screen {
     }
 
     private void doStuff(Object object) {
-        client.getWindow().setScaleFactor(2);
+        Main.setScale(width, height, client);
 
         this.client.setScreen((Screen) object);
     }

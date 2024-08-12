@@ -8,7 +8,9 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.RotatingCubeMapRenderer;
+import net.minecraft.client.gui.screen.GameModeSelectionScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.*;
@@ -19,6 +21,7 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
 import java.io.*;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -32,25 +35,34 @@ public class AddProfileScreen extends Screen {
     public ButtonWidget fromNewButton;
     public  ButtonWidget fromCodeButton;
     public TextFieldWidget presetNameField;
-    private String[] profileNameTooltips = new String[]{"Please enter your desired profile name", "This profile name already exists"};
+    private final String[] profileNameTooltips = new String[]{"firorize.config.tooltip.empty", "firorize.config.tooltip.exists"};
     private String profileNameTooltip = "";
     private int profileNameTooltipTime = 0;
 
     @Override
     protected void init() {
         parent.isPresetAdd = false;
-        this.presetNameField = new TextFieldWidget(this.textRenderer, width/2 - 50, height/2  +30, 100, 20, ScreenTexts.DONE);
-        this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting()).dimensions(width/2 - (3*100 + 3*15)/2, height/2-10, 100, 20).build();
-        this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button ->  addFromNew()).dimensions(width/2 - (3*100 + 3*15)/2 + 115, height/2-10, 100, 20).build();
-        this.fromCodeButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCodeButton1"), button ->  fromCode()).dimensions(width/2 - (3*100 + 3*15)/2 + 230, height/2-10, 100, 20).build();
+        this.presetNameField = new TextFieldWidget(this.textRenderer, width/2 - 65, height/2  - 25, 130, 20, ScreenTexts.DONE);
+        this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting()).dimensions(width/2 - 60 - 15 - 120, height/2+5, 120, 20).build();
+        this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button ->  addFromNew()).dimensions(width/2 - 60, height/2+5, 120, 20).build();
+        this.fromCodeButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCodeButton1"), button ->  fromCode()).dimensions(width/2 + 60 + 15, height/2+5, 120, 20).build();
 
         presetNameField.setMaxLength(Integer.MAX_VALUE);
+        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), button -> close()).dimensions(width/2 + 60 + 15 + 100, height/2  - 25, 20, 20).build());
         this.addDrawableChild(presetNameField);
         this.addDrawableChild(fromExistingButton);
         this.addDrawableChild(fromNewButton);
         this.addDrawableChild(fromCodeButton);
         super.init();
         Main.inConfig = true;
+
+        fromExistingButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCurrentButton")));
+        fromExistingButton.setTooltipDelay(Duration.ofMillis(750L));
+        fromNewButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromNewButton")));
+        fromNewButton.setTooltipDelay(Duration.ofMillis(750L));
+        fromCodeButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCodeButton")));
+        fromCodeButton.setTooltipDelay(Duration.ofMillis(750L));
+        presetNameField.setPlaceholder(Text.translatable("firorize.config.placeholder.newProfileNameField"));
     }
 
     private int tooltipTime = 0;
@@ -103,7 +115,7 @@ public class AddProfileScreen extends Screen {
 
     @Override
     public void resize(MinecraftClient client, int width, int height) {
-        client.getWindow().setScaleFactor(2);
+        Main.setScale(width, height, client);
         super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
@@ -117,7 +129,7 @@ public class AddProfileScreen extends Screen {
                 profileNameTooltipTime = 30;
             } else {
                 parent.presetListWidget.addProfile(presetNameField.getText(), newProfile);
-                client.getWindow().setScaleFactor(2);
+                Main.setScale(width, height, client);
                 client.setScreen(parent);
             }
         }
@@ -150,20 +162,29 @@ public class AddProfileScreen extends Screen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         this.applyBlur(delta);
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 1000);
+//        context.getMatrices().push();
+//        context.getMatrices().translate(0, 0, 1000);
         this.renderDarkening(context);
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        context.getMatrices().push();
+        context.getMatrices().translate(0, 0, -500);
         parent.render(context, 0, 0, delta);
+        context.getMatrices().pop();
+        context.getMatrices().push();
+
+        context.getMatrices().translate(0, 0, -490);
+
+//        context.getMatrices().translate(0, 0, 200);
         super.render(context, mouseX, mouseY, delta);
+
         if (tooltipTime > 0) {
             context.drawTooltip(textRenderer, Text.translatable("firorize.config.tooltip.invalidCode"), fromCodeButton.getX() + 10, fromCodeButton.getY() - 5);
         }
         if (profileNameTooltipTime > 0) {
-            context.drawTooltip(textRenderer, Text.literal(profileNameTooltip), presetNameField.getX() + 10, presetNameField.getY() + presetNameField.getHeight() + 5);
+            context.drawTooltip(textRenderer, Text.translatable(profileNameTooltip), presetNameField.getX() + 10, presetNameField.getY() + presetNameField.getHeight() + 5);
         }
 
         context.getMatrices().pop();

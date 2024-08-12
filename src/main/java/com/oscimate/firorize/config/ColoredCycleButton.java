@@ -6,6 +6,7 @@ import com.oscimate.firorize.Main;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
@@ -25,10 +26,12 @@ public class ColoredCycleButton extends PressableWidget {
     public boolean isAdding = false;
     private final int x;
     private final int y;
+    private final TextRenderer textRenderer;
 
 
-    ColoredCycleButton(ChangeFireColorScreen instance, int x, int y, int width, int height) {
+    ColoredCycleButton(ChangeFireColorScreen instance, int x, int y, int width, int height, TextRenderer textRenderer) {
         super(x, y, width, height, Text.literal(""));
+        this.textRenderer = textRenderer;
         this.x = x;
         this.y = y;
         this.instance = instance;
@@ -69,10 +72,17 @@ public class ColoredCycleButton extends PressableWidget {
         if (!isAdding) {
             this.drawMessage(context, minecraftClient.textRenderer, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
         }
+
+        if (instance.cycleTooltipTimer > 0) {
+            context.drawTooltip(textRenderer, Text.translatable(tooltip), instance.invisibleTextFieldWidget.getX() + 10, instance.invisibleTextFieldWidget.getY() + instance.invisibleTextFieldWidget.getHeight() + 5);
+        }
     }
 
     private boolean isWhite = false;
     private boolean removing = false;
+
+    private final String[] tooltips = new String[]{"firorize.config.tooltip.empty", "firorize.config.tooltip.exists"};
+    private String tooltip = "";
 
     public void addColor() {
         if (index > 0) {
@@ -83,7 +93,7 @@ public class ColoredCycleButton extends PressableWidget {
             Main.CONFIG_MANAGER.save();
         } else {
             if (isAdding) {
-                if (this.values.stream().noneMatch(colors -> colors.getName().equalsIgnoreCase(instance.invisibleTextFieldWidget.getText()))) {
+                if (this.values.stream().noneMatch(colors -> colors.getName().equalsIgnoreCase(instance.invisibleTextFieldWidget.getText())) && !instance.invisibleTextFieldWidget.getText().isEmpty()) {
                     instance.invisibleTextFieldWidget.visible = false;
                     this.setPosition(x, y);
                     isAdding = false;
@@ -96,6 +106,12 @@ public class ColoredCycleButton extends PressableWidget {
                     Main.CONFIG_MANAGER.save();
                     isWhite = true;
                     instance.invisibleTextFieldWidget.setText("");
+                } else if (instance.invisibleTextFieldWidget.getText().isEmpty()) {
+                    tooltip = tooltips[0];
+                    instance.cycleTooltipTimer = 30;
+                } else {
+                    tooltip = tooltips[1];
+                    instance.cycleTooltipTimer = 30;
                 }
             } else {
                 instance.invisibleTextFieldWidget.visible = true;
@@ -104,7 +120,6 @@ public class ColoredCycleButton extends PressableWidget {
             }
         }
     }
-
 
     @Override
     public void onClick(double mouseX, double mouseY) {
@@ -189,13 +204,14 @@ public class ColoredCycleButton extends PressableWidget {
         }
 
 
-        public ColoredCycleButton build(ChangeFireColorScreen instance, int x, int y, int width, int height) {
+        public ColoredCycleButton build(ChangeFireColorScreen instance, int x, int y, int width, int height, TextRenderer textRenderer) {
                 return new ColoredCycleButton(
                         instance,
                         x,
                         y,
                         width,
-                        height
+                        height,
+                        textRenderer
                 );
             }
     }

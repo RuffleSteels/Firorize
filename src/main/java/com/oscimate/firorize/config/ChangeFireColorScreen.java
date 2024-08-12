@@ -22,7 +22,10 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -130,7 +133,7 @@ public class ChangeFireColorScreen extends Screen {
                         )
                 ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()))) {
             MinecraftClient.getInstance().reloadResources();  }
-        client.getWindow().setScaleFactor(2);
+        Main.setScale(width, height, client);
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
@@ -187,6 +190,11 @@ public class ChangeFireColorScreen extends Screen {
     public ButtonWidget resetProfileButton;
     private final KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> comparedCurrentFire;
     public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
+    public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80;
+
+    public int profileButtonXInitial = (wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20;
+
+    public int[] profileButtonXs = new int[]{profileButtonXInitial-40, profileButtonXInitial-20, profileButtonXInitial};
     @Override
     protected void init() {
         Main.inConfig = true;
@@ -200,7 +208,7 @@ public class ChangeFireColorScreen extends Screen {
         addColorButton = new ButtonWidget.Builder(Text.literal("+"), button -> cyclicalPresets.addColor()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, hexBoxCoords[1], 20, 20).build();
 
         this.cyclicalPresets = ColoredCycleButton.builder()
-                .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20);
+                .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, textRenderer);
 
         blockSearchCoords[0] = width - 300 - 20;
         redoButton = new UndoButton(hexBoxCoords[0], hexBoxCoords[1], 20, 20, button -> redo());
@@ -218,10 +226,10 @@ public class ChangeFireColorScreen extends Screen {
 
         this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30, wheelCoords[0], 15, this, textRenderer);
 
-        this.resetProfileButton = new ButtonWidget.Builder(Text.literal("Reset Profile"), button -> this.presetListWidget.resetProfile()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20)/2 + wheelCoords[0] - 50, wheelCoords[0] + wheelRadius*2 + 80, (wheelRadius*2 + sliderDimensions[0] + 20)/2 - 20, 20).build();
+        this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[0], profileButtonY, 20, 20).build();
 
-        this.shareProfileButton = new ButtonWidget.Builder(Text.literal("Share Profile"), button -> saveProfile()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20)/2 + wheelCoords[0], wheelCoords[0] + wheelRadius*2 + 80, (wheelRadius*2 + sliderDimensions[0] + 20)/2 - 20, 20).build();
-        this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, wheelCoords[0] + wheelRadius*2 + 80, 20, 20).build();
+        this.shareProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> saveProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
+        this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
         this.addDrawableChild(addButton);
         textFieldWidget.setChangedListener(this::updateCursor);
         updateCursor(this.hexCode);
@@ -299,6 +307,10 @@ public class ChangeFireColorScreen extends Screen {
 
     private int tooltipTimer = 0;
 
+    public int cycleTooltipTimer = 0;
+
+
+
     @Override
     public void tick() {
         super.tick();
@@ -306,6 +318,9 @@ public class ChangeFireColorScreen extends Screen {
         // Decrease the timer each tick
         if (tooltipTimer > 0) {
             tooltipTimer--;
+        }
+        if (cycleTooltipTimer > 0) {
+            cycleTooltipTimer--;
         }
     }
 
@@ -328,6 +343,7 @@ public class ChangeFireColorScreen extends Screen {
             throw new RuntimeException(e);
         }
         tooltipTimer = 40;
+        shareProfileButton.setFocused(false);
     }
 
     @Override
@@ -343,7 +359,8 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     public void resize(MinecraftClient client, int width, int height) {
-        client.getWindow().setScaleFactor(2);
+        Main.setScale(width, height, client);
+
         super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
     private int currentSearchButton = 0;
@@ -460,6 +477,7 @@ public class ChangeFireColorScreen extends Screen {
         this.searchScreenListWidget.num = num;
         this.searchScreenListWidget.test();
         this.saveButton.active = false;
+        this.saveButton.setFocused(false);
     }
     public void updateBlockUnder(String blockUnderTag) {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;
@@ -502,9 +520,7 @@ public class ChangeFireColorScreen extends Screen {
                 sliderClickedY = ((1 - HSB[2]) * (sliderDimensions[1] - sliderPadding*2)) + sliderCoords[1] + sliderPadding;
                 clickedX = x;
                 clickedY = y;
-                if (!onBaseColor) {
-                    saveButton.active = false;
-                }
+
                 if (onBaseColor) {
                     int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(); //help
                     saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
@@ -514,7 +530,8 @@ public class ChangeFireColorScreen extends Screen {
                         int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(string); //help
                         saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
                     } else {
-                        saveButton.active = !(pickedColor[0].getRGB() == baseColor[0].getRGB() && pickedColor[1].getRGB() == baseColor[1].getRGB());
+//                        saveButton.active = !(pickedColor[0].getRGB() == baseColor[0].getRGB() && pickedColor[1].getRGB() == baseColor[1].getRGB());
+                        saveButton.active = true;
                     }
                 }
 
@@ -582,6 +599,7 @@ public class ChangeFireColorScreen extends Screen {
         }
         hasRedo = bool;
         redoButton.active = bool;
+        this.saveButton.setFocused(false);
     }
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -649,6 +667,14 @@ public class ChangeFireColorScreen extends Screen {
         context.getMatrices().push();
 
         super.render(context, mouseX, mouseY, delta);
+
+        Sprite RESET = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/reset")).getSprite();
+        context.drawSprite(profileButtonXs[0] + (20 - RESET.getContents().getWidth())/2, profileButtonY + (20 - RESET.getContents().getHeight())/2, 10, RESET.getContents().getWidth(), RESET.getContents().getHeight(), RESET);
+
+        Sprite SHARE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/share")).getSprite();
+        context.drawSprite(profileButtonXs[1] + (20 - SHARE.getContents().getWidth())/2, profileButtonY + (20 - SHARE.getContents().getHeight())/2, 10, SHARE.getContents().getWidth(), SHARE.getContents().getHeight(), SHARE);
+
+
 
         context.getMatrices().push();
 
@@ -757,7 +783,7 @@ public class ChangeFireColorScreen extends Screen {
 
         context.getMatrices().push();
 
-        context.getMatrices().translate(0, 0, -350);
+        context.getMatrices().translate(0, 0, -375);
 
         context.enableScissor(0, 0, blockSearchCoords[0], height);
 
@@ -796,6 +822,7 @@ public class ChangeFireColorScreen extends Screen {
         Block block = Blocks.FIRE;
         Block block2 = Blocks.SOUL_FIRE;
         consumer = context.getVertexConsumers().getBuffer(CustomRenderLayer.getCustomTint());
+
         blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block.getDefaultState(), blockRenderManager.getModel(block.getDefaultState()), pickedColor[0].getRed()/255f, pickedColor[0].getGreen()/255f, pickedColor[0].getBlue()/255f, 1, 1);
         blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block2.getDefaultState(), blockRenderManager.getModel(block2.getDefaultState()), pickedColor[1].getRed()/255f, pickedColor[1].getGreen()/255f, pickedColor[1].getBlue()/255f, 1, 1);
 
