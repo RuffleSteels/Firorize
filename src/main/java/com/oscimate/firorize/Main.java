@@ -56,20 +56,10 @@ public class Main implements ClientModInitializer {
         return new int[]{nextWidth, nextHeight};
     }
     public static void setScale(int width, int height, MinecraftClient client) {
-
-//        System.out.println(client.getWindow().getFramebufferWidth());
-//
-//        System.out.println(client.getWindow().getFramebufferHeight());
-
         int[] stuffs = getNextResolution(client.getWindow().getFramebufferWidth(), client.getWindow().getFramebufferHeight());
 
         int widthh = client.getWindow().getFramebufferWidth();
         int heightt = client.getWindow().getFramebufferHeight();
-
-//        System.out.println(stuffs[0]);
-//        System.out.println(stuffs[1] );
-
-        System.out.println(stuffs[0]);
 
         if (Math.round((float) widthh / 16) < Math.round((float) heightt / 9)) {
             System.out.println("EE");
