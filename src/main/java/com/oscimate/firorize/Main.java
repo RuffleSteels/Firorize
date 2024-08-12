@@ -62,10 +62,8 @@ public class Main implements ClientModInitializer {
         int heightt = client.getWindow().getFramebufferHeight();
 
         if (Math.round((float) widthh / 16) < Math.round((float) heightt / 9)) {
-            System.out.println("EE");
             client.getWindow().setScaleFactor((double) widthh / stuffs[0] * 2  * ((double) stuffs[0] /1920));
         } else{
-            System.out.println("ZZ");
             client.getWindow().setScaleFactor((double)2*heightt/ stuffs[1] * ((double) stuffs[0] /1920));
         }
     }
