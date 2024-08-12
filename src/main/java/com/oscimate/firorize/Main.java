@@ -69,12 +69,14 @@ public class Main implements ClientModInitializer {
 //        System.out.println(stuffs[0]);
 //        System.out.println(stuffs[1] );
 
+        System.out.println(stuffs[0]);
+
         if (Math.round((float) widthh / 16) < Math.round((float) heightt / 9)) {
             System.out.println("EE");
-            client.getWindow().setScaleFactor((double) widthh / stuffs[0] * 2);
+            client.getWindow().setScaleFactor((double) widthh / stuffs[0] * 2  * ((double) stuffs[0] /1920));
         } else{
             System.out.println("ZZ");
-            client.getWindow().setScaleFactor((double)2*heightt/ stuffs[1]);
+            client.getWindow().setScaleFactor((double)2*heightt/ stuffs[1] * ((double) stuffs[0] /1920));
         }
     }
     public static void settingFireColor(Entity entity) {

@@ -21,8 +21,6 @@ public class ConfigScreen extends Screen {
         this.parent = parent;
     }
 
-
-
     @Override
     protected void init() {
         this.addDrawableChild(new ButtonWidget.Builder(Text.translatable("firorize.config.button.changeFireHeightScreen"), button -> doStuff(new ChangeFireHeightScreen(this))).dimensions(width / 2 + buttonWidth/2 - 40, height/2 - 15 - 20, buttonWidth, 20).build());
