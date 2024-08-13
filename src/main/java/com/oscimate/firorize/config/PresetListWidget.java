@@ -34,6 +34,8 @@ class PresetListWidget
         this.x = x + instance.wheelCoords[0];
         this.y = instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2;
 
+        setLeftPos(x);
+
         Main.CONFIG_MANAGER.getFireColorPresets().forEach((string, map) -> {
             this.addEntry(new PresetEntry(string));
         });

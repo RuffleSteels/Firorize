@@ -218,7 +218,7 @@ public class ChangeFireColorScreen extends Screen {
 
         saveButton.active = false;
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
-        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, blockSearchCoords[1] + 40 + blockSearchDimensions[1], 15);
+        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, blockSearchCoords[1] + blockSearchDimensions[1], 15);
         this.addDrawableChild(searchScreenListWidget);
         textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20, hexBoxCoords[1], 50, 20, ScreenTexts.DONE);
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0], blockSearchCoords[1]+20, blockSearchDimensions[0], 20, ScreenTexts.DONE, this);
@@ -251,7 +251,7 @@ public class ChangeFireColorScreen extends Screen {
                     this.addDrawableChild(movableArrowButtons[2 * i + j]);
 
                     movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
-                    movableArrowButtons[2 * i + j].setTooltipDelay(7);
+                    movableArrowButtons[2 * i + j].setTooltipDelay(75);
                 }
             }
         }
@@ -282,19 +282,19 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         shareProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
-        shareProfileButton.setTooltipDelay(7);
+        shareProfileButton.setTooltipDelay(75);
         addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
-        addButton.setTooltipDelay(7);
+        addButton.setTooltipDelay(75);
         resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
-        resetProfileButton.setTooltipDelay(7);
+        resetProfileButton.setTooltipDelay(75);
         overlayToggles[0].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.baseToggle")));
-        overlayToggles[0].setTooltipDelay(7);
+        overlayToggles[0].setTooltipDelay(75);
         overlayToggles[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.overlayToggle")));
-        overlayToggles[1].setTooltipDelay(7);
+        overlayToggles[1].setTooltipDelay(75);
         saveButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.applyButton")));
-        saveButton.setTooltipDelay(7);
+        saveButton.setTooltipDelay(75);
         redoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.undoButton")));
-        redoButton.setTooltipDelay(7);
+        redoButton.setTooltipDelay(75);
 
         toggle(true);
 
@@ -691,10 +691,10 @@ public class ChangeFireColorScreen extends Screen {
 
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
 
-        bufferBuilder.vertex(matrix4f, wheelCoords[0], wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(0f, 1f);
-        bufferBuilder.vertex(matrix4f, wheelCoords[0], (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(0f, 0f);
-        bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(1f, 0f);
-        bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(1f, 1f);
+        bufferBuilder.vertex(matrix4f, wheelCoords[0], wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(0f, 1f).next();
+        bufferBuilder.vertex(matrix4f, wheelCoords[0], (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(0f, 0f).next();;
+        bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(1f, 0f).next();;
+        bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(1f, 1f).next();;
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
 
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
@@ -850,6 +850,8 @@ public class ChangeFireColorScreen extends Screen {
     @Environment(value= EnvType.CLIENT)
     class SearchScreenListWidget
             extends AlwaysSelectedEntryListWidget<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
+
+        private final int x;
         private void generateEntries() {
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
@@ -939,6 +941,8 @@ public class ChangeFireColorScreen extends Screen {
         }
         public SearchScreenListWidget(MinecraftClient minecraftClient, int i, int j, int k, int l, int m) {
             super(minecraftClient, i, j, k, l, m);
+            this.x = blockSearchCoords[0];
+            setLeftPos(x);
             generateEntries();
         }
         public int num = 0;
@@ -966,8 +970,8 @@ public class ChangeFireColorScreen extends Screen {
 
         @Override
         protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-            int i = this.getRowLeft() + (this.width - entryWidth) / 2;
-            int j = this.getRowLeft() + (this.width + entryWidth) / 2;
+            int i = this.x + (this.width - entryWidth) / 2;
+            int j = this.x + (this.width + entryWidth) / 2;
             context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
             context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
         }
@@ -986,12 +990,7 @@ public class ChangeFireColorScreen extends Screen {
 //        public int getX() {
 //            return super.getX() + blockSearchCoords[0];
 //        }
-
-
-        @Override
-        public int getRowLeft() {
-            return super.getRowLeft() + blockSearchCoords[0];
-        }
+        
 
         @Override
         public void setSelected(@Nullable ChangeFireColorScreen.SearchScreenListWidget.BlockEntry entry) {

@@ -250,7 +250,7 @@ public class ChangeFireColorScreen extends Screen {
                     this.addDrawableChild(movableArrowButtons[2 * i + j]);
 
                     movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
-                    movableArrowButtons[2 * i + j].setTooltipDelay(7);
+                    movableArrowButtons[2 * i + j].setTooltipDelay(75);
                 }
             }
         }
@@ -281,19 +281,19 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         shareProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
-        shareProfileButton.setTooltipDelay(7);
+        shareProfileButton.setTooltipDelay(75);
         addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
-        addButton.setTooltipDelay(7);
+        addButton.setTooltipDelay(75);
         resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
-        resetProfileButton.setTooltipDelay(7);
+        resetProfileButton.setTooltipDelay(75);
         overlayToggles[0].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.baseToggle")));
-        overlayToggles[0].setTooltipDelay(7);
+        overlayToggles[0].setTooltipDelay(75);
         overlayToggles[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.overlayToggle")));
-        overlayToggles[1].setTooltipDelay(7);
+        overlayToggles[1].setTooltipDelay(75);
         saveButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.applyButton")));
-        saveButton.setTooltipDelay(7);
+        saveButton.setTooltipDelay(75);
         redoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.undoButton")));
-        redoButton.setTooltipDelay(7);
+        redoButton.setTooltipDelay(75);
 
         toggle(true);
 
