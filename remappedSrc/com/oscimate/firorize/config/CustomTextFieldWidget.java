@@ -21,13 +21,11 @@ public class CustomTextFieldWidget extends TextFieldWidget {
     }
 
     @Override
-    public void eraseCharacters(int characterOffset) {
-        super.eraseCharacters(characterOffset);
+    public void eraseCharactersTo(int position) {
+        super.eraseCharactersTo(position);
         instance.input = this.getText();
         instance.searchScreenListWidget.selected.clear();
         instance.searchScreenListWidget.test();
         instance.setRedo(false);
     }
-
-
 }

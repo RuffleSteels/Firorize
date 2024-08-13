@@ -84,32 +84,32 @@ public class Main implements ClientModInitializer {
             for (int q = k; q < l; ++q) {
                 for (int r = m; r < n; ++r) {
                     mutable.set(p, q, r);
-                    Block block = entity.getWorld().getBlockState(mutable).getBlock();
+                    Block block = entity.method_48926().getBlockState(mutable).getBlock();
                     if (!((float)q + 1f >= box.minY)) continue;
                     if (block instanceof AbstractFireBlock) {
                         final Block blockUnder;
                         if (block instanceof FireBlock) {
-                            if (entity.getWorld().getBlockState(mutable).get(FireBlock.NORTH)) {
-                                blockUnder = entity.getWorld().getBlockState(mutable.north()).getBlock();
-                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.EAST)) {
-                                blockUnder = entity.getWorld().getBlockState(mutable.east()).getBlock();
-                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.SOUTH)) {
-                                blockUnder = entity.getWorld().getBlockState(mutable.south()).getBlock();
-                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.WEST)) {
-                                blockUnder = entity.getWorld().getBlockState(mutable.west()).getBlock();
-                            } else if (entity.getWorld().getBlockState(mutable).get(FireBlock.UP)) {
-                                blockUnder = entity.getWorld().getBlockState(mutable.up()).getBlock();
+                            if (entity.method_48926().getBlockState(mutable).get(FireBlock.NORTH)) {
+                                blockUnder = entity.method_48926().getBlockState(mutable.north()).getBlock();
+                            } else if (entity.method_48926().getBlockState(mutable).get(FireBlock.EAST)) {
+                                blockUnder = entity.method_48926().getBlockState(mutable.east()).getBlock();
+                            } else if (entity.method_48926().getBlockState(mutable).get(FireBlock.SOUTH)) {
+                                blockUnder = entity.method_48926().getBlockState(mutable.south()).getBlock();
+                            } else if (entity.method_48926().getBlockState(mutable).get(FireBlock.WEST)) {
+                                blockUnder = entity.method_48926().getBlockState(mutable.west()).getBlock();
+                            } else if (entity.method_48926().getBlockState(mutable).get(FireBlock.UP)) {
+                                blockUnder = entity.method_48926().getBlockState(mutable.up()).getBlock();
                             } else {
-                                blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
+                                blockUnder = entity.method_48926().getBlockState(mutable.down()).getBlock();
                             }
                         } else {
-                            blockUnder = entity.getWorld().getBlockState(mutable.down()).getBlock();
+                            blockUnder = entity.method_48926().getBlockState(mutable.down()).getBlock();
                         }
 
                         if (!blockUnder.equals(Blocks.AIR)) {
                             ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
                             if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
-                                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString()) ||
+                                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.method_48926().getBiome(mutable).getKey().get().getValue().toString()) ||
                                     list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
 
                                 ((RenderFireColorAccessor) entity).setRenderFireColor(new int[]{2});
@@ -130,8 +130,8 @@ public class Main implements ClientModInitializer {
                                             return;
                                         }
                                     } else if (order == 2) {
-                                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())) {
-                                            ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(String.valueOf(entity.getWorld().getBiome(mutable).getKey().get().getValue().toString())).clone());
+                                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.method_48926().getBiome(mutable).getKey().get().getValue().toString())) {
+                                            ((RenderFireColorAccessor) entity).setRenderFireColor(list.get(2).get(String.valueOf(entity.method_48926().getBiome(mutable).getKey().get().getValue().toString())).clone());
                                             return;
                                         }
                                     }
@@ -161,15 +161,17 @@ public class Main implements ClientModInitializer {
         });
         ModelLoadingPlugin.register(pluginContext -> {
             pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
-                if (context.id().getPath().contains("block/fire_side") || context.id().getPath().contains("block/fire_floor") || context.id().getPath().contains("block/fire_up") ) {
-                    return new TestModel(model, Integer.parseInt(context.id().getPath().substring(context.id().getPath().length() - 1)), false, context.id().getPath().split("_")[1]);
-                }
-                if (context.id().getPath().contains("block/soul_fire_side") || context.id().getPath().contains("block/soul_fire_floor") || context.id().getPath().contains("block/soul_fire_up") ) {
+                if (context.topLevelId() == null) {
+                    if (context.resourceId().getPath().contains("block/fire_side") || context.resourceId().getPath().contains("block/fire_floor") || context.resourceId().getPath().contains("block/fire_up") ) {
+                        return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)), false, context.resourceId().getPath().split("_")[1]);
+                    }
+                    if (context.resourceId().getPath().contains("block/soul_fire_side") || context.resourceId().getPath().contains("block/soul_fire_floor") || context.resourceId().getPath().contains("block/soul_fire_up") ) {
 
-                    if (Main.inConfig) {
-                        return new TestModel(model, Integer.parseInt(context.id().getPath().substring(context.id().getPath().length() - 1)), true, context.id().getPath().split("_")[2]);
-                    } else {
-                        return new TestModel(model, Integer.parseInt(context.id().getPath().substring(context.id().getPath().length() - 1)), true, context.id().getPath().split("_")[2]);
+                        if (Main.inConfig) {
+                            return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)), true, context.resourceId().getPath().split("_")[2]);
+                        } else {
+                            return new TestModel(model, Integer.parseInt(context.resourceId().getPath().substring(context.resourceId().getPath().length() - 1)), true, context.resourceId().getPath().split("_")[2]);
+                        }
                     }
                 }
                 return model;

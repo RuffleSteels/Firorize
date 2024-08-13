@@ -161,9 +161,8 @@ public class ColoredCycleButton extends PressableWidget {
             instance.updateCursor("#"+Integer.toHexString(RGB).substring(2));
         }
     }
-
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (verticalAmount > 0.0) {
             this.cycle(-1);
         } else if (verticalAmount < 0.0) {

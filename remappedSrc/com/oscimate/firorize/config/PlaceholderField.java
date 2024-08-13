@@ -12,6 +12,10 @@ public class PlaceholderField extends TextFieldWidget {
     private Text placeholder;
     private TextRenderer textRenderer;
 
+    public PlaceholderField(TextRenderer textRenderer, int width, int height, Text text) {
+        super(textRenderer, width, height, text);
+        this.textRenderer = textRenderer;
+    }
 
     public PlaceholderField(TextRenderer textRenderer, int x, int y, int width, int height, Text text) {
         super(textRenderer, x, y, width, height, text);
@@ -27,7 +31,6 @@ public class PlaceholderField extends TextFieldWidget {
     public void setPlaceholder(Text placeholder) {
         this.placeholder = placeholder;
     }
-
 
     private final int placeholderColor = new Color(128, 128, 128).getRGB();
 

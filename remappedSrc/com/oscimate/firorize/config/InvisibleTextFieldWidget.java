@@ -11,6 +11,12 @@ public class InvisibleTextFieldWidget extends PlaceholderField {
         this.instance = instance;
     }
 
+
+    @Override
+    public void setCursor(int cursor, boolean shiftKeyPressed) {
+        super.setCursor(cursor, shiftKeyPressed);
+    }
+
     @Override
     public boolean charTyped(char chr, int modifiers) {
         if (!String.valueOf(chr).matches("[^A-Za-z0-9 ]") && !String.valueOf(chr).equals(" ")) {

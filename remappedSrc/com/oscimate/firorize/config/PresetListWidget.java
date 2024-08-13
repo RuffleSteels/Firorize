@@ -21,18 +21,11 @@ class PresetListWidget
         extends AlwaysSelectedEntryListWidget<PresetListWidget.PresetEntry> {
 
     public String curPresetID;
-    private final int width;
-    private final int x;
-    private final int y;
 
     public PresetListWidget(MinecraftClient client, int width, int height, int x, int y, ChangeFireColorScreen instance, TextRenderer textRenderer) {
-        super(client, width, height, instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2, instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2 + height, y);
+        super(client, width, height, x, y);
         this.instance = instance;
         this.textRenderer = textRenderer;
-
-        this.width = width;
-        this.x = x + instance.wheelCoords[0];
-        this.y = instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2;
 
         Main.CONFIG_MANAGER.getFireColorPresets().forEach((string, map) -> {
             this.addEntry(new PresetEntry(string));
@@ -49,7 +42,7 @@ class PresetListWidget
 
     @Override
     public int getRowWidth() {
-        return width;
+        return this.getWidth();
     }
 
 
@@ -132,23 +125,34 @@ class PresetListWidget
 
     @Override
     protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-        int i = this.x + (this.width - entryWidth) / 2;
-        int j = this.x + (this.width + entryWidth) / 2;
+        int i = this.getX() + (this.width - entryWidth) / 2;
+        int j = this.getX() + (this.width + entryWidth) / 2;
         context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
         context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
     }
 
     @Override
     protected int getScrollbarPositionX() {
-        return super.getScrollbarPositionX() + 20 + instance.blockSearchCoords[0];
+        return super.getScrollbarPositionX() - 16;
+    }
+    @Override
+    public int getX() {
+        return super.getX() + instance.wheelCoords[0];
     }
 
     @Override
-    public void renderList(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderList(context, mouseX, mouseY, delta);
+    public int getY() {
+        return instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2;
+    }
+
+
+
+    @Override
+    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.renderButton(context, mouseX, mouseY, delta);
         context.getMatrices().push();
         context.getMatrices().scale(2f, 2f, 2f);
-        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), x - 21, (y-183), Color.WHITE.getRGB());
+        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
         context.getMatrices().pop();
     }
 
@@ -179,7 +183,7 @@ class PresetListWidget
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (mouseX >= x+width-entryHeight-10 && mouseX <= x+width-10 && mouseY >= y && mouseY <= y+entryHeight) {
+            if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight) {
                 if (!languageDefinition.equals("Initial")) {
                     Main.CONFIG_MANAGER.getFireColorPresets().remove(languageDefinition);
                     PresetListWidget.this.children().remove(this);

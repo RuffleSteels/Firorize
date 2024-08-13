@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.oscimate.firorize.ColorizeMath;
 import com.oscimate.firorize.Main;
-import com.oscimate.firorize.SpriteContentsDuck;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.SpriteContents;
 import net.minecraft.client.texture.SpriteDimensions;
@@ -22,7 +21,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +57,7 @@ public class SpriteLoaderMixin {
     ));
 
     @Inject(method = "stitch", at = @At("HEAD"))
-    private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) throws IOException {
+    private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
         if (id.equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)) {
             List<int[]> ints = Stream.concat(
                     Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
@@ -150,7 +148,7 @@ public class SpriteLoaderMixin {
                                 int num = spriteContents.getId().toString().contains("1") ? 1 : 0;
 
                                 if (!isOverlay) {
-                                    all.add(new SpriteContents((new Identifier("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer),((SpriteContentsDuck)spriteContents).firorize$getMetadata()));
+                                    all.add(new SpriteContents((new Identifier("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer), spriteContents.getMetadata()));
                                 }
                             }
                         }

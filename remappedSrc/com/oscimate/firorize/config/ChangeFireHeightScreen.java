@@ -14,6 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 
 public class ChangeFireHeightScreen extends Screen {
     private Screen parent;
@@ -50,13 +51,13 @@ public class ChangeFireHeightScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderBackgroundTexture(context);
+
         super.render(context, mouseX, mouseY, delta);
 
         MatrixStack matrixStack = context.getMatrices();
         matrixStack.push();
         GameRenderer gameRenderer = MinecraftClient.getInstance().gameRenderer;
-        gameRenderer.loadProjectionMatrix(gameRenderer.getBasicProjectionMatrix(((GameRendererMixin)gameRenderer).callGetFov(gameRenderer.getCamera(), MinecraftClient.getInstance().getTickDelta(), false)));
+        gameRenderer.loadProjectionMatrix(gameRenderer.getBasicProjectionMatrix(((GameRendererMixin)gameRenderer).callGetFov(gameRenderer.getCamera(), MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true), false)));
         matrixStack.loadIdentity();
 
 
@@ -72,8 +73,8 @@ public class ChangeFireHeightScreen extends Screen {
         float j = 1/32F * counter;
 
         var modelView = RenderSystem.getModelViewStack();
-        modelView.push();
-        modelView.loadIdentity();
+        modelView.pushMatrix();
+        modelView.identity();
         RenderSystem.applyModelViewMatrix();
 
         matrixStack.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
@@ -83,8 +84,7 @@ public class ChangeFireHeightScreen extends Screen {
             matrixStack.translate((float)(-(r * 2 - 1)) * 0.24f, -0.3f, 0.0f);
             matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float)(r * 2 - 1) * 10.0f));
             Matrix4f matrix4f = matrixStack.peek().getPositionMatrix();
-            BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
-            bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
+            BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
             bufferBuilder.vertex(matrix4f, -0.5F, -0.5F, -0.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(a, j);
             bufferBuilder.vertex(matrix4f, 0.5F, -0.5F, -0.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, j);
             bufferBuilder.vertex(matrix4f, 0.5F, 0.5F, -0.5F).color(1.0f, 1.0f, 1.0f, 0.9f).texture(f, i);
@@ -93,7 +93,7 @@ public class ChangeFireHeightScreen extends Screen {
             matrixStack.pop();
         }
 
-        modelView.pop();
+        modelView.popMatrix();
         RenderSystem.applyModelViewMatrix();
 
         RenderSystem.disableBlend();

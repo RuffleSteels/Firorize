@@ -84,8 +84,8 @@ public class SearchScreen extends Screen {
             generateEntries();
         }
         @Override
-        protected int getScrollbarX() {
-            return super.getScrollbarX() - 16;
+        protected int getScrollbarPositionX() {
+            return super.getScrollbarPositionX() - 16;
         }
 
         @Override

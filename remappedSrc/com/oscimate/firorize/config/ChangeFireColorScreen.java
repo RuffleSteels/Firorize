@@ -49,7 +49,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.time.Duration;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -156,7 +155,7 @@ public class ChangeFireColorScreen extends Screen {
     public PresetListWidget presetListWidget;
     boolean isReset = false;
     private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP) || ((FireBlockInvoker)Blocks.FIRE).getBurnChances().containsKey(block)).toList();
-    public final int[] blockSearchCoords = {0, 18};
+    private final int[] blockSearchCoords = {0, 18};
     private final int[] blockSearchDimensions = {300, 320};
     private ButtonWidget[] overlayToggles = new ButtonWidget[2];
     public ButtonWidget redoButton;
@@ -218,7 +217,7 @@ public class ChangeFireColorScreen extends Screen {
 
         saveButton.active = false;
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
-        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, blockSearchCoords[1] + 40 + blockSearchDimensions[1], 15);
+        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, 15);
         this.addDrawableChild(searchScreenListWidget);
         textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20, hexBoxCoords[1], 50, 20, ScreenTexts.DONE);
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0], blockSearchCoords[1]+20, blockSearchDimensions[0], 20, ScreenTexts.DONE, this);
@@ -655,18 +654,18 @@ public class ChangeFireColorScreen extends Screen {
     private float dist = 0f;
     private boolean forwards = true;
 
-//    @Override
-//    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-//        this.renderPanoramaBackground(context, delta);
-//
-//        this.applyBlur(delta);
-//        this.renderDarkening(context);
-//    }
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderPanoramaBackground(context, delta);
+
+        this.applyBlur(delta);
+        this.renderDarkening(context);
+    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.getMatrices().push();
-        super.renderBackgroundTexture(context);
+
         super.render(context, mouseX, mouseY, delta);
 
         Sprite RESET = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("firorize:block/reset")).getSprite();
@@ -687,9 +686,7 @@ public class ChangeFireColorScreen extends Screen {
 
         Matrix4f matrix4f = context.getMatrices().peek().getPositionMatrix();
 
-        BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
-
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
+        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
 
         bufferBuilder.vertex(matrix4f, wheelCoords[0], wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(0f, 1f);
         bufferBuilder.vertex(matrix4f, wheelCoords[0], (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(0f, 0f);
@@ -937,8 +934,8 @@ public class ChangeFireColorScreen extends Screen {
                 this.centerScrollOn(this.getSelectedOrNull());
             }
         }
-        public SearchScreenListWidget(MinecraftClient minecraftClient, int i, int j, int k, int l, int m) {
-            super(minecraftClient, i, j, k, l, m);
+        public SearchScreenListWidget(MinecraftClient client, int width, int height, int x, int y) {
+            super(client, width, height, x, y);
             generateEntries();
         }
         public int num = 0;
@@ -950,7 +947,7 @@ public class ChangeFireColorScreen extends Screen {
         }
         @Override
         public int getRowWidth() {
-            return blockSearchDimensions[0];
+            return this.getWidth();
         }
 
         public List<Integer> selected = new ArrayList<>();
@@ -966,33 +963,20 @@ public class ChangeFireColorScreen extends Screen {
 
         @Override
         protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-            int i = this.getRowLeft() + (this.width - entryWidth) / 2;
-            int j = this.getRowLeft() + (this.width + entryWidth) / 2;
+            int i = this.getX() + (this.width - entryWidth) / 2;
+            int j = this.getX() + (this.width + entryWidth) / 2;
             context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
             context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
         }
 
-//        @Override
-//        protected int getScrollbarX() {
-//            return super.getScrollbarX() - 16;
-//        }
-
         @Override
         protected int getScrollbarPositionX() {
-            return super.getScrollbarPositionX() + 20 + blockSearchCoords[0];
+            return super.getScrollbarPositionX() - 16;
         }
-
-//        @Override
-//        public int getX() {
-//            return super.getX() + blockSearchCoords[0];
-//        }
-
-
         @Override
-        public int getRowLeft() {
-            return super.getRowLeft() + blockSearchCoords[0];
+        public int getX() {
+            return super.getX() + blockSearchCoords[0];
         }
-
         @Override
         public void setSelected(@Nullable ChangeFireColorScreen.SearchScreenListWidget.BlockEntry entry) {
             if (entry.realSelect) {
@@ -1151,7 +1135,7 @@ public class ChangeFireColorScreen extends Screen {
             }
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                if (mouseX >= x+width-entryHeight-10 && mouseX <= x+width-10 && mouseY >= y && mouseY <= y+entryHeight && children().indexOf(this) != 0) {
+                if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight && children().indexOf(this) != 0) {
                     if (isCustomized) {
 
                         Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).remove(this.languageDefinition);

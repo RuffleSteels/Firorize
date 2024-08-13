@@ -18,6 +18,7 @@
     "fire_overlays.client.NativeImageInvoker",
     "fire_overlays.client.OscimateClientPlayNetworkHandler",
     "fire_overlays.client.SpriteContentsInvoker",
+    "fire_overlays.client.SpriteContentsMixin",
     "fire_overlays.client.SpriteLoaderMixin"
   ],
   "injectors": {
