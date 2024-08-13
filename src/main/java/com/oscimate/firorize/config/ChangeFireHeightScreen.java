@@ -64,7 +64,7 @@ public class ChangeFireHeightScreen extends Screen {
         RenderSystem.depthFunc(519);
         RenderSystem.depthMask(false);
         RenderSystem.enableBlend();
-        RenderSystem.setShaderTexture(0, Identifier.of("textures/block/fire_1.png"));
+        RenderSystem.setShaderTexture(0, new Identifier("textures/block/fire_1.png"));
 
         float f = 0.0F;
         float a = 1.0F;

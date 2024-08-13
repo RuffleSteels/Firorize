@@ -25,9 +25,9 @@ public class EntityRenderDispatcherMixin {
         Main.settingFireColor(entity);
         int fireColor = ((RenderFireColorAccessor) entity).getRenderFireColor()[0];
         if (fireColor < 1) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_0_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_0_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
         } else if (fireColor == 2) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_0")).getSprite();
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_0")).getSprite();
         }
         return obj.getSprite();
     }
@@ -37,9 +37,9 @@ public class EntityRenderDispatcherMixin {
         Main.settingFireColor(entity);
         int fireColor = ((RenderFireColorAccessor)entity).getRenderFireColor()[0];
         if (fireColor < 1) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
         } else if (fireColor == 2) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1")).getSprite();
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1")).getSprite();
         }
         return obj.getSprite();
     }

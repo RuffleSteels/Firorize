@@ -50,10 +50,10 @@ public class SpriteLoaderMixin {
 
     @Unique
     ArrayList<Identifier> validIds = new ArrayList<>(List.of(
-            Identifier.of("firorize:block/blank_fire_overlay_0"),
-            Identifier.of("firorize:block/blank_fire_overlay_1"),
-            Identifier.of("firorize:block/blank_fire_0"),
-            Identifier.of("firorize:block/blank_fire_1")
+            new Identifier("firorize:block/blank_fire_overlay_0"),
+            new Identifier("firorize:block/blank_fire_overlay_1"),
+            new Identifier("firorize:block/blank_fire_0"),
+            new Identifier("firorize:block/blank_fire_1")
     ));
 
     @Inject(method = "stitch", at = @At("HEAD"))
@@ -148,7 +148,7 @@ public class SpriteLoaderMixin {
                                 int num = spriteContents.getId().toString().contains("1") ? 1 : 0;
 
                                 if (!isOverlay) {
-                                    all.add(new SpriteContents((Identifier.of("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer), spriteContents.getMetadata()));
+                                    all.add(new SpriteContents((new Identifier("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer), spriteContents.getMetadata()));
                                 }
                             }
                         }

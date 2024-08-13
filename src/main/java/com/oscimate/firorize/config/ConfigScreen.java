@@ -13,7 +13,7 @@ public class ConfigScreen extends Screen {
     private final Screen parent;
     protected static final int windowWidth = 176;
     protected static final int windowHeight = 182;
-    private final Identifier WINDOW = Identifier.of("firorize", "textures/gui/info_box.png");
+    private final Identifier WINDOW = new Identifier("firorize", "textures/gui/info_box.png");
     protected int guiTop, guiLeft;
 
     protected ConfigScreen(Screen parent) {

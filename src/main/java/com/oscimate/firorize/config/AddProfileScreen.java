@@ -50,11 +50,11 @@ public class AddProfileScreen extends Screen {
         Main.inConfig = true;
 
         fromExistingButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCurrentButton")));
-        fromExistingButton.setTooltipDelay(Duration.ofMillis(750L));
+        fromExistingButton.setTooltipDelay(7);
         fromNewButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromNewButton")));
-        fromNewButton.setTooltipDelay(Duration.ofMillis(750L));
+        fromNewButton.setTooltipDelay(7);
         fromCodeButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCodeButton")));
-        fromCodeButton.setTooltipDelay(Duration.ofMillis(750L));
+        fromCodeButton.setTooltipDelay(7);
         presetNameField.setPlaceholder(Text.translatable("firorize.config.placeholder.newProfileNameField"));
     }
 
@@ -152,13 +152,13 @@ public class AddProfileScreen extends Screen {
         }
         return null;
     }
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.applyBlur(delta);
-
-
-        this.renderDarkening(context);
-    }
+//    @Override
+//    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+//        this.applyBlur(delta);
+//
+//
+//        this.renderDarkening(context);
+//    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
