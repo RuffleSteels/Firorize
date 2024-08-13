@@ -663,6 +663,7 @@ public class ChangeFireColorScreen extends Screen {
 //        this.renderDarkening(context);
 //    }
 
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.getMatrices().push();
