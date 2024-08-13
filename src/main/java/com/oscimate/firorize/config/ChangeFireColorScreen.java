@@ -37,7 +37,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.EmptyBlockView;
 import net.minecraft.world.biome.Biome;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.SerializationUtils;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +132,6 @@ public class ChangeFireColorScreen extends Screen {
                         )
                 ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()))) {
             MinecraftClient.getInstance().reloadResources();  }
-        Main.setScale(width, height, client);
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
@@ -141,6 +139,9 @@ public class ChangeFireColorScreen extends Screen {
         Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
 
         Main.CONFIG_MANAGER.save();
+
+        int i = this.client.getWindow().calculateScaleFactor(this.client.options.getGuiScale().getValue(), this.client.forcesUnicodeFont());
+        this.client.getWindow().setScaleFactor((double)i);
 
         client.setScreen(parent);
     }
@@ -254,8 +255,8 @@ public class ChangeFireColorScreen extends Screen {
                 }
             }
         }
-//        movableArrowButtons[0].active = false;
-//        movableArrowButtons[5].active = false;
+
+
 
         this.addDrawableChild(presetListWidget);
         this.addDrawableChild(shareProfileButton);
@@ -315,7 +316,7 @@ public class ChangeFireColorScreen extends Screen {
     public void tick() {
         super.tick();
 
-        // Decrease the timer each tick
+
         if (tooltipTimer > 0) {
             tooltipTimer--;
         }
@@ -483,10 +484,10 @@ public class ChangeFireColorScreen extends Screen {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;
         String string = Registries.BLOCK.getId(blockUnder).toString();
         buffer = false;
-        if (onBaseColor || Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(blockUnderTag)) { //help
+        if (onBaseColor || Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(blockUnderTag)) {
 
 
-            int[] colorInts = onBaseColor ? Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight() : Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(blockUnderTag); //help
+            int[] colorInts = onBaseColor ? Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight() : Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(blockUnderTag);
             int RGB = colorInts[isOverlay ? 1:0];
             colorRedo = false;
             setPickedColors(new Color[]{new Color(colorInts[0]), new Color(colorInts[1])});
@@ -522,15 +523,15 @@ public class ChangeFireColorScreen extends Screen {
                 clickedY = y;
 
                 if (onBaseColor) {
-                    int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(); //help
+                    int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
                     saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
                 } else {
                     String string = currentSearchButton == 0 ? Registries.BLOCK.getId(blockUnder).toString() : currentSearchButton == 1 ? blockTags.get(0).id().toString() : biomeKeys.get(0).getValue().toString();
-                    if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(string)) { //help
-                        int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(string); //help
+                    if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(string)) {
+                        int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(string);
                         saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
                     } else {
-//                        saveButton.active = !(pickedColor[0].getRGB() == baseColor[0].getRGB() && pickedColor[1].getRGB() == baseColor[1].getRGB());
+
                         saveButton.active = true;
                     }
                 }
@@ -708,7 +709,7 @@ public class ChangeFireColorScreen extends Screen {
         context.drawBorder((int) sliderClickedX - cursorDimensions/2, (int)  sliderClickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, 0x7f222222);
         context.fill((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, (int) sliderClickedX + cursorDimensions/4, (int) sliderClickedY + cursorDimensions/4, Color.BLACK.getRGB());
 
-//        context.fill(wheelCoords[0] + 50, hexBoxCoords[1], wheelCoords[0] + wheelRadius*2  + sliderDimensions[0], hexBoxCoords[1] + 20, pickedColor[isOverlay ? 1:0].getRGB());
+
 
         RenderSystem.depthMask(true);
         BlockRenderManager brm = MinecraftClient.getInstance().getBlockRenderManager();
@@ -1092,14 +1093,14 @@ public class ChangeFireColorScreen extends Screen {
                     alpha = 0.5f;
                 }
                 int colorInt = new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB();
-//                if (!ChangeFireColorScreen.this.searchScreenListWidget.selected.contains(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this)) && !isCustomized && ChangeFireColorScreen.this.searchScreenListWidget.selected.stream().noneMatch(index2 -> ChangeFireColorScreen.this.searchScreenListWidget.children().get(index2).isCustomized)) {
+
                 if (!ChangeFireColorScreen.this.searchScreenListWidget.selected.contains(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this)) && !isCustomized) {
                     context.fill(x, y, x+entryHeight, y+entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
                     context.fill(x+entryHeight/2, y+3, x+entryHeight/2+1, y+entryHeight-3, colorInt);
                     context.fill(x+3, y+entryHeight/2, x+entryHeight-3, y+entryHeight/2+1, colorInt);
                     context.drawBorder(x, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                 }
-                if (isCustomized && currentSearchButton == 1  && children().indexOf(this) != 0) { // change to 1
+                if (isCustomized && currentSearchButton == 1  && children().indexOf(this) != 0) {
                     context.fill(x, y, x+entryHeight, y+entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
                     context.drawBorder(x, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                     if (shiftPressed) {
@@ -1137,9 +1138,9 @@ public class ChangeFireColorScreen extends Screen {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight && children().indexOf(this) != 0) {
                     if (isCustomized) {
-//                        selected.clear();
+
                         Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).remove(this.languageDefinition);
-//                        children().remove(this);
+
                         test();
                         return false;
                     }

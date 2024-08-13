@@ -2,7 +2,6 @@ package com.oscimate.firorize.config;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.oscimate.firorize.Main;
-
 import com.oscimate.firorize.mixin.fire_overlays.client.GameRendererMixin;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -16,10 +15,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
 
-import static com.oscimate.firorize.config.ConfigScreen.windowHeight;
-
 public class ChangeFireHeightScreen extends Screen {
-
     private Screen parent;
 
     private int counter = 16;
@@ -30,9 +26,8 @@ public class ChangeFireHeightScreen extends Screen {
         this.parent = parent;
     }
     public void onClose() {
-        Main.setScale(width, height, client);
-        resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
         Main.CONFIG_MANAGER.save();
+
         client.setScreen(parent);
     }
     @Override
@@ -48,14 +43,14 @@ public class ChangeFireHeightScreen extends Screen {
     }
     @Override
     public void resize(MinecraftClient client, int width, int height) {
-        Main.setScale(width, height, client);
+//        Main.setScale(width, height, client);
         super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-//        this.renderBackgroundTexture(context);
+
         super.render(context, mouseX, mouseY, delta);
 
         MatrixStack matrixStack = context.getMatrices();

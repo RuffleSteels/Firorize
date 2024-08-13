@@ -1,26 +1,19 @@
 package com.oscimate.firorize.config;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
-import com.oscimate.firorize.GameRendererSetting;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.RotatingCubeMapRenderer;
-import net.minecraft.client.gui.screen.GameModeSelectionScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.*;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import org.apache.commons.collections4.map.ListOrderedMap;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -42,7 +35,7 @@ public class AddProfileScreen extends Screen {
     @Override
     protected void init() {
         parent.isPresetAdd = false;
-        this.presetNameField = new TextFieldWidget(this.textRenderer, width/2 - 65, height/2  - 25, 130, 20, ScreenTexts.DONE);
+        this.presetNameField = new PlaceholderField(this.textRenderer, width/2 - 65, height/2  - 25, 130, 20, ScreenTexts.DONE);
         this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting()).dimensions(width/2 - 60 - 15 - 120, height/2+5, 120, 20).build();
         this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button ->  addFromNew()).dimensions(width/2 - 60, height/2+5, 120, 20).build();
         this.fromCodeButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCodeButton1"), button ->  fromCode()).dimensions(width/2 + 60 + 15, height/2+5, 120, 20).build();
@@ -162,8 +155,8 @@ public class AddProfileScreen extends Screen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         this.applyBlur(delta);
-//        context.getMatrices().push();
-//        context.getMatrices().translate(0, 0, 1000);
+
+
         this.renderDarkening(context);
     }
 
@@ -177,7 +170,7 @@ public class AddProfileScreen extends Screen {
 
         context.getMatrices().translate(0, 0, -490);
 
-//        context.getMatrices().translate(0, 0, 200);
+
         super.render(context, mouseX, mouseY, delta);
 
         if (tooltipTime > 0) {

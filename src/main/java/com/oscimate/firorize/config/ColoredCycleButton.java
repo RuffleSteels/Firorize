@@ -17,7 +17,8 @@ import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class ColoredCycleButton extends PressableWidget {
     private int index;

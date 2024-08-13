@@ -1,7 +1,6 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -14,7 +13,8 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 
 @Environment(value= EnvType.CLIENT)
 class PresetListWidget

@@ -1,7 +1,6 @@
 package com.oscimate.firorize.test;
 
 import com.oscimate.firorize.Main;
-
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.Block;
@@ -29,7 +28,6 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 

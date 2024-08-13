@@ -1,15 +1,14 @@
 package com.oscimate.firorize.config;
 
 import com.google.gson.Gson;
-
 import net.fabricmc.loader.api.FabricLoader;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
-
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
 
 public class ConfigManager {
     public long currentFireHeightSlider = -1;

@@ -1,7 +1,6 @@
 package com.oscimate.firorize;
 
 import com.oscimate.firorize.config.ConfigManager;
-
 import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import com.oscimate.firorize.test.TestModel;
 import net.fabricmc.api.ClientModInitializer;
@@ -10,27 +9,25 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
-import net.minecraft.block.*;
-
+import net.minecraft.block.AbstractFireBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.FireBlock;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.VideoMode;
 import net.minecraft.entity.Entity;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.EmptyBlockView;
 import net.minecraft.world.biome.Biome;
 import org.apache.commons.collections4.map.ListOrderedMap;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
-import java.nio.IntBuffer;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -42,14 +39,11 @@ public class Main implements ClientModInitializer {
     public static List<RegistryKey<Biome>> biomeKeyList = null;
     public static boolean inConfig = false;
     private static int[] getNextResolution(int width, int height) {
-        // Calculate the scaling factor for width and height
         double widthScale = Math.ceil((double) width / 1920);
         double heightScale = Math.ceil((double) height / 1080);
 
-        // Determine the scaling factor to use
         double scale = Math.max(widthScale, heightScale);
 
-        // Calculate the next multiple dimensions
         int nextWidth = (int) (1920 * scale);
         int nextHeight = (int) (1080 * scale);
 
@@ -62,9 +56,19 @@ public class Main implements ClientModInitializer {
         int heightt = client.getWindow().getFramebufferHeight();
 
         if (Math.round((float) widthh / 16) < Math.round((float) heightt / 9)) {
-            client.getWindow().setScaleFactor((double) widthh / stuffs[0] * 2  * ((double) stuffs[0] /1920));
+            double factor = (double) widthh / stuffs[0] * 2  * ((double) stuffs[0] /1920);
+            double nearestInt = Math.round(factor);
+            double difference = Math.abs(factor - nearestInt);
+            if (difference <= 0.2) factor = nearestInt;
+
+            client.getWindow().setScaleFactor(factor);
         } else{
-            client.getWindow().setScaleFactor((double)2*heightt/ stuffs[1] * ((double) stuffs[0] /1920));
+            double factor = (double)2*heightt/ stuffs[1] * ((double) stuffs[0] /1920);
+            double nearestInt = Math.round(factor);
+            double difference = Math.abs(factor - nearestInt);
+            if (difference <= 0.2) factor = nearestInt;
+
+            client.getWindow().setScaleFactor(factor);
         }
     }
     public static void settingFireColor(Entity entity) {

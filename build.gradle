@@ -40,7 +40,7 @@ dependencies {
 
 	modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
 
-	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.3.6")))
+	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
 
 	include(implementation('org.apache.commons:commons-collections4:4.5.0-M2'))
 }

@@ -1,11 +1,9 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class FireLogicConfig {
 

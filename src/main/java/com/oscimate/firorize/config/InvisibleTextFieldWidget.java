@@ -1,10 +1,9 @@
 package com.oscimate.firorize.config;
 
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
-public class InvisibleTextFieldWidget extends TextFieldWidget {
+public class InvisibleTextFieldWidget extends PlaceholderField {
     private final ChangeFireColorScreen instance;
 
     public InvisibleTextFieldWidget(ChangeFireColorScreen instance, TextRenderer textRenderer, int x, int y, int width, int height, Text text) {

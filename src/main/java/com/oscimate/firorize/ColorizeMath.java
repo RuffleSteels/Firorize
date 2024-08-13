@@ -1,17 +1,5 @@
 package com.oscimate.firorize;
 
-import com.mojang.blaze3d.platform.TextureUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-
 public class ColorizeMath {
     public static float[] applyColorization(float[] textureColor, float[] vertexColor) {
         float[] initialHSV = RGBtoHSV(vertexColor);
@@ -68,7 +56,7 @@ public class ColorizeMath {
 
         float[] finalColor = {rrr[0], rrr[1], rrr[2], textureColor[3]};
         if (textureColor[3] < 0.1) {
-            return new float[] {0, 0, 0, 0}; // discard
+            return new float[] {0, 0, 0, 0};
         }
 
         return finalColor;

@@ -23,7 +23,7 @@ public class KeyValuePair<K, V> implements Serializable {
 
         KeyValuePair<?, ?> that = (KeyValuePair<?, ?>) obj;
 
-        // Use areValuesEqual for both key and value comparison
+
         return areValuesEqual(this.key, that.key) && areValuesEqual(this.value, that.value);
     }
 
@@ -32,7 +32,7 @@ public class KeyValuePair<K, V> implements Serializable {
         return Objects.hash(key, value);
     }
 
-    // Custom method to compare keys/values, handling arrays specifically
+
     private boolean areValuesEqual(Object value1, Object value2) {
         if (value1 instanceof int[] && value2 instanceof int[]) {
             return Arrays.equals((int[]) value1, (int[]) value2);
@@ -41,7 +41,7 @@ public class KeyValuePair<K, V> implements Serializable {
         } else if (value1 instanceof KeyValuePair<?, ?> && value2 instanceof KeyValuePair<?, ?>) {
             return value1.equals(value2);
         }
-        // Add any other specific type checks if necessary
+
         return Objects.equals(value1, value2);
     }
     public KeyValuePair(KeyValuePair<K, V> keyValuePair) {
