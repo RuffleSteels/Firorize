@@ -11,10 +11,10 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
+import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -50,11 +50,11 @@ public class AddProfileScreen extends Screen {
         Main.inConfig = true;
 
         fromExistingButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCurrentButton")));
-        fromExistingButton.setTooltipDelay(75);
+        fromExistingButton.setTooltipDelay(750);
         fromNewButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromNewButton")));
-        fromNewButton.setTooltipDelay(75);
+        fromNewButton.setTooltipDelay(750);
         fromCodeButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCodeButton")));
-        fromCodeButton.setTooltipDelay(75);
+        fromCodeButton.setTooltipDelay(750);
         presetNameField.setPlaceholder(Text.translatable("firorize.config.placeholder.newProfileNameField"));
     }
 
@@ -63,6 +63,7 @@ public class AddProfileScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (client.world == null) this.client.getTextureManager().tick();
         if (tooltipTime > 0) {
             tooltipTime--;
         }
@@ -162,15 +163,16 @@ public class AddProfileScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+
         context.getMatrices().push();
-        context.getMatrices().translate(0, 0, -500);
+        context.getMatrices().translate(0, 0, -900);
         parent.render(context, 0, 0, delta);
         context.getMatrices().pop();
         context.getMatrices().push();
 
-        context.getMatrices().translate(0, 0, -490);
+        context.getMatrices().translate(0, 0, -250);
 
-
+        context.fill(0, 0, width, height, new Color(0, 0, 0, 0.5F).getRGB());
         super.render(context, mouseX, mouseY, delta);
 
         if (tooltipTime > 0) {

@@ -24,11 +24,11 @@ public class OscimateClientPlayNetworkHandler {
         Entity sourceEntity = world.getEntityById(packet.sourceDirectId());
         if (targetEntity != null && sourceEntity != null) {
             if ((sourceEntity instanceof ZombieEntity || sourceEntity instanceof ArrowEntity) && sourceEntity.doesRenderOnFire()) {
-                ((RenderFireColorAccessor)targetEntity).setRenderFireColor(((RenderFireColorAccessor) sourceEntity).getRenderFireColor());
+                ((RenderFireColorAccessor)targetEntity).firorize$setRenderFireColor(((RenderFireColorAccessor) sourceEntity).firorize$getRenderFireColor());
             }
         } if (targetEntity != null) {
             if (packet.createDamageSource(world).isOf(DamageTypes.LIGHTNING_BOLT)) {
-                ((RenderFireColorAccessor)targetEntity).setRenderFireColor(new int[]{2});
+                ((RenderFireColorAccessor)targetEntity).firorize$setRenderFireColor(new int[]{2});
             }
         }
     }

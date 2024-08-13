@@ -25,4 +25,5 @@ void main() {
         discard;
     }
     fragColor = vec4(wheelColor, 1.0) * ColorModulator;
+////    fragColor = vec4(1.0, 1.0, 1.0, 1.0);
 }

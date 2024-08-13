@@ -1,9 +1,9 @@
 package com.oscimate.firorize;
 
 public interface RenderFireColorAccessor {
-    int[] getRenderFireColor();
+    int[] firorize$getRenderFireColor();
 
-    void setRenderFireColor(int[] renderFireColor);
+    void firorize$setRenderFireColor(int[] renderFireColor);
 
 }
 

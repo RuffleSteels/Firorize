@@ -82,8 +82,9 @@ public class TestModel implements FabricBakedModel, BakedModel {
                             blockUnder = blockView.getBlockState(pos.down()).getBlock();
                         }
 
+
                         int[] ints;
-                        if ((blockUnder.equals(Blocks.AIR) && unique != null)|| (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
+                        if ((blockUnder.equals(Blocks.AIR) && unique != null) || (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
                                 (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
                                 list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
                             for (int i = 0; i < 3; i++) {

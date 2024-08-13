@@ -6,15 +6,11 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class ConfigScreen extends Screen {
     protected static final int buttonWidth = 130;
     private final Screen parent;
-    protected static final int windowWidth = 176;
     protected static final int windowHeight = 182;
-    private final Identifier WINDOW = new Identifier("firorize", "textures/gui/info_box.png");
-    protected int guiTop, guiLeft;
 
     protected ConfigScreen(Screen parent) {
         super(Text.literal(""));

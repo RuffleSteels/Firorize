@@ -175,11 +175,11 @@ public class ColoredCycleButton extends PressableWidget {
     public void setIndex(int index) {
         if (index == 0) {
             instance.addColorButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addColorPresetButton")));
-            instance.addColorButton.setTooltipDelay(75);
+            instance.addColorButton.setTooltipDelay(750);
             instance.addColorButton.setMessage(Text.literal("+"));
         } else {
             instance.addColorButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.removeColorPresetButton")));
-            instance.addColorButton.setTooltipDelay(75);
+            instance.addColorButton.setTooltipDelay(750);
             instance.addColorButton.setMessage(Text.literal("x"));
         }
         this.setMessage(Text.translatable("firorize.config.title.color").append(": " + this.values.get(index).getName()));

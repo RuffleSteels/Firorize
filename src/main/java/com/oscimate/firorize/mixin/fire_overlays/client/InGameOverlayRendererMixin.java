@@ -37,9 +37,9 @@ public class InGameOverlayRendererMixin {
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;"))
     private static Sprite renderOverlay(SpriteIdentifier instance, Operation<Sprite> original, MinecraftClient client, MatrixStack matrices) {
-        int fireColor = ((RenderFireColorAccessor)client.player).getRenderFireColor()[0];
+        int fireColor = ((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[0];
         if (fireColor < 1) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1_"+Math.abs(((RenderFireColorAccessor)client.player).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)client.player).getRenderFireColor()[1]))).getSprite();
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1_"+Math.abs(((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[1]))).getSprite();
         } else if (fireColor == 2) {
             return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, new Identifier("block/fire_1")).getSprite();
         }

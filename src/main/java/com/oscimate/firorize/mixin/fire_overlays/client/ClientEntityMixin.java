@@ -12,12 +12,12 @@ public class ClientEntityMixin implements RenderFireColorAccessor {
     private int[] renderFireColor;
 
     @Override
-    public int[] getRenderFireColor() {
+    public int[] firorize$getRenderFireColor() {
         return renderFireColor;
     }
 
     @Override
-    public void setRenderFireColor(int[] renderFireColor) {
+    public void firorize$setRenderFireColor(int[] renderFireColor) {
         this.renderFireColor = renderFireColor;
     }
 

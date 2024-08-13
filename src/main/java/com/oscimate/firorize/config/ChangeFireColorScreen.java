@@ -48,7 +48,6 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.time.Duration;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -114,14 +113,17 @@ public class ChangeFireColorScreen extends Screen {
         }
         return new KeyValuePair<>(clonedList, clonedArray);
     }
+
+    private final ArrayList<Integer> comparedPriorityOrder;
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
         this.comparedCurrentFire = deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors());
+        this.comparedPriorityOrder = new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder());
         this.parent = parent;
     }
     public void onClose() {
         Main.inConfig = false;
-        if (!isPresetAdd && !(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().size() == comparedCurrentFire.getLeft().size() &&
+        if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder()) || !(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().size() == comparedCurrentFire.getLeft().size() &&
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream().allMatch(map1 ->
                         comparedCurrentFire.getLeft().stream().anyMatch(map2 ->
                                 map1.size() == map2.size() &&
@@ -130,7 +132,7 @@ public class ChangeFireColorScreen extends Screen {
                                                 Arrays.equals(map1.get(key), map2.get(key))
                                         )
                         )
-                ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()))) {
+                ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight())))) {
             MinecraftClient.getInstance().reloadResources();  }
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
@@ -200,7 +202,7 @@ public class ChangeFireColorScreen extends Screen {
     protected void init() {
         Main.inConfig = true;
 
-        invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.textRenderer, wheelCoords[0] + 50 + 20, hexBoxCoords[1],wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, ScreenTexts.DONE);
+        invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.textRenderer, wheelCoords[0] + 50 + 20 + 1, hexBoxCoords[1] + 1,wheelRadius*2  + sliderDimensions[0] - 50 - 20 - 2, 18, ScreenTexts.DONE);
 
         invisibleTextFieldWidget.visible = false;
 
@@ -220,10 +222,9 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
         this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, blockSearchCoords[1] + blockSearchDimensions[1], 15);
         this.addDrawableChild(searchScreenListWidget);
-        textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20, hexBoxCoords[1], 50, 20, ScreenTexts.DONE);
-        blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0], blockSearchCoords[1]+20, blockSearchDimensions[0], 20, ScreenTexts.DONE, this);
-        this.addDrawableChild(textFieldWidget);
-        this.addDrawableChild(blockUnderField);
+        textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20+1, hexBoxCoords[1]+1, 48, 18, ScreenTexts.DONE);
+        blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this);
+
 
         this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30, wheelCoords[0], 15, this, textRenderer);
 
@@ -231,9 +232,8 @@ public class ChangeFireColorScreen extends Screen {
 
         this.shareProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> saveProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
         this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
-        this.addDrawableChild(addButton);
+
         textFieldWidget.setChangedListener(this::updateCursor);
-        updateCursor(this.hexCode);
 
         overlayToggles[0] = new ButtonWidget.Builder(Text.translatable("firorize.config.button.baseButton"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
         overlayToggles[1]  = new ButtonWidget.Builder(Text.translatable("firorize.config.button.overlayButton"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
@@ -251,7 +251,7 @@ public class ChangeFireColorScreen extends Screen {
                     this.addDrawableChild(movableArrowButtons[2 * i + j]);
 
                     movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
-                    movableArrowButtons[2 * i + j].setTooltipDelay(75);
+                    movableArrowButtons[2 * i + j].setTooltipDelay(750);
                 }
             }
         }
@@ -259,6 +259,9 @@ public class ChangeFireColorScreen extends Screen {
 
 
         this.addDrawableChild(presetListWidget);
+        this.addDrawableChild(textFieldWidget);
+        this.addDrawableChild(blockUnderField);
+        this.addDrawableChild(addButton);
         this.addDrawableChild(shareProfileButton);
         this.addDrawableChild(searchOptions[0]);
         this.addDrawableChild(searchOptions[1]);
@@ -282,19 +285,19 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         shareProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
-        shareProfileButton.setTooltipDelay(75);
+        shareProfileButton.setTooltipDelay(750);
         addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
-        addButton.setTooltipDelay(75);
+        addButton.setTooltipDelay(750);
         resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
-        resetProfileButton.setTooltipDelay(75);
+        resetProfileButton.setTooltipDelay(750);
         overlayToggles[0].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.baseToggle")));
-        overlayToggles[0].setTooltipDelay(75);
+        overlayToggles[0].setTooltipDelay(750);
         overlayToggles[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.overlayToggle")));
-        overlayToggles[1].setTooltipDelay(75);
+        overlayToggles[1].setTooltipDelay(750);
         saveButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.applyButton")));
-        saveButton.setTooltipDelay(75);
+        saveButton.setTooltipDelay(750);
         redoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.undoButton")));
-        redoButton.setTooltipDelay(75);
+        redoButton.setTooltipDelay(750);
 
         toggle(true);
 
@@ -315,6 +318,7 @@ public class ChangeFireColorScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (client.world == null) this.client.getTextureManager().tick();
 
 
         if (tooltipTimer > 0) {
@@ -479,6 +483,13 @@ public class ChangeFireColorScreen extends Screen {
         this.searchScreenListWidget.test();
         this.saveButton.active = false;
         this.saveButton.setFocused(false);
+
+        int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
+
+        Main.CONFIG_MANAGER.save();
     }
     public void updateBlockUnder(String blockUnderTag) {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;
@@ -667,8 +678,12 @@ public class ChangeFireColorScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.getMatrices().push();
+//        GL45.glPushDebugGroup(GL45.GL_DEBUG_SOURCE_APPLICATION , 0, "BACKGROUND");
         super.renderBackgroundTexture(context);
+//        GL45.glPopDebugGroup();
+//        GL45.glPushDebugGroup(GL45.GL_DEBUG_SOURCE_APPLICATION, 0, "DRAWABLES");
         super.render(context, mouseX, mouseY, delta);
+//        GL45.glPopDebugGroup();
 
         Sprite RESET = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("firorize:block/reset")).getSprite();
         context.drawSprite(profileButtonXs[0] + (20 - RESET.getContents().getWidth())/2, profileButtonY + (20 - RESET.getContents().getHeight())/2, 10, RESET.getContents().getWidth(), RESET.getContents().getHeight(), RESET);
@@ -680,20 +695,31 @@ public class ChangeFireColorScreen extends Screen {
 
         context.getMatrices().push();
 
-        BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
+        context.getMatrices().push();
+
+//        context.getMatrices().translate(0, 0, 5000);
+
         RenderSystem.setShader(GameRendererSetting::getRenderTypeColorWheel);
-        RenderSystem.depthFunc(519);
-        RenderSystem.depthMask(false);
+
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.enableBlend();
+        RenderSystem.depthMask(false);
+
+        BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
 
         Matrix4f matrix4f = context.getMatrices().peek().getPositionMatrix();
 
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);
+
         bufferBuilder.vertex(matrix4f, wheelCoords[0], wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(0f, 1f).next();
         bufferBuilder.vertex(matrix4f, wheelCoords[0], (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(0f, 0f).next();
         bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(1f, 0f).next();
         bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(1f, 1f).next();
+//        BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+
+        context.getMatrices().pop();
 
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
 
@@ -1065,6 +1091,11 @@ public class ChangeFireColorScreen extends Screen {
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index+1, temp.get(index), temp.getValue(index));
             }
             setRedo(false);
+        }
+
+        @Override
+        protected void renderList(DrawContext context, int mouseX, int mouseY, float delta) {
+            super.renderList(context, mouseX, mouseY, delta);
         }
 
         @Override

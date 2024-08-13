@@ -50,11 +50,11 @@ public class AddProfileScreen extends Screen {
         Main.inConfig = true;
 
         fromExistingButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCurrentButton")));
-        fromExistingButton.setTooltipDelay(75);
+        fromExistingButton.setTooltipDelay(750);
         fromNewButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromNewButton")));
-        fromNewButton.setTooltipDelay(75);
+        fromNewButton.setTooltipDelay(750);
         fromCodeButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCodeButton")));
-        fromCodeButton.setTooltipDelay(75);
+        fromCodeButton.setTooltipDelay(750);
         presetNameField.setPlaceholder(Text.translatable("firorize.config.placeholder.newProfileNameField"));
     }
 

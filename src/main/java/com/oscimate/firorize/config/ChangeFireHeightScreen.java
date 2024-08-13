@@ -47,6 +47,18 @@ public class ChangeFireHeightScreen extends Screen {
         super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
+    @Override
+    public void tick() {
+        super.tick();
+        if (client.world == null) this.client.getTextureManager().tick();
+
+        if (ticks % 4 == 0) counter++;
+        ticks++;
+        if (counter > 32) {
+            counter = 0;
+            ticks = 0;
+        }
+    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
@@ -101,11 +113,6 @@ public class ChangeFireHeightScreen extends Screen {
         RenderSystem.depthFunc(515);
 
 
-        if (ticks % 4 == 0) counter++;
-        ticks++;
-        if (counter > 32) {
-            counter = 0;
-            ticks = 0;
-        }
+
     }
 }

@@ -21,7 +21,7 @@ public abstract class GamRenMixin {
         instance.add(Pair.of(new ShaderProgram(factory, "firorize/rendertype_custom_tint", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL), program -> {
             GameRendererSetting.renderTypeCustomTint = program;
         }));
-        instance.add(Pair.of(new ShaderProgram(factory, "firorize/rendertype_color_wheel", VertexFormats.POSITION_TEXTURE_COLOR), program -> {
+        instance.add(Pair.of(new ShaderProgram(factory, "firorize/rendertype_color_wheel", VertexFormats.POSITION_COLOR_TEXTURE), program -> {
             GameRendererSetting.renderTypeColorWheel = program;
         }));
         return instance;

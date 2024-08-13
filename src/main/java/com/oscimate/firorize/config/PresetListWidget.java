@@ -25,8 +25,9 @@ class PresetListWidget
     private final int x;
     private final int y;
 
+
     public PresetListWidget(MinecraftClient client, int width, int height, int x, int y, ChangeFireColorScreen instance, TextRenderer textRenderer) {
-        super(client, width, height, instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2, instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2 + height, y);
+        super(client, width, height, instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2 , instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2 + height, y);
         this.instance = instance;
         this.textRenderer = textRenderer;
 
@@ -35,6 +36,8 @@ class PresetListWidget
         this.y = instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2;
 
         setLeftPos(x);
+        setRenderHorizontalShadows(false);
+
 
         Main.CONFIG_MANAGER.getFireColorPresets().forEach((string, map) -> {
             this.addEntry(new PresetEntry(string));
@@ -44,6 +47,11 @@ class PresetListWidget
         isConstruct = true;
 
         setSelected(children().get(children().stream().map(entry -> entry.languageDefinition).toList().indexOf(Main.CONFIG_MANAGER.getCurrentPreset())));
+    }
+
+    @Override
+    public int getRowLeft() {
+        return 0;
     }
 
     private final TextRenderer textRenderer;
@@ -133,35 +141,20 @@ class PresetListWidget
     }
 
     @Override
-    protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-        int i = this.x + (this.width - entryWidth) / 2;
-        int j = this.x + (this.width + entryWidth) / 2;
-        context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
-        context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
-    }
-
-    @Override
     protected int getScrollbarPositionX() {
         return super.getScrollbarPositionX() + 20 + instance.blockSearchCoords[0];
     }
 
     @Override
-    public void renderList(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderList(context, mouseX, mouseY, delta);
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
         context.getMatrices().push();
         context.getMatrices().scale(2f, 2f, 2f);
-        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), x - 21, (y-183), Color.WHITE.getRGB());
+        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), x - 63, (y-183), Color.WHITE.getRGB());
         context.getMatrices().pop();
     }
 
-    @Override
-    protected void renderEntry(DrawContext context, int mouseX, int mouseY, float delta, int index, int x, int y, int entryWidth, int entryHeight) {
-        PresetListWidget.PresetEntry entry = this.getEntry(index);
-        entry.x = x;
-        entry.entryHeight = entryHeight;
-        entry.y = y;
-        super.renderEntry(context, mouseX, mouseY, delta, index, x, y, entryWidth, entryHeight);
-    }
+
 
     @Environment(value=EnvType.CLIENT)
     public class PresetEntry
@@ -193,6 +186,7 @@ class PresetListWidget
             return super.mouseClicked(mouseX, mouseY, button);
         }
         private float alphaa;
+
         @Override
         public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (!languageDefinition.equals("Initial")) {
