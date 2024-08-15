@@ -1045,6 +1045,8 @@ public class ChangeFireColorScreen extends Screen {
                 selected.clear();
                 selected.add(index-1);
 
+                index--;
+
                 ListOrderedMap<String, int[]> temp = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton);
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index, temp.get(index-1), temp.getValue(index-1));
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index-1, temp.get(index), temp.getValue(index));
@@ -1054,11 +1056,13 @@ public class ChangeFireColorScreen extends Screen {
 
         public void moveEntryDown(BlockEntry entry) {
             int index = this.children().indexOf(entry);
-            if (index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size()-1) {
+            if (index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size()) {
                 this.children().set(index, this.children().get(index+1));
                 this.children().set(index+1, entry);
                 selected.clear();
                 selected.add(index+1);
+
+                index--;
 
                 ListOrderedMap<String, int[]> temp = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton);
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index, temp.get(index+1), temp.getValue(index+1));
