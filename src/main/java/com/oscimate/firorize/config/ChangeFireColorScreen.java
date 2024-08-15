@@ -145,8 +145,6 @@ public class ChangeFireColorScreen extends Screen {
         int i = this.client.getWindow().calculateScaleFactor(this.client.options.getGuiScale().getValue(), this.client.forcesUnicodeFont());
         this.client.getWindow().setScaleFactor((double)i);
 
-        System.out.println(Arrays.toString(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()));
-
         client.setScreen(parent);
     }
     private boolean onBaseColor = true;
