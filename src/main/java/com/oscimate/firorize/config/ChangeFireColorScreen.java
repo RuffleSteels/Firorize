@@ -114,14 +114,16 @@ public class ChangeFireColorScreen extends Screen {
         }
         return new KeyValuePair<>(clonedList, clonedArray);
     }
+    private final ArrayList<Integer> comparedPriorityOrder;
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
         this.comparedCurrentFire = deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors());
+        this.comparedPriorityOrder = new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder());
         this.parent = parent;
     }
     public void onClose() {
         Main.inConfig = false;
-        if (!isPresetAdd && !(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().size() == comparedCurrentFire.getLeft().size() &&
+        if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder()) || !(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().size() == comparedCurrentFire.getLeft().size() &&
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream().allMatch(map1 ->
                         comparedCurrentFire.getLeft().stream().anyMatch(map2 ->
                                 map1.size() == map2.size() &&
@@ -130,7 +132,7 @@ public class ChangeFireColorScreen extends Screen {
                                                 Arrays.equals(map1.get(key), map2.get(key))
                                         )
                         )
-                ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()))) {
+                ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight())))) {
             MinecraftClient.getInstance().reloadResources();  }
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
