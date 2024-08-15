@@ -198,7 +198,7 @@ public class ChangeFireColorScreen extends Screen {
     public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80;
 
     public int profileButtonXInitial = (wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20;
-
+    public boolean isCycling = false;
     public int[] profileButtonXs = new int[]{profileButtonXInitial-40, profileButtonXInitial-20, profileButtonXInitial};
     @Override
     protected void init() {
@@ -224,9 +224,8 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
         this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, 15);
         this.addDrawableChild(searchScreenListWidget);
-        textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20, hexBoxCoords[1], 50, 20, ScreenTexts.DONE);
-        blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0], blockSearchCoords[1]+20, blockSearchDimensions[0], 20, ScreenTexts.DONE, this);
-        this.addDrawableChild(textFieldWidget);
+        textFieldWidget = new CustomTextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20+1, hexBoxCoords[1]+1, 48, 18, ScreenTexts.DONE, this, true);
+        blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this, false);this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
         this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30, wheelCoords[0], 15, this, textRenderer);
@@ -236,7 +235,7 @@ public class ChangeFireColorScreen extends Screen {
         this.shareProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> saveProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
         this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
         this.addDrawableChild(addButton);
-        textFieldWidget.setChangedListener(this::updateCursor);
+//        textFieldWidget.setChangedListener(this::updateCursor);
         updateCursor(this.hexCode);
 
         overlayToggles[0] = new ButtonWidget.Builder(Text.translatable("firorize.config.button.baseButton"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
@@ -532,7 +531,7 @@ public class ChangeFireColorScreen extends Screen {
                 sliderClickedY = ((1 - HSB[2]) * (sliderDimensions[1] - sliderPadding*2)) + sliderCoords[1] + sliderPadding;
                 clickedX = x;
                 clickedY = y;
-                cyclicalPresets.setIndex(0);
+                if (!isCycling) cyclicalPresets.setIndex(0);
 
                 if (onBaseColor) {
                     int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
@@ -570,7 +569,7 @@ public class ChangeFireColorScreen extends Screen {
             hue = (Math.atan2(dy, dx) / (2 * Math.PI) + 0.25);
 
             int RGB = Color.HSBtoRGB((float) hue, (float) saturation, (float) ((float) lightness == 0 ? lightness+0.01 : lightness));
-            cyclicalPresets.setIndex(0);
+            if (!isCycling) cyclicalPresets.setIndex(0);
             textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
             if (click) {
                 buffer = false;
@@ -620,7 +619,7 @@ public class ChangeFireColorScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         double selectSpace = (double) cursorDimensions / 2;
         if (mouseX >= sliderCoords[0] && mouseX <= sliderCoords[0] + sliderDimensions[0] && mouseY >= sliderCoords[1] + sliderPadding && mouseY <= sliderCoords[1] + sliderDimensions[1] - sliderPadding) {
-            cyclicalPresets.setIndex(0);
+            if (!isCycling) cyclicalPresets.setIndex(0);
             sliderClicked = true;
             isClick = true;
             mouseDragged(mouseX, mouseY, button, 0, 0);

@@ -144,6 +144,7 @@ public class ColoredCycleButton extends PressableWidget {
 
     private void cycle(int amount) {
         if (!isAdding && values.size() > 1) {
+            instance.isCycling = true;
             this.setIndex(MathHelper.floorMod(this.index + amount, this.values.size()));
 
             if (this.index == 1 && !removing) {
@@ -159,6 +160,7 @@ public class ColoredCycleButton extends PressableWidget {
             int RGB = ChangeFireColorScreen.pickedColor[instance.isOverlay ? 1:0].getRGB();
             instance.textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
             instance.updateCursor("#"+Integer.toHexString(RGB).substring(2));
+            instance.isCycling = false;
         }
     }
     @Override
