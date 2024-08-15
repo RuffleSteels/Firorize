@@ -7,9 +7,6 @@
     "fire_overlays.client.FireBlockInvoker"
   ],
   "client": [
-    "fire_overlays.client.BakedModelManagerAccessor",
-    "fire_overlays.client.BlockModelRendererMixin",
-    "fire_overlays.client.BlockRenderManagerMixin",
     "fire_overlays.client.ClientEntityMixin",
     "fire_overlays.client.EntityRenderDispatcherMixin",
     "fire_overlays.client.GameRendererMixin",

@@ -7,9 +7,11 @@
   "vertex": "firorize/rendertype_custom_tint",
   "fragment": "firorize/rendertype_custom_tint",
   "attributes": [
+    "Position",
     "Color",
     "UV0",
-    "UV2"
+    "UV2",
+    "Normal"
   ],
   "samplers": [
     { "name": "Sampler0" }

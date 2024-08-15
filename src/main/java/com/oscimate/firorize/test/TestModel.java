@@ -149,7 +149,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
                             verticesNew[i + 4] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4]) - min1U) * (max2U - min2U) / (max1U - min1U) + min2U);
                             verticesNew[i + 4 + 1] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4 + 1]) - min1V) * (max2V - min2V) / (max1V - min1V) + min2V);
                         }
-                        BakedQuad bakedQuad = new BakedQuad(verticesNew, tempList.get(n).getColorIndex(), tempList.get(n).getFace(), sprite, tempList.get(n).hasShade());
+                        BakedQuad bakedQuad = new BakedQuad(verticesNew, 0, tempList.get(n).getFace(), sprite, tempList.get(n).hasShade());
                         tempList.set(n, bakedQuad);
                     }
                     return tempList;

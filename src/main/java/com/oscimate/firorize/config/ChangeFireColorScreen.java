@@ -479,6 +479,13 @@ public class ChangeFireColorScreen extends Screen {
         this.searchScreenListWidget.test();
         this.saveButton.active = false;
         this.saveButton.setFocused(false);
+
+        int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
+
+        Main.CONFIG_MANAGER.save();
     }
     public void updateBlockUnder(String blockUnderTag) {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;

@@ -23,9 +23,9 @@ public class EntityRenderDispatcherMixin {
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 0))
     private Sprite getSprite0(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
         Main.settingFireColor(entity);
-        int fireColor = ((RenderFireColorAccessor) entity).getRenderFireColor()[0];
+        int fireColor = ((RenderFireColorAccessor) entity).firorize$getRenderFireColor()[0];
         if (fireColor < 1) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_0_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_0_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[1]))).getSprite();
         } else if (fireColor == 2) {
             return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_0")).getSprite();
         }
@@ -35,9 +35,9 @@ public class EntityRenderDispatcherMixin {
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 1))
     private Sprite getSprite1(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
         Main.settingFireColor(entity);
-        int fireColor = ((RenderFireColorAccessor)entity).getRenderFireColor()[0];
+        int fireColor = ((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[0];
         if (fireColor < 1) {
-            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).getRenderFireColor()[1]))).getSprite();
+            return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[1]))).getSprite();
         } else if (fireColor == 2) {
             return new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1")).getSprite();
         }
