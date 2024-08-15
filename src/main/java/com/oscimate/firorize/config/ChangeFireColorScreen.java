@@ -145,6 +145,8 @@ public class ChangeFireColorScreen extends Screen {
         int i = this.client.getWindow().calculateScaleFactor(this.client.options.getGuiScale().getValue(), this.client.forcesUnicodeFont());
         this.client.getWindow().setScaleFactor((double)i);
 
+        System.out.println(Arrays.toString(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()));
+
         client.setScreen(parent);
     }
     private boolean onBaseColor = true;
@@ -454,7 +456,7 @@ public class ChangeFireColorScreen extends Screen {
         setRedo(false);
         int num = 0;
 
-        if (onBaseColor) {
+        if (onBaseColor && !isOnAdd) {
             System.arraycopy(new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()}, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, 2);
             baseColor = new Color[]{new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]), new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1])};
         } else {
@@ -530,6 +532,7 @@ public class ChangeFireColorScreen extends Screen {
                 sliderClickedY = ((1 - HSB[2]) * (sliderDimensions[1] - sliderPadding*2)) + sliderCoords[1] + sliderPadding;
                 clickedX = x;
                 clickedY = y;
+                cyclicalPresets.setIndex(0);
 
                 if (onBaseColor) {
                     int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
@@ -591,6 +594,8 @@ public class ChangeFireColorScreen extends Screen {
     }
     private boolean isClick = false;
 
+    private boolean isOnAdd = false;
+
     public void setRedo(boolean bool) {
         setRedo(bool, false);
     }
@@ -615,6 +620,7 @@ public class ChangeFireColorScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         double selectSpace = (double) cursorDimensions / 2;
         if (mouseX >= sliderCoords[0] && mouseX <= sliderCoords[0] + sliderDimensions[0] && mouseY >= sliderCoords[1] + sliderPadding && mouseY <= sliderCoords[1] + sliderDimensions[1] - sliderPadding) {
+            cyclicalPresets.setIndex(0);
             sliderClicked = true;
             isClick = true;
             mouseDragged(mouseX, mouseY, button, 0, 0);
@@ -1164,9 +1170,10 @@ public class ChangeFireColorScreen extends Screen {
                             ChangeFireColorScreen.this.searchScreenListWidget.moveEntryUp(this);
                         }
                     }
-                    else if ((!isFocused() && !isSelected)) {
+                    else if ((!isFocused() && !isSelected && !selected.isEmpty())) {
                         this.onAddButton();
                     } else {
+                        ChangeFireColorScreen.this.searchScreenListWidget.setSelected(this);
                         return false;
                     }
                 } else {
@@ -1176,7 +1183,8 @@ public class ChangeFireColorScreen extends Screen {
                 return false;
             }
             void onAddButton() {
-                boolean clear = ChangeFireColorScreen.this.searchScreenListWidget.children().get(ChangeFireColorScreen.this.searchScreenListWidget.selected.get(0)).isCustomized;
+                isOnAdd = true;
+                boolean clear = onBaseColor || ChangeFireColorScreen.this.searchScreenListWidget.children().get(ChangeFireColorScreen.this.searchScreenListWidget.selected.get(0)).isCustomized;
 
                 ChangeFireColorScreen.this.dist = 0;
                 ChangeFireColorScreen.this.counter = 0;
@@ -1205,6 +1213,7 @@ public class ChangeFireColorScreen extends Screen {
                     ChangeFireColorScreen.this.searchScreenListWidget.setSelected(entry);
                     ChangeFireColorScreen.this.searchScreenListWidget.centerScrollOn(entry);
                     setRedo(false);
+                    isOnAdd = false;
                 } else {
                     ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
                 }

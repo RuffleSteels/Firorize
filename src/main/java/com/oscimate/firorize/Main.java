@@ -28,6 +28,7 @@ import net.minecraft.world.biome.Biome;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -141,6 +142,7 @@ public class Main implements ClientModInitializer {
                             }
                         }
                     } else {
+
                         if (entity.isInLava()) {
                             ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(new int[]{2});
                         }

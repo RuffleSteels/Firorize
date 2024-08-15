@@ -15,17 +15,17 @@ public class CustomTextFieldWidget extends TextFieldWidget {
     public void write(String text) {
         super.write(text);
         instance.input = this.getText();
-        instance.searchScreenListWidget.selected.clear();
         instance.searchScreenListWidget.test();
         instance.setRedo(false);
+        instance.searchScreenListWidget.selected.clear();
     }
 
     @Override
     public void eraseCharactersTo(int position) {
         super.eraseCharactersTo(position);
         instance.input = this.getText();
-        instance.searchScreenListWidget.selected.clear();
         instance.searchScreenListWidget.test();
         instance.setRedo(false);
+        instance.searchScreenListWidget.selected.clear();
     }
 }
