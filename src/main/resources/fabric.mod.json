@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "firorize",
-  "version": "2.0",
+  "version": "1.0",
 
   "name": "Firorize",
   "description": "This client side mod allows full color customization over fire, depending on the biome it's in, or even the block it's on! It also has a fire height slider for an easy fix to that painfully large fire overlay. For a bonus, it fixes the bug where the soul fire did not produce a blue overlay!",
