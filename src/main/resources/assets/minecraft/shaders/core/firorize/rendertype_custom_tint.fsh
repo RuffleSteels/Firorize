@@ -51,6 +51,7 @@ vec3 HSVtoRGB(in vec3 HSV)
 void main() {
     vec4 textureColor = texture(Sampler0, texCoord0);
 
+
     if (vertexColor.rgb == vec3(0, 0, 0)) {
         if (textureColor.a < 0.1) {
             discard;

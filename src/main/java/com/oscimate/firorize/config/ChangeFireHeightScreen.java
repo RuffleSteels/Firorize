@@ -50,7 +50,7 @@ public class ChangeFireHeightScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        if (client.world == null) this.client.getTextureManager().tick();
+        
 
         if (ticks % 4 == 0) counter++;
         ticks++;

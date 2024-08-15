@@ -32,8 +32,8 @@ public class PlaceholderField extends TextFieldWidget {
     private final int placeholderColor = new Color(128, 128, 128).getRGB();
 
     @Override
-    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderButton(context, mouseX, mouseY, delta);
+    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.renderWidget(context, mouseX, mouseY, delta);
         int k = this.drawsBackground() ? this.getX() + 4 : this.getX();
         int l = this.drawsBackground() ? this.getY() + (this.height - 8) / 2 : this.getY();
         int m = k;

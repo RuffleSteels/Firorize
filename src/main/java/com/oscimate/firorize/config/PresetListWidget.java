@@ -21,23 +21,11 @@ class PresetListWidget
         extends AlwaysSelectedEntryListWidget<PresetListWidget.PresetEntry> {
 
     public String curPresetID;
-    private final int width;
-    private final int x;
-    private final int y;
-
 
     public PresetListWidget(MinecraftClient client, int width, int height, int x, int y, ChangeFireColorScreen instance, TextRenderer textRenderer) {
-        super(client, width, height, instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2 , instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2 + height, y);
+        super(client, width, height, x, y);
         this.instance = instance;
         this.textRenderer = textRenderer;
-
-        this.width = width;
-        this.x = x + instance.wheelCoords[0];
-        this.y = instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2;
-
-        setLeftPos(x);
-        setRenderHorizontalShadows(false);
-
 
         Main.CONFIG_MANAGER.getFireColorPresets().forEach((string, map) -> {
             this.addEntry(new PresetEntry(string));
@@ -49,18 +37,14 @@ class PresetListWidget
         setSelected(children().get(children().stream().map(entry -> entry.languageDefinition).toList().indexOf(Main.CONFIG_MANAGER.getCurrentPreset())));
     }
 
-    @Override
-    public int getRowLeft() {
-        return 0;
-    }
-
     private final TextRenderer textRenderer;
     private final ChangeFireColorScreen instance;
 
     @Override
     public int getRowWidth() {
-        return width;
+        return this.getWidth();
     }
+
 
 
     private boolean isConstruct = false;
@@ -141,17 +125,44 @@ class PresetListWidget
     }
 
     @Override
+    protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
+        int i = this.getX() + (this.width - entryWidth) / 2;
+        int j = this.getX() + (this.width + entryWidth) / 2;
+        context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
+        context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
+    }
+    @Override
+    public int getX() {
+        return super.getX() + instance.wheelCoords[0];
+    }
+
+    @Override
+    public int getY() {
+        return instance.wheelCoords[0] + instance.wheelRadius*2 + 90 + 10 + 2;
+    }
+
+
+    @Override
     protected int getScrollbarPositionX() {
         return super.getScrollbarPositionX() + 20 + instance.blockSearchCoords[0];
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.renderWidget(context, mouseX, mouseY, delta);
         context.getMatrices().push();
         context.getMatrices().scale(2f, 2f, 2f);
-        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), x - 63, (y-183), Color.WHITE.getRGB());
+        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
         context.getMatrices().pop();
+    }
+
+    @Override
+    protected void renderEntry(DrawContext context, int mouseX, int mouseY, float delta, int index, int x, int y, int entryWidth, int entryHeight) {
+        PresetListWidget.PresetEntry entry = this.getEntry(index);
+        entry.x = x;
+        entry.entryHeight = entryHeight;
+        entry.y = y;
+        super.renderEntry(context, mouseX, mouseY, delta, index, x, y, entryWidth, entryHeight);
     }
 
 
@@ -163,14 +174,15 @@ class PresetListWidget
         public PresetEntry(String languageDefinition) {
             this.languageDefinition = languageDefinition;
         }
-        private int x;
-        private int y;
-        private int entryHeight;
 
         @Override
         public Text getNarration() {
             return Text.translatable("narrator.select", this.languageDefinition);
         }
+        private int x;
+        private int y;
+        private int entryHeight;
+
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {

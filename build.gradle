@@ -15,8 +15,8 @@ archivesBaseName  = project.archives_base_name
 
 repositories {
 	maven {
-		name 'Terraformers'
-		url 'https://maven.terraformersmc.com/releases/'
+		name = "Terraformers"
+		url = "https://maven.terraformersmc.com/"
 	}
 	maven {
 		url = "https://jitpack.io"
@@ -28,6 +28,10 @@ repositories {
 		content {
 			includeGroup "maven.modrinth"
 		}
+	}
+	maven {
+		name = 'Nucleoid'
+		url = 'https://maven.nucleoid.xyz/'
 	}
 }
 
@@ -43,6 +47,8 @@ dependencies {
 	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
 
 	include(implementation('org.apache.commons:commons-collections4:4.5.0-M2'))
+
+	modImplementation(include("eu.pb4:placeholder-api:${project.text_placeholder_api_version}"))
 }
 
 processResources {

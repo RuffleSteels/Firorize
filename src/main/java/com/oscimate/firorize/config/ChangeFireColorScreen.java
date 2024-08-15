@@ -220,7 +220,7 @@ public class ChangeFireColorScreen extends Screen {
 
         saveButton.active = false;
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
-        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, blockSearchCoords[1] + blockSearchDimensions[1], 15);
+        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, 15);
         this.addDrawableChild(searchScreenListWidget);
         textFieldWidget = new TextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20+1, hexBoxCoords[1]+1, 48, 18, ScreenTexts.DONE);
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this);
@@ -318,7 +318,7 @@ public class ChangeFireColorScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        if (client.world == null) this.client.getTextureManager().tick();
+
 
 
         if (tooltipTimer > 0) {
@@ -678,12 +678,8 @@ public class ChangeFireColorScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.getMatrices().push();
-//        GL45.glPushDebugGroup(GL45.GL_DEBUG_SOURCE_APPLICATION , 0, "BACKGROUND");
-        super.renderBackgroundTexture(context);
-//        GL45.glPopDebugGroup();
-//        GL45.glPushDebugGroup(GL45.GL_DEBUG_SOURCE_APPLICATION, 0, "DRAWABLES");
+
         super.render(context, mouseX, mouseY, delta);
-//        GL45.glPopDebugGroup();
 
         Sprite RESET = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("firorize:block/reset")).getSprite();
         context.drawSprite(profileButtonXs[0] + (20 - RESET.getContents().getWidth())/2, profileButtonY + (20 - RESET.getContents().getHeight())/2, 10, RESET.getContents().getWidth(), RESET.getContents().getHeight(), RESET);
@@ -695,15 +691,11 @@ public class ChangeFireColorScreen extends Screen {
 
         context.getMatrices().push();
 
-        context.getMatrices().push();
-
-//        context.getMatrices().translate(0, 0, 5000);
 
         RenderSystem.setShader(GameRendererSetting::getRenderTypeColorWheel);
-
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.enableBlend();
+        RenderSystem.depthFunc(519);
         RenderSystem.depthMask(false);
+        RenderSystem.enableBlend();
 
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
 
@@ -719,7 +711,6 @@ public class ChangeFireColorScreen extends Screen {
 
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
 
-        context.getMatrices().pop();
 
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
 
@@ -849,7 +840,6 @@ public class ChangeFireColorScreen extends Screen {
         Block block = Blocks.FIRE;
         Block block2 = Blocks.SOUL_FIRE;
         consumer = context.getVertexConsumers().getBuffer(CustomRenderLayer.getCustomTint());
-
         blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block.getDefaultState(), blockRenderManager.getModel(block.getDefaultState()), pickedColor[0].getRed()/255f, pickedColor[0].getGreen()/255f, pickedColor[0].getBlue()/255f, 1, 1);
         blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block2.getDefaultState(), blockRenderManager.getModel(block2.getDefaultState()), pickedColor[1].getRed()/255f, pickedColor[1].getGreen()/255f, pickedColor[1].getBlue()/255f, 1, 1);
 
@@ -875,7 +865,6 @@ public class ChangeFireColorScreen extends Screen {
     class SearchScreenListWidget
             extends AlwaysSelectedEntryListWidget<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
 
-        private final int x;
         private void generateEntries() {
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
@@ -963,10 +952,8 @@ public class ChangeFireColorScreen extends Screen {
                 this.centerScrollOn(this.getSelectedOrNull());
             }
         }
-        public SearchScreenListWidget(MinecraftClient minecraftClient, int i, int j, int k, int l, int m) {
-            super(minecraftClient, i, j, k, l, m);
-            this.x = blockSearchCoords[0];
-            setLeftPos(x);
+        public SearchScreenListWidget(MinecraftClient client, int width, int height, int x, int y) {
+            super(client, width, height, x, y);
             generateEntries();
         }
         public int num = 0;
@@ -994,26 +981,21 @@ public class ChangeFireColorScreen extends Screen {
 
         @Override
         protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-            int i = this.x + (this.width - entryWidth) / 2;
-            int j = this.x + (this.width + entryWidth) / 2;
+            int i = this.getX() + (this.width - entryWidth) / 2;
+            int j = this.getX() + (this.width + entryWidth) / 2;
             context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
             context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
         }
-
-//        @Override
-//        protected int getScrollbarX() {
-//            return super.getScrollbarX() - 16;
-//        }
 
         @Override
         protected int getScrollbarPositionX() {
             return super.getScrollbarPositionX() + 20 + blockSearchCoords[0];
         }
 
-//        @Override
-//        public int getX() {
-//            return super.getX() + blockSearchCoords[0];
-//        }
+        @Override
+        public int getX() {
+            return super.getX() + blockSearchCoords[0];
+        }
         
 
         @Override

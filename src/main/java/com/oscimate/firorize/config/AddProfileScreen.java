@@ -63,7 +63,7 @@ public class AddProfileScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        if (client.world == null) this.client.getTextureManager().tick();
+        
         if (tooltipTime > 0) {
             tooltipTime--;
         }
@@ -160,6 +160,12 @@ public class AddProfileScreen extends Screen {
 //
 //        this.renderDarkening(context);
 //    }
+
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        context.fill(0, 0, width, height, new Color(0, 0, 0, 0.5F).getRGB());
+    }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
