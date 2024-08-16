@@ -52,7 +52,7 @@ class PresetListWidget
     private boolean isConstruct = false;
 
     public void resetProfile() {
-//        instance.resetBuffer = true;
+        instance.resetBuffer = false;
         KeyValuePair< KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> temp = Main.CONFIG_MANAGER.getDefaultProfile();
         int[] list = temp.getLeft().getRight();
 
