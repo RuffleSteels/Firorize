@@ -66,17 +66,18 @@ class PresetListWidget
     private boolean isConstruct = false;
 
     public void resetProfile() {
-        instance.resetBuffer = true;
+//        instance.resetBuffer = true;
         KeyValuePair< KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> temp = Main.CONFIG_MANAGER.getDefaultProfile();
         int[] list = temp.getLeft().getRight();
 
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, list.length);
         Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), temp.getLeft().getLeft());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), temp.getRight());
-        instance.setRedo(true);
+
         instance.isReset = true;
         setSelected(children().stream().filter(thing -> thing.languageDefinition.equalsIgnoreCase(curPresetID)).findFirst().get());
-        instance.resetBuffer = false;
+        instance.setRedo(true);
+        instance.resetBuffer = true;
         instance.resetProfileButton.setFocused(false);
     }
 
@@ -154,6 +155,16 @@ class PresetListWidget
         context.getMatrices().pop();
     }
 
+    @Override
+    protected void renderEntry(DrawContext context, int mouseX, int mouseY, float delta, int index, int x, int y, int entryWidth, int entryHeight) {
+        PresetListWidget.PresetEntry entry = this.getEntry(index);
+        entry.x = x;
+        entry.entryHeight = entryHeight;
+        entry.entryWidth = entryWidth;
+        entry.y = y;
+        super.renderEntry(context, mouseX, mouseY, delta, index, x, y, entryWidth, entryHeight);
+    }
+
 
 
     @Environment(value=EnvType.CLIENT)
@@ -166,15 +177,17 @@ class PresetListWidget
         private int x;
         private int y;
         private int entryHeight;
+        private int entryWidth;
 
         @Override
         public Text getNarration() {
             return Text.translatable("narrator.select", this.languageDefinition);
         }
+        private int buffer = 30;
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (mouseX >= x+width-entryHeight-10 && mouseX <= x+width-10 && mouseY >= y && mouseY <= y+entryHeight) {
+            if (mouseX >= x+entryWidth-entryHeight-10+buffer && mouseX <= x+entryWidth-10+buffer && mouseY >= y && mouseY <= y+entryHeight) {
                 if (!languageDefinition.equals("Initial")) {
                     Main.CONFIG_MANAGER.getFireColorPresets().remove(languageDefinition);
                     PresetListWidget.this.children().remove(this);
@@ -190,14 +203,14 @@ class PresetListWidget
         @Override
         public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (!languageDefinition.equals("Initial")) {
-                if (mouseX >= x+entryWidth-entryHeight-10 && mouseX <= x+entryWidth-10 && mouseY >= y && mouseY <= y+entryHeight) {
+                if (mouseX >= x+entryWidth-entryHeight-10+buffer && mouseX <= x+entryWidth-10+buffer && mouseY >= y && mouseY <= y+entryHeight) {
                     alphaa = 1f;
                 } else {
                     alphaa = 0.5f;
                 }
-                context.fill(x+entryWidth-entryHeight-10, y, x+entryWidth-10, y + entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alphaa).getRGB());
-                instance.drawX(context, entryWidth, entryHeight, y, x);
-                context.drawBorder(x+entryWidth-entryHeight-10, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                context.fill(x+entryWidth-entryHeight-10+buffer, y, x+entryWidth-10+buffer, y + entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alphaa).getRGB());
+                instance.drawX(context, entryWidth, entryHeight, y, x+buffer);
+                context.drawBorder(x+entryWidth-entryHeight-10+buffer, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
             }
             context.drawCenteredTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y+1, 0xFFFFFF);
         }
