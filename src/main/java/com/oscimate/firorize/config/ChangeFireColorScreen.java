@@ -425,7 +425,7 @@ public class ChangeFireColorScreen extends Screen {
                                     .filter(block -> blockUnderList.contains(block) && !allBlockUnders.contains(block))
                                     .toList();
 
-                            allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).toList();
+                            allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).collect(Collectors.toList());
                         } else if (currentSearchButton == 2) {
                             RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(entry.languageDefinition));
                             biomeKeys.add(key);
@@ -438,6 +438,10 @@ public class ChangeFireColorScreen extends Screen {
                     textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
                     updateCursor("#" + Integer.toHexString(RGB).substring(2));
                 }
+            }
+            if (onBaseColor) {
+                allBlockUnders.clear();
+                allBlockUnders.add(Blocks.NETHERRACK);
             }
             setRedo(false);
         }
@@ -603,7 +607,7 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     public void setRedo(boolean bool, boolean useRedo) {
-        if (isReset && useRedo) {
+        if (isReset && resetBuffer) {
             isReset = false;
             int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
             System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
@@ -613,6 +617,7 @@ public class ChangeFireColorScreen extends Screen {
             Main.CONFIG_MANAGER.save();
 
             presetListWidget.setSelected(presetListWidget.children().stream().filter(thing -> thing.languageDefinition.equalsIgnoreCase(presetListWidget.curPresetID)).findFirst().get());
+            resetBuffer = false;
         }
         hasRedo = bool;
         redoButton.active = bool;
@@ -1023,6 +1028,8 @@ public class ChangeFireColorScreen extends Screen {
 
             if (children().indexOf(entry) == 0) {
                 onBaseColor = true;
+                allBlockUnders.clear();
+                allBlockUnders.add(Blocks.NETHERRACK);
                 blockUnderField.setText(entry.languageDefinition);
                 updateBlockUnder(entry.languageDefinition);
             } else {
@@ -1036,7 +1043,7 @@ public class ChangeFireColorScreen extends Screen {
                     TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(entry.languageDefinition)).findFirst().get();
                     blockTags = new ArrayList<>();
                     blockTags.add(tag);
-                    allBlockUnders = Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).toList();
+                    allBlockUnders = Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).collect(Collectors.toList());;
                     blockUnderField.setText(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 } else if (currentSearchButton == 2) {
@@ -1220,7 +1227,7 @@ public class ChangeFireColorScreen extends Screen {
                             .filter(block -> blockUnderList.contains(block) && !allBlockUnders.contains(block))
                             .toList();
 
-                    allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).toList();
+                    allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).collect(Collectors.toList());
                 } else if (currentSearchButton == 2) {
                     if (clear) biomeKeys.clear();
                     RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(this.languageDefinition));

@@ -47,20 +47,22 @@ class PresetListWidget
 
 
 
+
+
     private boolean isConstruct = false;
 
     public void resetProfile() {
-        instance.resetBuffer = true;
+//        instance.resetBuffer = true;
         KeyValuePair< KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> temp = Main.CONFIG_MANAGER.getDefaultProfile();
         int[] list = temp.getLeft().getRight();
 
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, list.length);
         Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), temp.getLeft().getLeft());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), temp.getRight());
-        instance.setRedo(true);
         instance.isReset = true;
         setSelected(children().stream().filter(thing -> thing.languageDefinition.equalsIgnoreCase(curPresetID)).findFirst().get());
-        instance.resetBuffer = false;
+        instance.setRedo(true);
+        instance.resetBuffer = true;
         instance.resetProfileButton.setFocused(false);
     }
 
@@ -182,6 +184,7 @@ class PresetListWidget
         private int x;
         private int y;
         private int entryHeight;
+
 
 
         @Override
