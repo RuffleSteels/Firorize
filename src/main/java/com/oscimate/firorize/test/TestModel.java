@@ -64,14 +64,13 @@ public class TestModel implements FabricBakedModel, BakedModel {
                     if (!Main.inConfig) {
                         int[] ints;
                         if (blockView.getBlockState(pos).getBlock().equals(Blocks.AIR)) {
-                            if (soulFire && CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).keyList().contains("minecraft:soul_fire")) {
-                                ints = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).get("minecraft:soul_fire");
-                                sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
+                            if (soulFire && CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).keyList().contains("minecraft:soul_sand")) {
+                                ints = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).get("minecraft:soul_sand");
 
                             } else {
                                 ints = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-                                sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
                             }
+                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
                         } else {
                             ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
                             Block blockUnder;
