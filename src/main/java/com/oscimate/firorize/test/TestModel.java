@@ -236,6 +236,11 @@ public class TestModel implements FabricBakedModel, BakedModel {
 
     @Override
     public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+
+        if (!Main.inConfig && blockView.getBlockState(pos).getBlock().equals(Blocks.AIR)) {
+            model.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+        } else {
             editModel(blockView, pos).emitBlockQuads(blockView, state, pos, randomSupplier, context);
+        }
     }
 }
