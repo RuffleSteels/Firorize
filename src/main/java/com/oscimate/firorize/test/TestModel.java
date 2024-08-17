@@ -58,7 +58,6 @@ public class TestModel implements FabricBakedModel, BakedModel {
                     for(int g = 0; g < beforeTempList.size(); g++) {
                         tempList.add(g, beforeTempList.get(g));
                     }
-
                     Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("firorize:block/blank_fire_overlay_1_config")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier("firorize:block/blank_fire_1_config")).getSprite();
 
                     if (!Main.inConfig) {
