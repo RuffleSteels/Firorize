@@ -1,11 +1,14 @@
 package com.oscimate.firorize;
 
 import com.oscimate.firorize.config.ConfigManager;
+import com.oscimate.firorize.config.ConfigScreen;
 import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import com.oscimate.firorize.test.TestModel;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
@@ -14,6 +17,8 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FireBlock;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
@@ -155,8 +160,21 @@ public class Main implements ClientModInitializer {
         }
     }
 
+    public static final KeyBinding configKeybind = KeyBindingHelper.registerKeyBinding(
+            new KeyBinding("firorze.key.openConfig", InputUtil.Type.KEYSYM, InputUtil.GLFW_KEY_I, "firorze.title")
+    );
+
     @Override
     public void onInitializeClient() {
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.world != null && client.player != null) {
+                if (client.currentScreen == null) {
+                    while (configKeybind.isPressed()) {
+                        client.setScreen(new ConfigScreen());
+                    }
+                }
+            }
+        });
         CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {
             biomeKeyList = registries.get(RegistryKeys.BIOME).getKeys().stream().toList();
             blockTagList = registries.get(RegistryKeys.BLOCK).streamTags().filter(tag -> Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP) || ((FireBlockInvoker)Blocks.FIRE).getBurnChances().containsKey(block)).toList().size() > 0).toList();

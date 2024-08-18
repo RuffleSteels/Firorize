@@ -10,15 +10,19 @@ import net.minecraft.util.Identifier;
 
 public class ConfigScreen extends Screen {
     protected static final int buttonWidth = 130;
-    private final Screen parent;
+    private Screen parent = null;
     protected static final int windowWidth = 176;
     protected static final int windowHeight = 182;
     private final Identifier WINDOW = Identifier.of("firorize", "textures/gui/info_box.png");
     protected int guiTop, guiLeft;
 
-    protected ConfigScreen(Screen parent) {
+    public ConfigScreen(Screen parent) {
         super(Text.literal(""));
         this.parent = parent;
+    }
+
+    public ConfigScreen() {
+        super(Text.literal(""));
     }
 
     @Override
@@ -48,7 +52,11 @@ public class ConfigScreen extends Screen {
     }
 
     public void onClose() {
-        client.setScreen(parent);
+        if (parent == null) {
+            super.close();
+        } else {
+            client.setScreen(parent);
+        }
     }
 
     @Override
