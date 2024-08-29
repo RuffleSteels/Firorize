@@ -7,10 +7,7 @@ import com.oscimate.firorize.Main;
 import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.Blocks;
+import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -157,7 +154,15 @@ public class ChangeFireColorScreen extends Screen {
     public ChangeFireColorScreen.SearchScreenListWidget searchScreenListWidget;
     public PresetListWidget presetListWidget;
     boolean isReset = false;
-    private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> block.getDefaultState().isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, Direction.UP) || ((FireBlockInvoker)Blocks.FIRE).getBurnChances().containsKey(block)).toList();
+    private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> {
+        BlockState state = block.getDefaultState();
+        for (Direction direction : Direction.values()) {
+            if (state.isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, direction)) {
+                return true;
+            }
+        }
+        return ((FireBlockInvoker)Blocks.FIRE).getBurnChances().containsKey(block);
+    }).toList();
     public final int[] blockSearchCoords = {0, 18};
     private final int[] blockSearchDimensions = {300, 320};
     private ButtonWidget[] overlayToggles = new ButtonWidget[2];
