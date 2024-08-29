@@ -61,8 +61,8 @@ public class MoveableButton extends ButtonWidget {
         Sprite ARROW_RIGHT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/arrow_right")).getSprite();
         Sprite ARROW_LEFT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/arrow_left")).getSprite();
 
-        if (index!=2) context.drawSprite(x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), 10,ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight(), ARROW_RIGHT);
-        if (index!=0) context.drawSprite(x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), 10,ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight(), ARROW_LEFT);
+        if (index!=2) context.drawSprite(x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2)+1, 10,ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight(), ARROW_RIGHT);
+        if (index!=0) context.drawSprite(x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2)+1, 10,ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight(), ARROW_LEFT);
     }
 
     @Override
