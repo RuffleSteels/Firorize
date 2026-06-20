@@ -112,6 +112,33 @@ public class ChangeFireColorScreen extends Screen {
         }
         return new KeyValuePair<>(clonedList, clonedArray);
     }
+
+    /**
+     * Positional deep-equality for the fire-colour data. The three maps in {@code getLeft()}
+     * (0=blocks, 1=tags, 2=biomes) are compared index-for-index — including key order, since
+     * that drives in-category resolution — plus the global base colour in {@code getRight()}.
+     * <p>Unlike a set-style cross-match, this correctly reports a change when entries are
+     * <em>deleted</em> (e.g. a map emptied so it coincides with another empty category), so the
+     * texture reload in {@link #onClose()} fires for deletions, not just edits.
+     */
+    private static boolean fireColorsEqual(
+            KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> a,
+            KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> b) {
+        if (!Arrays.equals(a.getRight(), b.getRight())) return false;
+        ArrayList<ListOrderedMap<String, int[]>> la = a.getLeft();
+        ArrayList<ListOrderedMap<String, int[]>> lb = b.getLeft();
+        if (la.size() != lb.size()) return false;
+        for (int i = 0; i < la.size(); i++) {
+            ListOrderedMap<String, int[]> ma = la.get(i);
+            ListOrderedMap<String, int[]> mb = lb.get(i);
+            if (!ma.keyList().equals(mb.keyList())) return false;
+            for (String key : ma.keyList()) {
+                if (!Arrays.equals(ma.get(key), mb.get(key))) return false;
+            }
+        }
+        return true;
+    }
+
     private final ArrayList<Integer> comparedPriorityOrder;
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
@@ -121,16 +148,8 @@ public class ChangeFireColorScreen extends Screen {
     }
     public void onClose() {
         Main.inConfig = false;
-        if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder()) || !(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().size() == comparedCurrentFire.getLeft().size() &&
-                Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream().allMatch(map1 ->
-                        comparedCurrentFire.getLeft().stream().anyMatch(map2 ->
-                                map1.size() == map2.size() &&
-                                        map1.keySet().equals(map2.keySet()) &&
-                                        map1.keySet().stream().allMatch(key ->
-                                                Arrays.equals(map1.get(key), map2.get(key))
-                                        )
-                        )
-                ) && Arrays.equals(comparedCurrentFire.getRight(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight())))) {
+        if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder())
+                || !fireColorsEqual(comparedCurrentFire, Main.CONFIG_MANAGER.getCurrentBlockFireColors()))) {
             MinecraftClient.getInstance().reloadResources();  }
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
