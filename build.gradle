@@ -153,6 +153,10 @@ publishMods {
     file = remapJar.archiveFile
     modLoaders.add("fabric")
 
+    // game_versions is a comma-separated list (e.g. "1.21, 1.21.1"); split it so each Minecraft
+    // version is advertised as its own entry on Modrinth/CurseForge rather than one combined string.
+    def gameVersionList = project.game_versions.split(",").collect { it.trim() }.findAll { it }
+
     // Run with -PdryRunPublish (or -PdryRunPublish=true) to write the would-be upload payloads to
     // build/mod-publish-plugin/ instead of actually publishing to Modrinth/CurseForge/GitHub.
     dryRun = providers.gradleProperty("dryRunPublish").map { it.isEmpty() || Boolean.parseBoolean(it) }.orElse(false)
@@ -178,7 +182,7 @@ publishMods {
     modrinth {
         accessToken = providers.environmentVariable("MODRINTH_TOKEN")
         projectId = project.modrinth_id
-        minecraftVersions.add(project.game_versions)
+        minecraftVersions.addAll(gameVersionList)
 
         requires(project.required_dependencies)
         optional(project.optional_dependencies)
@@ -191,7 +195,7 @@ publishMods {
     curseforge {
         accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
         projectId = project.curseforge_id
-        minecraftVersions.add(project.game_versions)
+        minecraftVersions.addAll(gameVersionList)
         client = true
         server = false
 
