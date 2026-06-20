@@ -24,7 +24,11 @@ public class EntityRenderDispatcherMixin {
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 0))
     private Sprite getSprite0(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
         Main.settingFireColor(entity);
-        int fireColor = ((RenderFireColorAccessor) entity).firorize$getRenderFireColor()[0];
+        int[] color = ((RenderFireColorAccessor) entity).firorize$getRenderFireColor();
+        if (color == null) {
+            return obj.getSprite();
+        }
+        int fireColor = color[0];
         if (fireColor < 1) {
             Sprite sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[1]))).getSprite();
             return sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId()) ? new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0])+"_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1]))).getSprite() : sprite;
@@ -37,7 +41,11 @@ public class EntityRenderDispatcherMixin {
     @Redirect(method = "renderFire", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;", ordinal = 1))
     private Sprite getSprite1(SpriteIdentifier obj, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
         Main.settingFireColor(entity);
-        int fireColor = ((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[0];
+        int[] color = ((RenderFireColorAccessor) entity).firorize$getRenderFireColor();
+        if (color == null) {
+            return obj.getSprite();
+        }
+        int fireColor = color[0];
         if (fireColor < 1) {
             Sprite sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)entity).firorize$getRenderFireColor()[1]))).getSprite();
             return sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId()) ? new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0])+"_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1]))).getSprite() : sprite;

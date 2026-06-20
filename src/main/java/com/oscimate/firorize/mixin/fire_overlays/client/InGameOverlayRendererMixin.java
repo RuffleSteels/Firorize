@@ -40,7 +40,11 @@ public class InGameOverlayRendererMixin {
 
     @WrapOperation(method = "renderFireOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getSprite()Lnet/minecraft/client/texture/Sprite;"))
     private static Sprite renderOverlay(SpriteIdentifier instance, Operation<Sprite> original, MinecraftClient client, MatrixStack matrices) {
-        int fireColor = ((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[0];
+        int[] color = ((RenderFireColorAccessor) client.player).firorize$getRenderFireColor();
+        if (color == null) {
+            return original.call(instance);
+        }
+        int fireColor = color[0];
         if (fireColor < 1) {
             Sprite sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[1]))).getSprite();
             return sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId()) ? new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0])+"_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1]))).getSprite() : sprite;

@@ -158,6 +158,12 @@ public class Main implements ClientModInitializer {
                 }
             }
         }
+        // Ensure the entity always has a non-null colour: some paths above (e.g. a fire block
+        // whose block-under is air, or no priority match) can leave it unset, which would NPE the
+        // render redirects that dereference firorize$getRenderFireColor()[0].
+        if (((RenderFireColorAccessor) entity).firorize$getRenderFireColor() == null) {
+            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
+        }
     }
 
     public static final KeyBinding configKeybind = KeyBindingHelper.registerKeyBinding(

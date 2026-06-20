@@ -24,7 +24,10 @@ public class OscimateClientPlayNetworkHandler {
         Entity sourceEntity = world.getEntityById(packet.sourceDirectId());
         if (targetEntity != null && sourceEntity != null) {
             if ((sourceEntity instanceof ZombieEntity || sourceEntity instanceof ArrowEntity) && sourceEntity.doesRenderOnFire()) {
-                ((RenderFireColorAccessor)targetEntity).firorize$setRenderFireColor(((RenderFireColorAccessor) sourceEntity).firorize$getRenderFireColor());
+                int[] sourceColor = ((RenderFireColorAccessor) sourceEntity).firorize$getRenderFireColor();
+                if (sourceColor != null) {
+                    ((RenderFireColorAccessor) targetEntity).firorize$setRenderFireColor(sourceColor);
+                }
             }
         } if (targetEntity != null) {
             if (packet.createDamageSource(world).isOf(DamageTypes.LIGHTNING_BOLT)) {
