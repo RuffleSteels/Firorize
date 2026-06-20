@@ -4,7 +4,12 @@
 # against bad commits.
 
 name: Check Build
-on: [push, pull_request]
+on:
+  # Build on branch pushes and PRs, but not on tag pushes — a tag added to an
+  # already-pushed commit would otherwise duplicate the run for that commit.
+  push:
+    tags-ignore: ['**']
+  pull_request:
 
 jobs:
   build:
