@@ -34,4 +34,4 @@ run/
 # claude
 
 CLAUDE.md
-.claude/settings.local.json
+.claude/
