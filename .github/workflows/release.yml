@@ -2,8 +2,8 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      changelogCommits:
-        description: "Commit SHAs to include in the changelog (space/comma separated)"
+      changelog:
+        description: "Changelog bullet points, separated by | (each becomes its own line)"
         required: false
         default: ""
 
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - run: ./gradlew build publishMods -PchangelogCommits="${{ inputs.changelogCommits }}"
+      - run: ./gradlew build publishMods -Pchangelog="${{ inputs.changelog }}"
         env:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

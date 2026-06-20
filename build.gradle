@@ -53,15 +53,8 @@ dependencies {
 	modImplementation(include("eu.pb4:placeholder-api:${project.text_placeholder_api_version}"))
 }
 
-// Helper to run a git command (list form avoids shell-quoting issues) and return trimmed stdout.
-def gitOutput = { List<String> args ->
-    def proc = (["git"] + args).execute(null, project.rootDir)
-    proc.waitFor()
-    return proc.in.text.trim()
-}
-
 tasks.register("generateChangelog") {
-    description = "Builds a changelog from an explicit set of commits passed via -PchangelogCommits."
+    description = "Builds the changelog from the -Pchangelog input ('|'-separated bullet points)."
     doLast {
         // ---- Release type is derived from the version being published, not from any tag. ----
         def version = project.mod_version
@@ -90,46 +83,22 @@ tasks.register("generateChangelog") {
         println "Version: $version"
         println "Release type: $releaseType"
 
-        // ---- Collect the commits to include, from the -PchangelogCommits user input. ----
-        // SHAs are passed on the command line: -PchangelogCommits="sha1 sha2, sha3" (spaces/commas/newlines).
-        def requested = [] as List<String>
-        def pasted = project.findProperty("changelogCommits")
-        if (pasted) {
-            pasted.toString().split(/[\s,]+/).findAll { it }.each { requested << it }
-        }
-
-        // Resolve every ref to a full commit SHA, drop unknown refs, and dedupe (keep first occurrence).
-        def resolved = [] as List<String>
-        requested.each { ref ->
-            def full = gitOutput(["rev-parse", "--verify", "--quiet", "${ref}^{commit}"])
-            if (full.isEmpty()) {
-                println "Skipping unknown commit/tag: $ref"
-            } else if (!resolved.contains(full)) {
-                resolved << full
-            }
-        }
-
-        // Order the chosen commits oldest-first so the changelog reads chronologically.
-        def ordered = resolved
-        if (!resolved.isEmpty()) {
-            ordered = gitOutput((["rev-list", "--no-walk", "--date-order"] + resolved) as List<String>)
-                    .readLines().findAll { it }.reverse()
-        }
-        println "Selected ${ordered.size()} commit(s) for the changelog."
-
-        // ---- Turn each chosen commit into a changelog line: its full title (subject). ----
+        // ---- Build the changelog from the -Pchangelog text: '|' separates bullet points. ----
+        // Passed on the command line as -Pchangelog="First item|Second item|Third item".
         def changes = new StringBuilder()
-        ordered.each { sha ->
-            def subject = gitOutput(["log", "-1", "--pretty=format:%s", sha])
-            def entry = "- ${subject}".toString()
-            println "Adding changelog line: $entry"
-            changes << (changes.length() == 0 ? entry : "\n${entry}")
+        def changelogInput = project.findProperty("changelog")
+        if (changelogInput) {
+            changelogInput.toString().split(/\|/).collect { it.trim() }.findAll { it }.each { line ->
+                def entry = "- ${line}".toString()
+                println "Adding changelog line: $entry"
+                changes << (changes.length() == 0 ? entry : "\n${entry}")
+            }
         }
 
         def releaseChangelog = changes.toString()
         if (releaseChangelog.isEmpty()) {
             releaseChangelog = "No Changelog Available"
-            println "No commits selected. Pass -PchangelogCommits=\"<shas>\" to populate the changelog."
+            println "No changelog provided. Pass -Pchangelog=\"item one|item two\" to populate it."
         }
         // Expose results to other tasks (e.g. publishMods) via project extra properties.
         project.ext.releaseChangelog = releaseChangelog
