@@ -1,5 +1,5 @@
 <h1><strong>Firorize&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</strong></h1>
-<p><strong><span style="font-size: 12.0pt; line-height: 116%; font-family: 'Aptos',sans-serif;"><a href="https://www.modrinth.com/mod/fabric-api" target="_blank" rel="nofollow noopener"><img src="https://camo.githubusercontent.com/90934aeba21f02a2f467ff5a8b3bf00edb6a26663f18e96aa6c82a435cdf7450/68747470733a2f2f692e696d6775722e636f6d2f4f6c31546366382e706e67" alt="" width="199" height="67"></a><a href="https://www.modrinth.com/mod/modmenu" target="_blank" rel="nofollow noopener"><img src="https://i.imgur.com/9KdQ8fB.png" alt="" width="200" height="67"></a></span></strong></p>
+<p><strong><span style="font-size: 12.0pt; line-height: 116%; font-family: 'Aptos',sans-serif;"><a href="https://www.modrinth.com/mod/modmenu" target="_blank" rel="nofollow noopener"><img src="https://i.imgur.com/9KdQ8fB.png" alt="" width="200" height="67"></a></span></strong></p>
 <p><img src="https://img.shields.io/badge/environment-client-1976d2?style=flat-square" alt="" width="118" height="20"></p>
 <p><a href="https://ko-fi.com/rufflesteels" target="_blank" rel="nofollow noopener"><img src="https://i.imgur.com/WXx42Lo.png" alt="" width="224" height="35"></a></p>
 <p>&nbsp;</p>

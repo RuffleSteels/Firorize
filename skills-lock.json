@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "minecraft-fabric-dev": {
+      "source": "mcdxai/meteor-rejects-v2",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/minecraft-fabric-dev/SKILL.md",
+      "computedHash": "6f5f6e2edca415ba7fb2b57228f66f2cbc35154a79c4c69bd16d6183d8063c3d"
+    }
+  }
+}

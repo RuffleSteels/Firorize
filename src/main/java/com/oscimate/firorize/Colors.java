@@ -4,12 +4,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.StringIdentifiable;
 
 public class Colors implements StringIdentifiable {
-
-
-
-
-
-
     private final String name;
     private final int[] colors;
 
