@@ -1,7 +1,7 @@
 <h1><strong>Firorize&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</strong></h1>
-<p><strong><span style="font-size: 12.0pt; line-height: 116%; font-family: 'Aptos',sans-serif;"><a href="https://www.modrinth.com/mod/modmenu" target="_blank" rel="nofollow noopener"><img src="https://i.imgur.com/9KdQ8fB.png" alt="" width="200" height="67"></a></span></strong></p>
+<p><strong><span style="font-size: 12.0pt; line-height: 116%; font-family: 'Aptos',sans-serif;"><a href="https://www.modrinth.com/mod/modmenu" target="_blank" rel="nofollow noopener"><img src="https://cdn.raffers.co.uk/requiresModMenu.png" alt="" width="200" height="67"></a></span></strong></p>
 <p><img src="https://img.shields.io/badge/environment-client-1976d2?style=flat-square" alt="" width="118" height="20"></p>
-<p><a href="https://ko-fi.com/rufflesteels" target="_blank" rel="nofollow noopener"><img src="https://i.imgur.com/WXx42Lo.png" alt="" width="224" height="35"></a></p>
+<p><a href="https://ko-fi.com/rufflesteels" target="_blank" rel="nofollow noopener"><img src="https://cdn.raffers.co.uk/kofi.png" alt="" width="224" height="46"></a></p>
 <p>&nbsp;</p>
 <h2><strong><span style="color: #fff;">📖What's this mod?</span></strong></h2>
 <p>Are you bored of that same old orange fire? In need of more atmospheric nether biomes? Wishing for some colorful variety next time you decide to burn your friend's house down?</p>
@@ -43,33 +43,7 @@
 <details>
 <summary>Spoiler</summary>
 
-<p><img src="https://i.imgur.com/P6YcK1B.gif" width="991" height="558"></p>
-
-</details>
-
-
-
-<p>&nbsp;</p>
-<h4><span style="color: #c6c6c6;"><strong>Customizing, reordering and deleting for block tags</strong></span></h4>
-
-
-<details>
-<summary>Spoiler</summary>
-
-<p><img src="https://i.imgur.com/2o4TGNB.gif" width="987" height="555"></p>
-
-</details>
-
-
-
-<h4>&nbsp;</h4>
-<h4><span style="color: #c6c6c6;"><strong>Export existing profiles as a code which your friends can import.&nbsp;</strong></span></h4>
-
-
-<details>
-<summary>Spoiler</summary>
-
-<p><img src="https://i.imgur.com/okWw30b.gif" width="1001" height="563"></p>
+<p><img src="https://cdn.raffers.co.uk/changeColour.gif" width="991" height="558"></p>
 
 </details>
 
@@ -82,8 +56,33 @@
 <details>
 <summary>Spoiler</summary>
 
-<p><img src="https://i.imgur.com/fL5IN6M.gif" alt="" width="989" height="557"></p>
+<p><img src="https://cdn.raffers.co.uk/fireHeight.gif" alt="" width="989" height="557"></p>
 
 </details>
+
+<p>&nbsp;</p>
+<h4><span style="color: #c6c6c6;"><strong>Customizing, reordering and deleting for block tags</strong></span></h4>
+
+
+<details>
+<summary>Spoiler</summary>
+
+<p><img src="https://cdn.raffers.co.uk/blockTag.gif" width="987" height="555"></p>
+
+</details>
+
+
+
+<h4>&nbsp;</h4>
+<h4><span style="color: #c6c6c6;"><strong>Export existing profiles as a code which your friends can import.&nbsp;</strong></span></h4>
+
+
+<details>
+<summary>Spoiler</summary>
+
+<p><img src="https://cdn.raffers.co.uk/profile.gif" width="1001" height="563"></p>
+
+</details>
+
 
 

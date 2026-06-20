@@ -1,5 +1,4 @@
 # gradle
-gifs
 .gradle/
 build/
 out/
@@ -8,7 +7,7 @@ classes/
 # eclipse
 
 *.launch
-
+/old
 # idea
 
 .idea/
