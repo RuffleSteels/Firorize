@@ -631,7 +631,7 @@ public class ChangeFireColorScreen extends Screen {
             }
         }
         currentSearchButton = buttonNum;
-        searchScreenListWidget.test();
+        searchScreenListWidget.test(false);
         searchScreenListWidget.setSelected(searchScreenListWidget.children().get(0));
     }
     private boolean buffer = false;
@@ -1180,9 +1180,15 @@ public class ChangeFireColorScreen extends Screen {
         }
         public int num = 0;
         public void test() {
+            test(true);
+        }
+        public void test(boolean keepScroll) {
+            double scroll = getScrollAmount();
             this.clearEntries();
             generateEntries();
-            setScrollAmount(0.0);
+            // setScrollAmount clamps to [0, getMaxScroll()], so restoring the prior
+            // amount keeps the user's place and snaps to the end if the list shrank.
+            setScrollAmount(keepScroll ? scroll : 0.0);
             num = 0;
         }
         @Override

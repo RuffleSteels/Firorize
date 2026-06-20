@@ -103,7 +103,7 @@ class PresetListWidget
         instance.input = instance.blockUnderField.getText();
         instance.searchScreenListWidget.selected.clear();
         if (isConstruct) {
-            instance.searchScreenListWidget.test();
+            instance.searchScreenListWidget.test(false);
         } else {
             instance.changeSearchOption(client.world == null ? 0 : Main.CONFIG_MANAGER.getPriorityOrder().get(0));
             if (client.world == null) {
