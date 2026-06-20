@@ -19,7 +19,6 @@ public class CustomTextFieldWidget extends TextFieldWidget {
         } else {
             instance.input = this.getText();
             instance.searchScreenListWidget.test();
-            instance.setRedo(false);
             instance.searchScreenListWidget.selected.clear();
         }
     }

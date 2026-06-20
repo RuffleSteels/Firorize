@@ -28,6 +28,13 @@ public class ChangeFireHeightScreen extends Screen {
         super(Text.translatable("options.videoTitle"));
         this.parent = parent;
     }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        this.setFocused(null); // clear previous focus/outline; a genuinely-clicked widget re-acquires it via super
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     public void onClose() {
         Main.CONFIG_MANAGER.save();
 

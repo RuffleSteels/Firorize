@@ -49,6 +49,7 @@ public class TestModel implements FabricBakedModel, BakedModel {
     public boolean isVanillaAdapter() {
         return Main.inConfig;
     }
+    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     private BakedModel editModel(BlockView blockView, BlockPos pos) {
         return new BakedModel() {
             @Override

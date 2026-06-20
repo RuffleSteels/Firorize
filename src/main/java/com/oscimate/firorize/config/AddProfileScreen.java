@@ -24,6 +24,13 @@ public class AddProfileScreen extends Screen {
         super(Text.translatable("options.videoTitle"));
         this.parent = parent;
     }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        this.setFocused(null); // clear previous focus/outline; a genuinely-clicked widget re-acquires it via super
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     public  ButtonWidget fromExistingButton;
     public ButtonWidget fromNewButton;
     public  ButtonWidget fromCodeButton;
@@ -128,6 +135,7 @@ public class AddProfileScreen extends Screen {
         }
     }
 
+    @SuppressWarnings("unchecked") // shape is validated by the instanceof checks above the cast
     public static KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> deserializeFromString(String str) {
         try {
             byte[] data = Base64.getDecoder().decode(str);

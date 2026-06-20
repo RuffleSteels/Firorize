@@ -85,13 +85,29 @@ public class ColoredCycleButton extends PressableWidget {
     private final String[] tooltips = new String[]{"firorize.config.tooltip.empty", "firorize.config.tooltip.exists"};
     private String tooltip = "";
 
+    /** Rebuilds the cycle list from the persisted custom colour presets (used after undo/redo). */
+    public void rebuildValues() {
+        values.clear();
+        values.add(new Colors("CUSTOM", Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()));
+        for (Map.Entry<String, int[]> entry : Main.CONFIG_MANAGER.getCustomColorPresets().entrySet()) {
+            values.add(new Colors(entry.getKey(), entry.getValue()));
+        }
+        isAdding = false;
+        instance.invisibleTextFieldWidget.visible = false;
+        this.setPosition(x, y);
+        setIndex(0);
+    }
+
     public void addColor() {
         if (index > 0) {
+            // Deleting a custom colour preset is undoable.
+            instance.historyBefore();
             removing = true;
             cycle(-1);
             Main.CONFIG_MANAGER.getCustomColorPresets().remove(values.get(index+1).getName());
             values.remove(index+1);
             Main.CONFIG_MANAGER.save();
+            instance.historyAfterPreset();
         } else {
             if (isAdding) {
                 if (this.values.stream().noneMatch(colors -> colors.getName().equalsIgnoreCase(instance.invisibleTextFieldWidget.getText())) && !instance.invisibleTextFieldWidget.getText().isEmpty()) {
@@ -101,10 +117,13 @@ public class ColoredCycleButton extends PressableWidget {
                     String string = instance.invisibleTextFieldWidget.getText();
                     int[] ints = new int[]{ChangeFireColorScreen.pickedColor[0].getRGB(), ChangeFireColorScreen.pickedColor[1].getRGB()};
 
+                    // Saving a new custom colour preset is undoable.
+                    instance.historyBefore();
                     Main.CONFIG_MANAGER.getCustomColorPresets().put(string, ints);
                     values.add(new Colors(string, ints));
                     this.setIndex(values.size() - 1);
                     Main.CONFIG_MANAGER.save();
+                    instance.historyAfterPreset();
                     isWhite = true;
                     instance.invisibleTextFieldWidget.setText("");
                 } else if (instance.invisibleTextFieldWidget.getText().isEmpty()) {
@@ -139,7 +158,6 @@ public class ColoredCycleButton extends PressableWidget {
         } else {
             this.cycle(1);
         }
-        instance.setRedo(false);
     }
 
     private void cycle(int amount) {

@@ -34,7 +34,10 @@ class PresetListWidget
 
         isConstruct = true;
 
-        setSelected(children().get(children().stream().map(entry -> entry.languageDefinition).toList().indexOf(Main.CONFIG_MANAGER.getCurrentPreset())));
+        // Fall back to the first profile if the saved currentPreset no longer exists (e.g. it was deleted).
+        int curIndex = children().stream().map(entry -> entry.languageDefinition).toList().indexOf(Main.CONFIG_MANAGER.getCurrentPreset());
+        if (curIndex < 0) curIndex = 0;
+        setSelected(children().get(curIndex));
     }
 
     private final TextRenderer textRenderer;
@@ -49,17 +52,19 @@ class PresetListWidget
     private boolean isConstruct = false;
 
     public void resetProfile() {
-        instance.resetBuffer = false;
+        // Snapshot the profile before resetting so the reset itself is a single undo step.
+        instance.historyBefore();
         KeyValuePair< KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> temp = Main.CONFIG_MANAGER.getDefaultProfile();
         int[] list = temp.getLeft().getRight();
 
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, list.length);
         Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), temp.getLeft().getLeft());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), temp.getRight());
-        instance.isReset = true;
+        // Commit the reset to the preset immediately (no deferral); history owns the revert.
+        instance.commitToPreset();
+        Main.CONFIG_MANAGER.save();
         setSelected(children().stream().filter(thing -> thing.languageDefinition.equalsIgnoreCase(curPresetID)).findFirst().get());
-        instance.setRedo(true);
-        instance.resetBuffer = true;
+        instance.historyAfterReset();
         instance.resetProfileButton.setFocused(false);
     }
 
@@ -81,20 +86,19 @@ class PresetListWidget
 
     @Override
     public void setSelected(@Nullable PresetListWidget.PresetEntry entry) {
-        if (!instance.isReset) {
-            if (!entry.equals(getSelectedOrNull())) {
-                instance.setRedo(false);
-                instance.searchScreenListWidget.setSelected(instance.searchScreenListWidget.children().get(0));
-                Main.CONFIG_MANAGER.setCurrentPreset(entry.languageDefinition);
-            }
-
-
-            curPresetID = entry.languageDefinition;
-            int[] list = Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().getRight();
-            System.arraycopy(list, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, list.length);
-            Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().getLeft());
-            Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getRight());
+        if (!entry.equals(getSelectedOrNull())) {
+            // Switching to a different profile: undo/redo history does not carry across profiles.
+            instance.clearHistory();
+            instance.searchScreenListWidget.setSelected(instance.searchScreenListWidget.children().get(0));
+            Main.CONFIG_MANAGER.setCurrentPreset(entry.languageDefinition);
         }
+
+        curPresetID = entry.languageDefinition;
+        int[] list = Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().getRight();
+        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, list.length);
+        Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().getLeft());
+        Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getRight());
+
         instance.blockUnderField.setText("");
         instance.input = instance.blockUnderField.getText();
         instance.searchScreenListWidget.selected.clear();
@@ -113,12 +117,7 @@ class PresetListWidget
 
         instance.searchScreenListWidget.setSelected(instance.searchScreenListWidget.children().get(0));
         isConstruct = false;
-        instance.setRedo(false, false);
         instance.cyclicalPresets.setIndex(0);
-
-        if (instance.isReset) {
-            instance.setRedo(true, false);
-        }
 
         super.setSelected(entry);
     }
@@ -185,9 +184,21 @@ class PresetListWidget
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight) {
                 if (!languageDefinition.equals("Initial")) {
-                    Main.CONFIG_MANAGER.getFireColorPresets().remove(languageDefinition);
-                    PresetListWidget.this.children().remove(this);
-                    PresetListWidget.this.setSelected(PresetListWidget.this.children().get(0));
+                    // Deleting a profile is destructive and not undoable — confirm first, in a box
+                    // drawn over the config screen (not a separate world-backed screen).
+                    String toDelete = languageDefinition;
+                    PresetListWidget.PresetEntry self = this;
+                    instance.showConfirm(
+                            Text.translatable("firorize.config.confirm.deleteProfile.title"),
+                            Text.translatable("firorize.config.confirm.deleteProfile.message"),
+                            () -> {
+                                Main.CONFIG_MANAGER.getFireColorPresets().remove(toDelete);
+                                PresetListWidget.this.children().remove(self);
+                                // setSelected updates currentPreset to the new selection; save afterwards
+                                // so the persisted currentPreset never dangles at the deleted profile.
+                                PresetListWidget.this.setSelected(PresetListWidget.this.children().get(0));
+                                Main.CONFIG_MANAGER.save();
+                            });
                     return false;
                 }
             }

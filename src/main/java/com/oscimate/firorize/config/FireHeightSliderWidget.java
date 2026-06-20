@@ -5,6 +5,7 @@ import net.minecraft.client.gui.widget.SliderWidget;
 import net.minecraft.text.Text;
 
 public class FireHeightSliderWidget extends SliderWidget {
+    @SuppressWarnings("this-escape") // updateMessage/applyValue are called after super() on a fully-set slider
     public FireHeightSliderWidget(int x, int y, int width, int height, Text text, double value) {
         super(x, y, width, height, text, value);
 

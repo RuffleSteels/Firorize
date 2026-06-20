@@ -61,6 +61,8 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
+    // -classfile/-processing drop unfixable noise from third-party jars (Guava) and Mixin annotations
+    it.options.compilerArgs += ['-Xlint:all', '-Xlint:-classfile', '-Xlint:-processing']
 }
 
 java {

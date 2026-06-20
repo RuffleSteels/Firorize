@@ -28,6 +28,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.screen.ScreenTexts;
+import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -153,7 +154,6 @@ public class ChangeFireColorScreen extends Screen {
     public String input = "";
     public ChangeFireColorScreen.SearchScreenListWidget searchScreenListWidget;
     public PresetListWidget presetListWidget;
-    boolean isReset = false;
     private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> {
         BlockState state = block.getDefaultState();
         for (Direction direction : Direction.values()) {
@@ -166,20 +166,266 @@ public class ChangeFireColorScreen extends Screen {
     private final int[] blockSearchCoords = {0, 18};
     private final int[] blockSearchDimensions = {300, 320};
     private ButtonWidget[] overlayToggles = new ButtonWidget[2];
+    public ButtonWidget undoButton;
     public ButtonWidget redoButton;
-    public boolean hasRedo = false;
     private boolean colorRedo = false;
     private ButtonWidget saveButton;
+
+    /** Maximum number of undo steps retained. Edit this to change history depth. */
+    public static final int MAX_HISTORY = 50;
+    private final Deque<HistoryEntry> undoStack = new ArrayDeque<>();
+    private final Deque<HistoryEntry> redoStack = new ArrayDeque<>();
+    /** Guards against history pushes/clears while we are applying an undo or redo. */
+    private boolean isUndoRedoing = false;
+    /** pickedColor pair captured at the start of a colour-wheel/slider gesture. */
+    private Color[] gestureStartColor = null;
+    /** before-snapshot captured by {@link #historyBefore()} for the next config action. */
+    private KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> pendingBefore = null;
+    private ArrayList<Integer> pendingPrioBefore = null;
+    private ListOrderedMap<String, int[]> pendingPresetBefore = null;
+
+    private static ListOrderedMap<String, int[]> clonePresets(ListOrderedMap<String, int[]> src) {
+        ListOrderedMap<String, int[]> out = new ListOrderedMap<>();
+        for (String k : src.keyList()) out.put(k, src.get(k).clone());
+        return out;
+    }
+
+    private void clearPending() {
+        pendingBefore = null;
+        pendingPrioBefore = null;
+        pendingPresetBefore = null;
+    }
+
+    private void pushHistory(HistoryEntry e) {
+        if (isUndoRedoing) return;
+        redoStack.clear();
+        undoStack.push(e);
+        while (undoStack.size() > MAX_HISTORY) undoStack.removeLast();
+        refreshHistoryButtons();
+    }
+
+    /** Clears all undo/redo history (e.g. when switching profiles). */
+    public void clearHistory() {
+        undoStack.clear();
+        redoStack.clear();
+        refreshHistoryButtons();
+    }
+
+    private void refreshHistoryButtons() {
+        if (undoButton != null) undoButton.active = !undoStack.isEmpty();
+        if (redoButton != null) redoButton.active = !redoStack.isEmpty();
+    }
+
+    /** Capture the config state before a breaking action; pair with {@link #historyAfter}. */
+    public void historyBefore() {
+        if (isUndoRedoing) return;
+        pendingBefore = deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors());
+        pendingPrioBefore = new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder());
+        pendingPresetBefore = clonePresets(Main.CONFIG_MANAGER.getCustomColorPresets());
+    }
+
+    /** Push a CONFIG history entry using the snapshot from {@link #historyBefore} as "before". */
+    public void historyAfter(int tab, String target, boolean overlay) {
+        if (isUndoRedoing || pendingBefore == null) { clearPending(); return; }
+        pushHistory(HistoryEntry.config(tab, target, overlay, false,
+                pendingBefore, pendingPrioBefore, pendingPresetBefore,
+                deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors()),
+                new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder()),
+                clonePresets(Main.CONFIG_MANAGER.getCustomColorPresets())));
+        clearPending();
+    }
+
+    /** Convenience for reset: navigates back to the base-colour entry on the current tab. */
+    public void historyAfterReset() {
+        historyAfter(currentSearchButton, baseEntryName(), false);
+    }
+
+    /** Push a CONFIG entry for a tab-priority reorder (refreshes tab buttons, keeps no entry target). */
+    public void historyAfterTabs() {
+        historyAfter(currentSearchButton, null, isOverlay);
+    }
+
+    /** Push a CONFIG entry for a custom colour-preset add/delete (does not disturb list/tab selection). */
+    public void historyAfterPreset() {
+        if (isUndoRedoing || pendingBefore == null) { clearPending(); return; }
+        pushHistory(HistoryEntry.config(currentSearchButton, null, isOverlay, true,
+                pendingBefore, pendingPrioBefore, pendingPresetBefore,
+                deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors()),
+                new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder()),
+                clonePresets(Main.CONFIG_MANAGER.getCustomColorPresets())));
+        clearPending();
+    }
+
+    public String baseEntryName() {
+        return Text.translatable("firorize.config.baseFire").getString();
+    }
+
+    // ---- In-screen confirmation dialog (drawn over this screen, not a separate Screen) ----
+    private boolean confirmActive = false;
+    private Text confirmTitle;
+    private Text confirmMessage;
+    private Runnable confirmOnYes;
+    private final int confirmBoxW = 280;
+    private final int confirmBoxH = 110;
+
+    /** Shows a modal confirm box over the current screen; runs onYes only if the user confirms. */
+    public void showConfirm(Text title, Text message, Runnable onYes) {
+        this.confirmTitle = title;
+        this.confirmMessage = message;
+        this.confirmOnYes = onYes;
+        this.confirmActive = true;
+        this.setFocused(null);
+    }
+
+    private void closeConfirm() {
+        confirmActive = false;
+        confirmOnYes = null;
+    }
+
+    private int confirmBoxX() { return (width - confirmBoxW) / 2; }
+    private int confirmBoxY() { return (height - confirmBoxH) / 2; }
+    private int[] confirmYesRect() {
+        int w = (confirmBoxW - 45) / 2;
+        return new int[]{confirmBoxX() + 15, confirmBoxY() + confirmBoxH - 30, w, 20};
+    }
+    private int[] confirmNoRect() {
+        int w = (confirmBoxW - 45) / 2;
+        return new int[]{confirmBoxX() + confirmBoxW - 15 - w, confirmBoxY() + confirmBoxH - 30, w, 20};
+    }
+    private static boolean inRect(int[] r, double mx, double my) {
+        return mx >= r[0] && mx <= r[0] + r[2] && my >= r[1] && my <= r[1] + r[3];
+    }
+
+    private void renderConfirm(DrawContext context, int mouseX, int mouseY) {
+        // The centre block/fire preview is drawn as depth-tested 3D, so push the overlay to a high Z
+        // (like vanilla tooltips) to guarantee it sits in front of everything.
+        context.getMatrices().push();
+        context.getMatrices().translate(0, 0, 1000);
+        context.fill(0, 0, width, height, 0xB0000000); // dim everything behind the box
+        int bx = confirmBoxX(), by = confirmBoxY();
+        context.fill(bx - 1, by - 1, bx + confirmBoxW + 1, by + confirmBoxH + 1, 0xFF000000);
+        context.fill(bx, by, bx + confirmBoxW, by + confirmBoxH, 0xFF1A1A1A);
+        context.drawBorder(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
+        context.drawCenteredTextWithShadow(textRenderer, confirmTitle, width / 2, by + 10, 0xFFFFFF);
+        int ty = by + 30;
+        for (OrderedText line : textRenderer.wrapLines(confirmMessage, confirmBoxW - 24)) {
+            context.drawCenteredTextWithShadow(textRenderer, line, width / 2, ty, 0xFFC0C0C0);
+            ty += 11;
+        }
+        drawConfirmButton(context, confirmYesRect(), ScreenTexts.YES, mouseX, mouseY);
+        drawConfirmButton(context, confirmNoRect(), ScreenTexts.NO, mouseX, mouseY);
+        context.getMatrices().pop();
+    }
+
+    private void drawConfirmButton(DrawContext context, int[] r, Text label, int mouseX, int mouseY) {
+        boolean hover = inRect(r, mouseX, mouseY);
+        context.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], hover ? 0xFF505050 : 0xFF383838);
+        context.drawBorder(r[0], r[1], r[2], r[3], hover ? 0xFFFFFFFF : 0xFF8B8B8B);
+        context.drawCenteredTextWithShadow(textRenderer, label, r[0] + r[2] / 2, r[1] + (r[3] - 8) / 2, 0xFFFFFF);
+    }
+
+    private void undo() {
+        if (undoStack.isEmpty()) return;
+        HistoryEntry e = undoStack.pop();
+        isUndoRedoing = true;
+        applyEntry(e, false);
+        redoStack.push(e);
+        isUndoRedoing = false;
+        refreshHistoryButtons();
+    }
+
+    private void redo() {
+        if (redoStack.isEmpty()) return;
+        HistoryEntry e = redoStack.pop();
+        isUndoRedoing = true;
+        applyEntry(e, true);
+        undoStack.push(e);
+        isUndoRedoing = false;
+        refreshHistoryButtons();
+    }
+
+    private void applyEntry(HistoryEntry e, boolean redo) {
+        if (e.type == HistoryEntry.Type.COLOR) {
+            navigateTo(e.tab, e.target, e.overlay, true);
+            Color[] c = redo ? e.colorAfter : e.colorBefore;
+            pickedColor[0] = c[0];
+            pickedColor[1] = c[1];
+            int RGB = pickedColor[e.overlay ? 1 : 0].getRGB();
+            textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
+            updateCursor("#" + Integer.toHexString(RGB).substring(2));
+        } else {
+            restoreConfig(redo ? e.cfgAfter : e.cfgBefore, redo ? e.prioAfter : e.prioBefore,
+                    redo ? e.presetAfter : e.presetBefore);
+            if (!e.presetOnly) {
+                navigateTo(e.tab, e.target, e.overlay, false);
+            }
+        }
+    }
+
+    /** Overwrites the live currentBlockFireColors + priority order + custom presets from a snapshot and commits it. */
+    private void restoreConfig(KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> snap, ArrayList<Integer> prio,
+                               ListOrderedMap<String, int[]> presets) {
+        KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> live = Main.CONFIG_MANAGER.getCurrentBlockFireColors();
+        System.arraycopy(snap.getRight(), 0, live.getRight(), 0, live.getRight().length);
+        for (int t = 0; t < live.getLeft().size(); t++) {
+            ListOrderedMap<String, int[]> lm = live.getLeft().get(t);
+            ListOrderedMap<String, int[]> sm = snap.getLeft().get(t);
+            lm.clear();
+            for (String k : sm.keyList()) lm.put(k, sm.get(k).clone());
+        }
+        Main.CONFIG_MANAGER.getPriorityOrder().clear();
+        Main.CONFIG_MANAGER.getPriorityOrder().addAll(prio);
+        // Restore the custom colour presets and rebuild the cycle button from them.
+        ListOrderedMap<String, int[]> livePresets = Main.CONFIG_MANAGER.getCustomColorPresets();
+        livePresets.clear();
+        for (String k : presets.keyList()) livePresets.put(k, presets.get(k).clone());
+        cyclicalPresets.rebuildValues();
+        baseColor = new Color[]{new Color(live.getRight()[0]), new Color(live.getRight()[1])};
+        commitToPreset();
+        Main.CONFIG_MANAGER.save();
+    }
+
+    /** Copies the live currentBlockFireColors + priority order into the active preset (no disk write). */
+    public void commitToPreset() {
+        int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
+        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
+    }
+
+    /** Switches tab/selection/side to the context an undone/redone action belonged to. */
+    private void navigateTo(int tab, String target, boolean overlay, boolean colorOnly) {
+        if (colorOnly) {
+            // Colour edits don't change the list; only switch tab if it actually differs.
+            if (client.world != null && tab != currentSearchButton) {
+                changeSearchOption(tab);
+            }
+        } else if (client.world != null) {
+            // Config restore: rebuild the list and refresh the tab buttons from the restored priority order.
+            changeSearchOption(tab);
+        } else {
+            searchScreenListWidget.test();
+        }
+        if (target != null) {
+            searchScreenListWidget.selectByName(target);
+        }
+        applyOverlay(overlay);
+    }
+
+    private void applyOverlay(boolean overlay) {
+        isOverlay = overlay;
+        overlayToggles[isOverlay ? 1 : 0].active = false;
+        overlayToggles[!isOverlay ? 1 : 0].active = true;
+        int RGB = pickedColor[isOverlay ? 1 : 0].getRGB();
+        textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
+        updateCursor("#" + Integer.toHexString(RGB).substring(2));
+    }
     public ButtonWidget[] searchOptions = new ButtonWidget[3];
     private List<TagKey<Block>> blockTags = new ArrayList<>();
     private List<RegistryKey<Biome>> biomeKeys = new ArrayList<>();
     public void handlePickedColor(Color[] input) {
-        if (!buffer) {
-            setRedo(true, !resetBuffer);
-            if (colorRedo) {
-                lastPickedColor = input.clone();
-            }
-        }
+        // Colour-wheel history is now recorded per gesture in mouseReleased; this hook no longer
+        // couples colour setting (or list selection) to the undo button.
         buffer = false;
     }
     public void setPickedColors(Color[] pickedColor) {
@@ -219,7 +465,8 @@ public class ChangeFireColorScreen extends Screen {
                 .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, textRenderer);
 
         blockSearchCoords[0] = width - 300 - 20;
-        redoButton = new UndoButton(hexBoxCoords[0], hexBoxCoords[1], 20, 20, button -> redo());
+        undoButton = new UndoButton(hexBoxCoords[0] - 22, hexBoxCoords[1], 20, 20, button -> undo());
+        redoButton = new RedoButton(hexBoxCoords[0], hexBoxCoords[1], 20, 20, button -> redo());
         saveButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.applyButton"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
         this.addDrawableChild(saveButton);
 
@@ -271,6 +518,7 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(searchOptions[2]);
         this.addDrawableChild(overlayToggles[0]);
         this.addDrawableChild(overlayToggles[1]);
+        this.addDrawableChild(undoButton);
         this.addDrawableChild(redoButton);
         this.addDrawableChild(cyclicalPresets);
         this.addDrawableChild(addColorButton);
@@ -299,14 +547,16 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[1].setTooltipDelay(Duration.ofMillis(750L));
         saveButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.applyButton")));
         saveButton.setTooltipDelay(Duration.ofMillis(750L));
-        redoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.undoButton")));
+        undoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.undoButton")));
+        undoButton.setTooltipDelay(Duration.ofMillis(750L));
+        redoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.redoButton")));
         redoButton.setTooltipDelay(Duration.ofMillis(750L));
 
         toggle(true);
 
         searchScreenListWidget.setSelected(searchScreenListWidget.children().get(0));
 
-        setRedo(false);
+        refreshHistoryButtons();
 
         super.init();
     }
@@ -372,8 +622,6 @@ public class ChangeFireColorScreen extends Screen {
     }
     private int currentSearchButton = 0;
 
-    public boolean resetBuffer = false;
-
     public void changeSearchOption(int buttonNum) {
         for (int i = 0; i < 3; i++) {
             if (i != Main.CONFIG_MANAGER.getPriorityOrder().indexOf(buttonNum)) {
@@ -385,71 +633,9 @@ public class ChangeFireColorScreen extends Screen {
         currentSearchButton = buttonNum;
         searchScreenListWidget.test();
         searchScreenListWidget.setSelected(searchScreenListWidget.children().get(0));
-        setRedo(false, !resetBuffer);
     }
     private boolean buffer = false;
-    private void redo() {
-        if (hasRedo) {
-            if (isReset) {
-                KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>> temp = Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID);
-                int[] list = temp.getLeft().getRight();
-                System.arraycopy(list, 0, Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(), 0, list.length);
-                Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), temp.getLeft().getLeft());
-                Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), temp.getRight());
-
-                Main.CONFIG_MANAGER.save();
-
-                presetListWidget.setSelected(presetListWidget.children().stream().filter(thing -> thing.languageDefinition.equalsIgnoreCase(presetListWidget.curPresetID)).findFirst().get());
-
-                isReset = false;
-            } else {
-                if (colorRedo) {
-                    pickedColor = lastPickedColor;
-                    int RGB = pickedColor[isOverlay ? 1 : 0].getRGB();
-                    textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
-                    updateCursor("#" + Integer.toHexString(RGB).substring(2));
-                } else {
-                    buffer = true;
-                    this.dist = 0;
-                    this.counter = 0;
-                    allBlockUnders = new ArrayList<>();
-                    biomeKeys = new ArrayList<>();
-                    lastSelected.forEach(index -> {
-                        SearchScreenListWidget.BlockEntry entry = this.searchScreenListWidget.children().get(index);
-                        if (currentSearchButton == 0) {
-                            allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(entry.languageDefinition)));
-                        } else if (currentSearchButton == 1) {
-                            TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(entry.languageDefinition)).findFirst().get();
-
-                            blockTags.add(tag);
-                            List<Block> newBlocks = Registries.BLOCK.getEntryList(tag).get().stream()
-                                    .map(entry2 -> entry2.value())
-                                    .filter(block -> blockUnderList.contains(block) && !allBlockUnders.contains(block))
-                                    .toList();
-
-                            allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).collect(Collectors.toList());;
-                        } else if (currentSearchButton == 2) {
-                            RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(entry.languageDefinition));
-                            biomeKeys.add(key);
-                        }
-                    });
-
-                    searchScreenListWidget.selected = lastSelected.stream().map(SerializationUtils::clone).collect(Collectors.toList());
-                    pickedColor = lastPickedColor.clone();
-                    int RGB = lastPickedColor[isOverlay ? 1 : 0].getRGB();
-                    textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
-                    updateCursor("#" + Integer.toHexString(RGB).substring(2));
-                }
-            }
-            if (onBaseColor) {
-                allBlockUnders.clear();
-                allBlockUnders.add(Blocks.NETHERRACK);
-            }
-            setRedo(false);
-        }
-    }
     private void toggle(boolean start) {
-        setRedo(false);
         isOverlay = start ? false : !isOverlay;
         int RGB = pickedColor[isOverlay ? 1:0].getRGB();
         textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
@@ -458,8 +644,11 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[!isOverlay?1:0].active = true;
     }
     private void save() {
-        hasRedo = false;
-        setRedo(false);
+        // Apply is a breaking change: snapshot config before, push history after.
+        historyBefore();
+        int histTab = currentSearchButton;
+        String histTarget = onBaseColor ? baseEntryName() : searchScreenListWidget.selectedName();
+        boolean histOverlay = isOverlay;
         int num = 0;
 
         if (onBaseColor && !isOnAdd) {
@@ -496,6 +685,7 @@ public class ChangeFireColorScreen extends Screen {
         Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
 
         Main.CONFIG_MANAGER.save();
+        historyAfter(histTab, histTarget, histOverlay);
     }
     public void updateBlockUnder(String blockUnderTag) {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;
@@ -596,35 +786,56 @@ public class ChangeFireColorScreen extends Screen {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         clicked = false;
         sliderClicked = false;
+        // End of a colour-wheel/slider gesture: record one undo step if the colour actually changed.
+        if (gestureStartColor != null) {
+            boolean changed = gestureStartColor[0].getRGB() != pickedColor[0].getRGB()
+                    || gestureStartColor[1].getRGB() != pickedColor[1].getRGB();
+            if (changed) {
+                pushHistory(HistoryEntry.color(currentSearchButton, searchScreenListWidget.selectedName(),
+                        isOverlay, gestureStartColor, new Color[]{pickedColor[0], pickedColor[1]}));
+            }
+            gestureStartColor = null;
+        }
         return super.mouseReleased(mouseX, mouseY, button);
     }
     private boolean isClick = false;
 
     private boolean isOnAdd = false;
 
-    public void setRedo(boolean bool) {
-        setRedo(bool, false);
-    }
-
-    public void setRedo(boolean bool, boolean useRedo) {
-        if (isReset && resetBuffer) {
-            isReset = false;
-            int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-            System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
-            Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
-            Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
-
-            Main.CONFIG_MANAGER.save();
-
-            presetListWidget.setSelected(presetListWidget.children().stream().filter(thing -> thing.languageDefinition.equalsIgnoreCase(presetListWidget.curPresetID)).findFirst().get());
-            resetBuffer = false;
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (confirmActive) {
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                closeConfirm();
+                return true;
+            }
+            if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+                Runnable a = confirmOnYes;
+                closeConfirm();
+                if (a != null) a.run();
+                return true;
+            }
+            return true; // modal: swallow other keys
         }
-        hasRedo = bool;
-        redoButton.active = bool;
-        this.saveButton.setFocused(false);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (confirmActive) {
+            if (button == 0) {
+                if (inRect(confirmYesRect(), mouseX, mouseY)) {
+                    Runnable a = confirmOnYes;
+                    closeConfirm();
+                    if (a != null) a.run();
+                } else if (inRect(confirmNoRect(), mouseX, mouseY)) {
+                    closeConfirm();
+                }
+            }
+            return true; // modal: swallow clicks to the screen behind
+        }
+        this.setFocused(null); // clear previous focus/outline; a genuinely-clicked widget re-acquires it via super
+        // Capture the colour at the start of a potential wheel/slider gesture (before it changes).
+        Color[] before = new Color[]{pickedColor[0], pickedColor[1]};
         double selectSpace = (double) cursorDimensions / 2;
         if (mouseX >= sliderCoords[0] && mouseX <= sliderCoords[0] + sliderDimensions[0] && mouseY >= sliderCoords[1] + sliderPadding && mouseY <= sliderCoords[1] + sliderDimensions[1] - sliderPadding) {
             if (!isCycling) cyclicalPresets.setIndex(0);
@@ -635,6 +846,9 @@ public class ChangeFireColorScreen extends Screen {
             clicked = true;
         } else {
             updateColorPicker(mouseX, mouseY, true);
+        }
+        if ((clicked || sliderClicked) && gestureStartColor == null) {
+            gestureStartColor = before;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -686,6 +900,7 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.getMatrices().push();
 
@@ -750,7 +965,7 @@ public class ChangeFireColorScreen extends Screen {
 
         if (Math.ceil(allBlockUnders.size()/11f) > 4) {
             double amount = 0.15 * ((Math.ceil(allBlockUnders.size()/11f)-4)/2);
-            dist += forwards ? amount : -amount;
+            dist = (float) (dist + (forwards ? amount : -amount));
             if (dist > (31 * (Math.ceil(allBlockUnders.size()/11f)-4))) {
                 counter++;
                 forwards = false;
@@ -865,6 +1080,8 @@ public class ChangeFireColorScreen extends Screen {
             context.drawTooltip(this.textRenderer, Text.translatable("firorize.config.tooltip.copied"), shareProfileButton.getX() + 50, shareProfileButton.getY() - 10);
         }
         context.getMatrices().pop();
+
+        if (confirmActive) renderConfirm(context, mouseX, mouseY);
     }
 
     @Environment(value= EnvType.CLIENT)
@@ -975,6 +1192,28 @@ public class ChangeFireColorScreen extends Screen {
 
         public List<Integer> selected = new ArrayList<>();
 
+        /** languageDefinition of the currently selected entry, or null if nothing is selected. */
+        public String selectedName() {
+            if (selected.isEmpty()) return null;
+            int i = selected.get(0);
+            if (i < 0 || i >= children().size()) return null;
+            return children().get(i).languageDefinition;
+        }
+
+        /** Selects the entry with the given languageDefinition (falls back to index 0). */
+        public void selectByName(String name) {
+            if (name != null) {
+                for (BlockEntry e : children()) {
+                    if (e.languageDefinition.equals(name)) {
+                        setSelected(e);
+                        centerScrollOn(e);
+                        return;
+                    }
+                }
+            }
+            if (!children().isEmpty()) setSelected(children().get(0));
+        }
+
         @Override
         protected boolean isSelectedEntry(int index) {
             if (selected.contains(index)) {
@@ -1050,6 +1289,7 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         public void moveEntryUp(BlockEntry entry) {
+            historyBefore();
             int index = this.children().indexOf(entry);
             if (index > 0) {
                 this.children().set(index, this.children().get(index-1));
@@ -1063,10 +1303,11 @@ public class ChangeFireColorScreen extends Screen {
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index, temp.get(index-1), temp.getValue(index-1));
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index-1, temp.get(index), temp.getValue(index));
             }
-            setRedo(false);
+            historyAfter(currentSearchButton, entry.languageDefinition, isOverlay);
         }
 
         public void moveEntryDown(BlockEntry entry) {
+            historyBefore();
             int index = this.children().indexOf(entry);
             if (index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size()) {
                 this.children().set(index, this.children().get(index+1));
@@ -1080,7 +1321,7 @@ public class ChangeFireColorScreen extends Screen {
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index, temp.get(index+1), temp.getValue(index+1));
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).put(index+1, temp.get(index), temp.getValue(index));
             }
-            setRedo(false);
+            historyAfter(currentSearchButton, entry.languageDefinition, isOverlay);
         }
 
         @Override
@@ -1166,10 +1407,13 @@ public class ChangeFireColorScreen extends Screen {
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight && children().indexOf(this) != 0) {
                     if (isCustomized) {
-
+                        // Deleting a saved block/tag/biome colour is undoable.
+                        historyBefore();
                         Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).remove(this.languageDefinition);
-
+                        commitToPreset();
+                        Main.CONFIG_MANAGER.save();
                         test();
+                        historyAfter(currentSearchButton, this.languageDefinition, isOverlay);
                         return false;
                     }
                 }
@@ -1225,7 +1469,6 @@ public class ChangeFireColorScreen extends Screen {
                     BlockEntry entry = ChangeFireColorScreen.this.searchScreenListWidget.children().stream().filter(child -> child.languageDefinition.equals(this.languageDefinition)).findFirst().get();
                     ChangeFireColorScreen.this.searchScreenListWidget.setSelected(entry);
                     ChangeFireColorScreen.this.searchScreenListWidget.centerScrollOn(entry);
-                    setRedo(false);
                     isOnAdd = false;
                 } else {
                     ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));

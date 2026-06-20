@@ -34,10 +34,13 @@
   "firorize.config.tooltip.overlayToggle": "編輯火焰的覆蓋顏色",
   "firorize.config.tooltip.applyButton": "將目前的火焰顏色套用到選取的項目",
   "firorize.config.tooltip.undoButton": "復原",
+  "firorize.config.tooltip.redoButton": "重做",
   "firorize.config.tooltip.addColorPresetButton": "將目前的火焰顏色儲存為預設",
   "firorize.config.tooltip.removeColorPresetButton": "刪除此顏色預設",
   "firorize.config.tooltip.copied": "設定檔程式碼已複製到剪貼簿",
   "firorize.config.tooltip.invalidCode": "無效的程式碼",
   "firorize.config.tooltip.exists": "此名稱已存在",
-  "firorize.config.tooltip.empty": "請輸入名稱"
+  "firorize.config.tooltip.empty": "請輸入名稱",
+  "firorize.config.confirm.deleteProfile.title": "刪除設定檔？",
+  "firorize.config.confirm.deleteProfile.message": "確定要刪除此設定檔嗎？此操作無法復原。"
 }

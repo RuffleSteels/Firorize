@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
+// K/V are generic types and instances are Java-serialized for profile import/export codes.
+// No explicit serialVersionUID: adding one would break deserialization of already-shared codes.
+@SuppressWarnings("serial")
 public class KeyValuePair<K, V> implements Serializable {
     private K key;
     private V value;

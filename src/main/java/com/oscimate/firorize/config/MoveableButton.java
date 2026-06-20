@@ -32,6 +32,7 @@ public class MoveableButton extends ButtonWidget {
     }
 
     private final TextRenderer textRenderer;
+    @SuppressWarnings("this-escape") // updateMessage/getY are called after super(), values are set deterministically
     protected MoveableButton(ChangeFireColorScreen instance, TextRenderer textRenderer, int x, int y, int width, int height, Text message, int index) {
         super(x, y, width, height, message, null, DEFAULT_NARRATION_SUPPLIER);
         this.index = index;
@@ -43,6 +44,8 @@ public class MoveableButton extends ButtonWidget {
     }
 
     public void move(boolean right) {
+        // Reordering the block/tag/biome priority tabs is undoable.
+        instance.historyBefore();
         int temp = Main.CONFIG_MANAGER.getPriorityOrder().get(index);
         Main.CONFIG_MANAGER.getPriorityOrder().set(index, Main.CONFIG_MANAGER.getPriorityOrder().get(right ? index+1 : index-1));
         Main.CONFIG_MANAGER.getPriorityOrder().set(right ? index+1 : index-1, temp);
@@ -52,9 +55,11 @@ public class MoveableButton extends ButtonWidget {
         instance.searchOptions[right ? index+1 : index-1].active = tempB;
 
         Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(instance.presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
+        instance.historyAfterTabs();
     }
 
     @Override
+    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         super.renderWidget(context, mouseX, mouseY, delta);
 

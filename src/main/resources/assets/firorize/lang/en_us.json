@@ -34,10 +34,13 @@
   "firorize.config.tooltip.overlayToggle": "Edit the overlay color of the fire",
   "firorize.config.tooltip.applyButton": "Apply the current fire color to the selected",
   "firorize.config.tooltip.undoButton": "Undo",
+  "firorize.config.tooltip.redoButton": "Redo",
   "firorize.config.tooltip.addColorPresetButton": "Save the current fire color as a preset",
   "firorize.config.tooltip.removeColorPresetButton": "Delete this color preset",
   "firorize.config.tooltip.copied": "Profile code copied to clipboard",
   "firorize.config.tooltip.invalidCode": "Invalid code",
   "firorize.config.tooltip.exists": "This name already exists",
-  "firorize.config.tooltip.empty": "Please enter a name"
+  "firorize.config.tooltip.empty": "Please enter a name",
+  "firorize.config.confirm.deleteProfile.title": "Delete profile?",
+  "firorize.config.confirm.deleteProfile.message": "Are you sure you want to delete this profile? This cannot be undone."
 }
