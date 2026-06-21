@@ -44,6 +44,15 @@ import static com.oscimate.firorize.Main.CONFIG_MANAGER;
  * {@link WrapperBlockStateModel} / {@code FabricBlockStateModel} emit API.
  */
 public class TestModel extends WrapperBlockStateModel {
+    /**
+     * ARGB colour the config preview fire should be tinted to. Set by the config renderer
+     * immediately before {@code FabricBlockModelRenderer.render} (single-threaded render thread)
+     * because the {@code r,g,b} tint args of that call are dropped for untinted quads (fire has no
+     * tint index), so the colour must be written onto the vertices here instead. Read by the
+     * {@code custom_tint} shader as the HSV target. See docs/RENDERING-1.21.11.md §4.
+     */
+    public static int configPreviewColor = 0xFFFFFFFF;
+
     private final boolean soulFire;
     /** Caches the last resolved block-under-fire, so animation frames where the source block reads as air keep their colour. */
     private Block unique = null;
@@ -92,6 +101,12 @@ public class TestModel extends WrapperBlockStateModel {
                         emitter.uv(i, nu, nv);
                     }
                     emitter.spriteBake(target, MutableQuadView.BAKE_NORMALIZED);
+                    if (Main.inConfig) {
+                        // fromBakedQuad copied the fire quad's white vertex colour; overwrite it with
+                        // the preview target so the custom_tint shader recolours toward it (the tint
+                        // args of FabricBlockModelRenderer.render never reach untinted fire quads).
+                        emitter.color(configPreviewColor, configPreviewColor, configPreviewColor, configPreviewColor);
+                    }
                     emitter.cullFace(d);
                     emitter.emit();
                 }

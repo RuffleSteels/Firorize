@@ -1034,15 +1034,14 @@ public class ChangeFireColorScreen extends Screen {
 
         pvOps.add(new BlockDrawOp(Blocks.FIRE.getDefaultState(),
                 0f, (-4f/960) * context.getScaledWindowHeight(), 0f,
-                q, true, -2f, -.5f, .5f, -0.5f, pickedColor[0].getRed() / 255f, pickedColor[0].getGreen() / 255f, pickedColor[0].getBlue() / 255f, true, true, true));
+                q, true, -2f, -.5f, .5f, -0.5f,
+                pickedColor[0].getRed() / 255f, pickedColor[0].getGreen() / 255f, pickedColor[0].getBlue() / 255f, true, true, true));
 
-//        pvOps.add(new BlockDrawOp(Blocks.FIRE.getDefaultState(),
-//                0f, 0f, 0f, new Quaternionf(), true, 1f, -1f, 1f, 0f,
-//                pickedColor[0].getRed() / 255f, pickedColor[0].getGreen() / 255f, pickedColor[0].getBlue() / 255f, true, false, false));
 //        // Soul fire (custom tint, overlay colour): same matrix as fire, then pop.
-//        pvOps.add(new BlockDrawOp(Blocks.SOUL_FIRE.getDefaultState(),
-//                0f, 0f, 0f, new Quaternionf(), false, 1f, 0f, 0f, 0f,
-//                pickedColor[1].getRed() / 255f, pickedColor[1].getGreen() / 255f, pickedColor[1].getBlue() / 255f, true, false, true));
+        pvOps.add(new BlockDrawOp(Blocks.SOUL_FIRE.getDefaultState(),
+                0f, (-4f/960) * context.getScaledWindowHeight(), 0f,
+                q, true, -2f, -.5f, .5f, -0.5f,
+                pickedColor[1].getRed() / 255f, pickedColor[1].getGreen() / 255f, pickedColor[1].getBlue() / 255f, true, true, true));
 
         int x1 = wheelCoords[0] + (wheelRadius*2 + sliderDimensions[0] + 20);
         int x2 = context.getScaledWindowWidth() - (blockSearchCoords[1] ) -  blockSearchDimensions[0];
