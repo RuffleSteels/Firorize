@@ -1,5 +1,1 @@
 accessWidener	v2 named
-
-accessible class net/minecraft/client/render/RenderLayer$MultiPhase
-accessible class net/minecraft/client/render/RenderLayer$MultiPhaseParameters
-accessible method net/minecraft/client/gui/DrawContext drawTexturedQuad (Lnet/minecraft/util/Identifier;IIIIIFFFF)V

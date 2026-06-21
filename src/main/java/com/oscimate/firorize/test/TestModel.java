@@ -1,255 +1,171 @@
 package com.oscimate.firorize.test;
 
+import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
+import net.fabricmc.fabric.api.client.model.loading.v1.wrapper.WrapperBlockStateModel;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FireBlock;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.render.model.BlockModelPart;
+import net.minecraft.client.render.model.BlockStateModel;
+import net.minecraft.client.texture.AtlasManager;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.TagKey;
-import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.EmptyBlockView;
+import net.minecraft.world.biome.Biome;
 import org.apache.commons.collections4.map.ListOrderedMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 
 import static com.oscimate.firorize.Main.CONFIG_MANAGER;
 
-public class TestModel implements FabricBakedModel, BakedModel {
-    BakedModel model;
-    int fireNum;
-    boolean soulFire;
-    String endBit;
-    public TestModel(BakedModel model, int fireNum, boolean soulFire, String endBit) {
-        this.model = model;
+/**
+ * Wraps the vanilla FIRE / SOUL_FIRE {@link BlockStateModel} and recolours its quads per-position:
+ * for each fire block it resolves the configured colour (block-under-fire → priority order over
+ * block/tag/biome) and re-textures the fire quads onto the generated {@code block/fire_<n>_<R>_<B>}
+ * sprite produced by {@code SpriteLoaderMixin}.
+ *
+ * <p>Ported from the pre-1.21.4 {@code FabricBakedModel} implementation to the new
+ * {@link WrapperBlockStateModel} / {@code FabricBlockStateModel} emit API.
+ */
+public class TestModel extends WrapperBlockStateModel {
+    private final boolean soulFire;
+    /** Caches the last resolved block-under-fire, so animation frames where the source block reads as air keep their colour. */
+    private Block unique = null;
+
+    public TestModel(BlockStateModel wrapped, boolean soulFire) {
+        super(wrapped);
         this.soulFire = soulFire;
-        this.fireNum = fireNum;
-        this.endBit = endBit;
-    }
-    Block unique = null;
-    @Override
-    public boolean isVanillaAdapter() {
-        return Main.inConfig;
-    }
-    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
-    private BakedModel editModel(BlockView blockView, BlockPos pos) {
-        return new BakedModel() {
-            @Override
-            public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
-                    List<BakedQuad> beforeTempList = model.getQuads(state, face, random);
-                    List<BakedQuad> tempList = new ArrayList<>();
-                    for(int g = 0; g < beforeTempList.size(); g++) {
-                        tempList.add(g, beforeTempList.get(g));
-                    }
-
-                    Sprite sprite = soulFire ? new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_overlay_1_config")).getSprite() : new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/blank_fire_1_config")).getSprite();
-
-                    if (!Main.inConfig) {
-                        int[] ints;
-                        if (blockView.getBlockState(pos).getBlock().equals(Blocks.AIR)) {
-                            if (soulFire && CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).keyList().contains("minecraft:soul_sand")) {
-                                ints = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).get("minecraft:soul_sand");
-
-                            } else {
-                                ints = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-                            }
-                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
-                        } else {
-                            ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
-                            Block blockUnder;
-                            if (!soulFire) {
-                                if (state.get(FireBlock.NORTH)) {
-                                    blockUnder = blockView.getBlockState(pos.north()).getBlock();
-                                } else if (state.get(FireBlock.EAST)) {
-                                    blockUnder = blockView.getBlockState(pos.east()).getBlock();
-                                } else if (state.get(FireBlock.SOUTH)) {
-                                    blockUnder = blockView.getBlockState(pos.south()).getBlock();
-                                } else if (state.get(FireBlock.WEST)) {
-                                    blockUnder = blockView.getBlockState(pos.west()).getBlock();
-                                } else if (state.get(FireBlock.UP)) {
-                                    blockUnder = blockView.getBlockState(pos.up()).getBlock();
-                                } else {
-                                    blockUnder = blockView.getBlockState(pos.down()).getBlock();
-                                }
-                            } else {
-                                blockUnder = blockView.getBlockState(pos.down()).getBlock();
-                            }
-
-                            if ((blockUnder.equals(Blocks.AIR) && unique != null) || (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
-                                    (blockView.getBiomeFabric(pos) != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) ||
-                                    list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
-                                for (int i = 0; i < 3; i++) {
-                                    int order = Main.CONFIG_MANAGER.getPriorityOrder().get(i);
-                                    if (order == 0) {
-                                        if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
-                                            blockUnder = unique;
-                                        }
-                                        if (blockUnder != null && list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
-                                            unique = blockUnder;
-                                            ints = list.get(0).get(Registries.BLOCK.getId(blockUnder).toString());
-                                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
-                                            break;
-                                        }
-                                    } else if (order == 1) {
-                                        if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
-                                            blockUnder = unique;
-                                        }
-                                        if (blockUnder != null && blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString()))) {
-                                            unique = blockUnder;
-                                            ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1);
-                                            Block finalBlockUnder = blockUnder;
-                                            List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> finalBlockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get()).toList();
-                                            ints = list.get(1).get(tags.get(0).id().toString());
-                                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
-                                            break;
-                                        }
-                                    } else if (order == 2) {
-                                        if (blockUnder != null && Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(blockView.getBiomeFabric(pos).getKey().get().getValue().toString())) {
-                                            ints = list.get(2).get(String.valueOf(blockView.getBiomeFabric(pos).getKey().get().getValue().toString()));
-                                            sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
-                                            break;
-                                        }
-                                    }
-                                }
-                            } else {
-                                ints = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-                                sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_" + fireNum + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]))).getSprite();
-                            }
-                        }
-                    }
-
-
-
-                    for (int n = 0; n < tempList.size(); n++) {
-                        int[] verticesOriginal = tempList.get(n).getVertexData();
-                        int[] verticesNew = new int[32];
-
-                        for (int cornerIndex = 0; cornerIndex < 4; ++cornerIndex) {
-                            int i = cornerIndex * 8;
-                            float min1U = tempList.get(n).getSprite().getMinU();
-                            float max1U = tempList.get(n).getSprite().getMaxU();
-                            float min2U = sprite.getMinU();
-                            float max2U = sprite.getMaxU();
-                            float min1V = tempList.get(n).getSprite().getMinV();
-                            float max1V = tempList.get(n).getSprite().getMaxV();
-                            float min2V = sprite.getMinV();
-                            float max2V = sprite.getMaxV();
-
-                            verticesNew[i] = verticesOriginal[i];
-                            verticesNew[i + 1] = verticesOriginal[i + 1];
-                            verticesNew[i + 2] = verticesOriginal[i + 2];
-                            verticesNew[i + 3] = verticesOriginal[i + 3];
-                            verticesNew[i + 4] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4]) - min1U) * (max2U - min2U) / (max1U - min1U) + min2U);
-                            verticesNew[i + 4 + 1] = Float.floatToRawIntBits((Float.intBitsToFloat(verticesOriginal[i + 4 + 1]) - min1V) * (max2V - min2V) / (max1V - min1V) + min2V);
-                        }
-                        BakedQuad bakedQuad = new BakedQuad(verticesNew, 0, tempList.get(n).getFace(), sprite, tempList.get(n).hasShade());
-                        tempList.set(n, bakedQuad);
-                    }
-                    return tempList;
-            }
-
-            @Override
-            public boolean useAmbientOcclusion() {
-                return model.useAmbientOcclusion();
-            }
-
-            @Override
-            public boolean hasDepth() {
-                return model.hasDepth();
-            }
-
-            @Override
-            public boolean isSideLit() {
-                return model.isSideLit();
-            }
-
-            @Override
-            public boolean isBuiltin() {
-                return model.isBuiltin();
-            }
-
-            @Override
-            public Sprite getParticleSprite() {
-                return model.getParticleSprite();
-            }
-
-            @Override
-            public ModelTransformation getTransformation() {
-                return model.getTransformation();
-            }
-
-            @Override
-            public ModelOverrideList getOverrides() {
-                return model.getOverrides();
-            }
-
-        };
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
-        return editModel(EmptyBlockView.INSTANCE, BlockPos.ORIGIN).getQuads(state, face, random);
-    }
+    public void emitQuads(QuadEmitter emitter, BlockRenderView blockView, BlockPos pos, BlockState state,
+                          Random random, Predicate<Direction> cullTest) {
+        AtlasManager atlas = FireSprites.atlasManager();
 
-    @Override
-    public boolean useAmbientOcclusion() {
-        return false;
-    }
-
-    @Override
-    public boolean hasDepth() {
-        return false;
-    }
-
-    @Override
-    public boolean isSideLit() {
-        return false;
-    }
-
-    @Override
-    public boolean isBuiltin() {
-        return false;
-    }
-
-    @Override
-    public Sprite getParticleSprite() {
-        return model.getParticleSprite();
-    }
-
-    @Override
-    public ModelTransformation getTransformation() {
-        return null;
-    }
-
-    @Override
-    public ModelOverrideList getOverrides() {
-        return null;
-    }
-
-    @Override
-    public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-        if (blockView != null) {
-            editModel(blockView, pos).emitBlockQuads(blockView, state, pos, randomSupplier, context);
+        Sprite configSprite = null;
+        int[] ints = null;
+        if (Main.inConfig) {
+            configSprite = atlas.getSprite(new SpriteIdentifier(FireSprites.ATLAS,
+                    Identifier.of("firorize", soulFire ? "block/blank_fire_overlay_1_config" : "block/blank_fire_1_config")));
         } else {
-            model.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            ints = computeColor(blockView, pos, state);
         }
+
+        for (BlockModelPart part : getParts(random)) {
+            for (int faceIndex = 0; faceIndex <= ModelHelper.NULL_FACE_ID; faceIndex++) {
+                Direction d = ModelHelper.faceFromIndex(faceIndex);
+                if (d != null && cullTest.test(d)) {
+                    continue;
+                }
+                for (BakedQuad q : part.getQuads(d)) {
+                    Sprite src = q.sprite();
+                    Sprite target;
+                    if (Main.inConfig) {
+                        target = configSprite;
+                    } else {
+                        int n = src.getContents().getId().getPath().endsWith("1") ? 1 : 0;
+                        target = FireSprites.block(atlas, "block/fire_" + n + "_" + Math.abs(ints[0]) + "_" + Math.abs(ints[1]));
+                    }
+
+                    emitter.fromBakedQuad(q);
+                    // Normalize the imported (source-sprite) UVs, then re-bake onto the recoloured sprite.
+                    float uMin = src.getMinU(), uMax = src.getMaxU(), vMin = src.getMinV(), vMax = src.getMaxV();
+                    for (int i = 0; i < 4; i++) {
+                        float nu = (emitter.u(i) - uMin) / (uMax - uMin);
+                        float nv = (emitter.v(i) - vMin) / (vMax - vMin);
+                        emitter.uv(i, nu, nv);
+                    }
+                    emitter.spriteBake(target, MutableQuadView.BAKE_NORMALIZED);
+                    emitter.cullFace(d);
+                    emitter.emit();
+                }
+            }
+        }
+    }
+
+    /** Resolves the fire colour {@code int[]{baseRGB, overlayRGB}} for the fire at {@code pos}. Ported verbatim from the old model. */
+    private int[] computeColor(BlockRenderView blockView, BlockPos pos, BlockState state) {
+        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
+
+        if (blockView.getBlockState(pos).getBlock().equals(Blocks.AIR)) {
+            if (soulFire && list.get(0).keyList().contains("minecraft:soul_sand")) {
+                return list.get(0).get("minecraft:soul_sand");
+            }
+            return CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+        }
+
+        Block blockUnder;
+        if (!soulFire) {
+            if (state.get(FireBlock.NORTH)) {
+                blockUnder = blockView.getBlockState(pos.north()).getBlock();
+            } else if (state.get(FireBlock.EAST)) {
+                blockUnder = blockView.getBlockState(pos.east()).getBlock();
+            } else if (state.get(FireBlock.SOUTH)) {
+                blockUnder = blockView.getBlockState(pos.south()).getBlock();
+            } else if (state.get(FireBlock.WEST)) {
+                blockUnder = blockView.getBlockState(pos.west()).getBlock();
+            } else if (state.get(FireBlock.UP)) {
+                blockUnder = blockView.getBlockState(pos.up()).getBlock();
+            } else {
+                blockUnder = blockView.getBlockState(pos.down()).getBlock();
+            }
+        } else {
+            blockUnder = blockView.getBlockState(pos.down()).getBlock();
+        }
+
+        RegistryEntry<Biome> biome = ((FabricBlockView) blockView).getBiomeFabric(pos);
+
+        if ((blockUnder.equals(Blocks.AIR) && unique != null)
+                || blockUnder.getDefaultState().streamTags().anyMatch(tag -> list.get(1).containsKey(tag.id().toString()))
+                || (biome != null && list.get(2).containsKey(biome.getKey().get().getValue().toString()))
+                || list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
+            for (int i = 0; i < 3; i++) {
+                int order = CONFIG_MANAGER.getPriorityOrder().get(i);
+                if (order == 0) {
+                    if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
+                        blockUnder = unique;
+                    }
+                    if (blockUnder != null && list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
+                        unique = blockUnder;
+                        return list.get(0).get(Registries.BLOCK.getId(blockUnder).toString());
+                    }
+                } else if (order == 1) {
+                    if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
+                        blockUnder = unique;
+                    }
+                    if (blockUnder != null && blockUnder.getDefaultState().streamTags().anyMatch(tag -> list.get(1).containsKey(tag.id().toString()))) {
+                        unique = blockUnder;
+                        ListOrderedMap<String, int[]> map = list.get(1);
+                        Block finalBlockUnder = blockUnder;
+                        List<TagKey<Block>> tags = map.keyList().stream()
+                                .filter(tag -> finalBlockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag))
+                                .map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get())
+                                .toList();
+                        return list.get(1).get(tags.get(0).id().toString());
+                    }
+                } else if (order == 2) {
+                    if (biome != null && list.get(2).containsKey(biome.getKey().get().getValue().toString())) {
+                        return list.get(2).get(biome.getKey().get().getValue().toString());
+                    }
+                }
+            }
+        }
+        return CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
     }
 }

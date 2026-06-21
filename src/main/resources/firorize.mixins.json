@@ -8,9 +8,10 @@
   ],
   "client": [
     "fire_overlays.client.ClientEntityMixin",
-    "fire_overlays.client.EntityRenderDispatcherMixin",
+    "fire_overlays.client.EntityRenderStateMixin",
+    "fire_overlays.client.EntityRendererMixin",
+    "fire_overlays.client.FireCommandRendererMixin",
     "fire_overlays.client.GameRendererMixin",
-    "fire_overlays.client.GamRenMixin",
     "fire_overlays.client.InGameOverlayRendererMixin",
     "fire_overlays.client.NativeImageInvoker",
     "fire_overlays.client.OscimateClientPlayNetworkHandler",

@@ -1,13 +1,13 @@
 package com.oscimate.firorize.config;
 
+import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -33,7 +33,7 @@ public class MoveableButton extends ButtonWidget {
 
     private final TextRenderer textRenderer;
     @SuppressWarnings("this-escape") // updateMessage/getY are called after super(), values are set deterministically
-    protected MoveableButton(ChangeFireColorScreen instance, TextRenderer textRenderer, int x, int y, int width, int height, Text message, int index) {
+    protected MoveableButton(ChangeFireColorScreen instance, TextRenderer textRenderer, int x, int y, int width, int height, net.minecraft.text.Text message, int index) {
         super(x, y, width, height, message, null, DEFAULT_NARRATION_SUPPLIER);
         this.index = index;
         this.instance = instance;
@@ -59,28 +59,25 @@ public class MoveableButton extends ButtonWidget {
     }
 
     @Override
-    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderWidget(context, mouseX, mouseY, delta);
+    protected void drawIcon(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.drawButton(context); // renderWidget no longer draws the button background/label
+        // getMessage() can no longer be overridden, so keep the header in sync here (1-frame lag on reorder).
+        setMessage(net.minecraft.text.Text.literal(headers[Main.CONFIG_MANAGER.getPriorityOrder().get(index)]));
+        context.drawCenteredTextWithShadow(this.textRenderer, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
 
-        Sprite ARROW_RIGHT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/arrow_right")).getSprite();
-        Sprite ARROW_LEFT = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/arrow_left")).getSprite();
+        Sprite ARROW_RIGHT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_right");
+        Sprite ARROW_LEFT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_left");
 
-        if (index!=2) context.drawSprite(x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), 10,ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight(), ARROW_RIGHT);
-        if (index!=0) context.drawSprite(x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), 10,ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight(), ARROW_LEFT);
+        if (index!=2) context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, ARROW_RIGHT, x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight());
+        if (index!=0) context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, ARROW_LEFT, x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight());
     }
 
     @Override
-    public void onPress() {
+    public void onPress(net.minecraft.client.input.AbstractInput input) {
         instance.blockUnderField.setText("");
         instance.input = instance.blockUnderField.getText();
         instance.searchScreenListWidget.selected.clear();
         instance.searchScreenListWidget.test();
         instance.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(index));
-    }
-
-    @Override
-    public Text getMessage() {
-        return Text.literal(headers[Main.CONFIG_MANAGER.getPriorityOrder().get(index)]);
     }
 }

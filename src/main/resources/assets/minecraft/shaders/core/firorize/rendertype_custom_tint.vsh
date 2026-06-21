@@ -1,7 +1,8 @@
-#version 150
+#version 330
 
-#moj_import <light.glsl>
-#moj_import <fog.glsl>
+#moj_import <minecraft:fog.glsl>
+#moj_import <minecraft:dynamictransforms.glsl>
+#moj_import <minecraft:projection.glsl>
 
 in vec3 Position;
 in vec4 Color;
@@ -9,22 +10,17 @@ in vec2 UV0;
 in ivec2 UV2;
 in vec3 Normal;
 
-uniform mat4 ModelViewMat;
-uniform mat4 ProjMat;
-uniform vec3 ChunkOffset;
-uniform int FogShape;
-
-out float vertexDistance;
+out float sphericalVertexDistance;
+out float cylindricalVertexDistance;
 out vec4 vertexColor;
 out vec2 texCoord0;
-out vec4 normal;
 
 void main() {
-    vec3 pos = Position + ChunkOffset;
+    vec3 pos = Position + ModelOffset;
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
 
-    vertexDistance = fog_distance(pos, FogShape);
+    sphericalVertexDistance = fog_spherical_distance(pos);
+    cylindricalVertexDistance = fog_cylindrical_distance(pos);
     vertexColor = Color;
     texCoord0 = UV0;
-    normal = ProjMat * ModelViewMat * vec4(Normal, 0.0);
 }

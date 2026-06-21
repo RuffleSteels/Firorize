@@ -5,11 +5,13 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.oscimate.firorize.ColorizeMath;
 import com.oscimate.firorize.Main;
+import net.minecraft.client.resource.metadata.AnimationFrameResourceMetadata;
+import net.minecraft.client.resource.metadata.AnimationResourceMetadata;
 import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.texture.SpriteContents;
 import net.minecraft.client.texture.SpriteDimensions;
 import net.minecraft.client.texture.SpriteLoader;
-import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Final;
@@ -25,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,8 +60,17 @@ public class SpriteLoaderMixin {
     ));
 
     @Inject(method = "stitch", at = @At("HEAD"))
+    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
-        if (id.equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)) {
+        if (id.equals(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE)) {
+            // Animation for the generated fire sprites, matching blank_fire_{0,1}.png.mcmeta
+            // (32 frames of 16x16, reordered 16..31 then 0..15). getMetadata() was removed in 1.21.11.
+            List<AnimationFrameResourceMetadata> fireFrames = new ArrayList<>();
+            for (int f = 16; f < 32; f++) fireFrames.add(new AnimationFrameResourceMetadata(f));
+            for (int f = 0; f < 16; f++) fireFrames.add(new AnimationFrameResourceMetadata(f));
+            AnimationResourceMetadata fireAnimation =
+                    new AnimationResourceMetadata(Optional.of(fireFrames), Optional.of(16), Optional.of(16), 1, false);
+
             List<int[]> ints = Stream.concat(
                     Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
                             .flatMap(map -> map.values().stream())
@@ -148,7 +160,13 @@ public class SpriteLoaderMixin {
                                 int num = spriteContents.getId().toString().contains("1") ? 1 : 0;
 
                                 if (!isOverlay) {
-                                    all.add(new SpriteContents((Identifier.of("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1]))), new SpriteDimensions(16, 16), NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer), spriteContents.getMetadata()));
+                                    all.add(new SpriteContents(
+                                            Identifier.of("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1])),
+                                            new SpriteDimensions(16, 16),
+                                            NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer),
+                                            Optional.of(fireAnimation),
+                                            List.of(),
+                                            Optional.empty()));
                                 }
                             }
                         }

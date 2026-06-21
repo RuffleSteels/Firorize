@@ -26,9 +26,9 @@ public class AddProfileScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
         this.setFocused(null); // clear previous focus/outline; a genuinely-clicked widget re-acquires it via super
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     public  ButtonWidget fromExistingButton;
@@ -114,9 +114,10 @@ public class AddProfileScreen extends Screen {
     }
 
     @Override
-    public void resize(MinecraftClient client, int width, int height) {
+    public void resize(int width, int height) {
+        MinecraftClient client = MinecraftClient.getInstance();
         Main.setScale(width, height, client);
-        super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
     public void addProfile(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
@@ -162,24 +163,17 @@ public class AddProfileScreen extends Screen {
     }
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.applyBlur(delta);
-
-
-        this.renderDarkening(context);
+        // Draw the config screen behind, then a dim overlay (like the profile-delete confirm box),
+        // rather than blurring through to the game.
+        if (parent != null) {
+            parent.render(context, 0, 0, delta);
+        }
+        context.fill(0, 0, this.width, this.height, 0xB0000000);
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, -500);
-        parent.render(context, 0, 0, delta);
-        context.getMatrices().pop();
-        context.getMatrices().push();
-
-        context.getMatrices().translate(0, 0, -490);
-
-
-        super.render(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta); // renderBackground (parent + dim) then the dialog widgets
 
         if (tooltipTime > 0) {
             context.drawTooltip(textRenderer, Text.translatable("firorize.config.tooltip.invalidCode"), fromCodeButton.getX() + 10, fromCodeButton.getY() - 5);
@@ -187,7 +181,5 @@ public class AddProfileScreen extends Screen {
         if (profileNameTooltipTime > 0) {
             context.drawTooltip(textRenderer, Text.translatable(profileNameTooltip), presetNameField.getX() + 10, presetNameField.getY() + presetNameField.getHeight() + 5);
         }
-
-        context.getMatrices().pop();
     }
 }

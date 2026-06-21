@@ -1,6 +1,5 @@
 package com.oscimate.firorize.config;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.oscimate.firorize.Colors;
 import com.oscimate.firorize.Main;
 import net.fabricmc.api.EnvType;
@@ -51,15 +50,13 @@ public class ColoredCycleButton extends PressableWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void drawIcon(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        context.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
-        RenderSystem.enableBlend();
-        RenderSystem.enableDepthTest();
+        // Fade the swatch via the colour's alpha channel (setShaderColor was removed in 1.21.5).
+        int swatch = (ChangeFireColorScreen.pickedColor[instance.isOverlay ? 1 : 0].getRGB() & 0xFFFFFF)
+                | (MathHelper.ceil(this.alpha * 255.0F) << 24);
+        context.fill(instance.wheelCoords[0] + 50 + 20, instance.hexBoxCoords[1], instance.wheelCoords[0] + instance.wheelRadius*2  + instance.sliderDimensions[0], instance.hexBoxCoords[1] + 20, swatch);
 
-        context.fill(instance.wheelCoords[0] + 50 + 20, instance.hexBoxCoords[1], instance.wheelCoords[0] + instance.wheelRadius*2  + instance.sliderDimensions[0], instance.hexBoxCoords[1] + 20, ChangeFireColorScreen.pickedColor[instance.isOverlay ? 1:0].getRGB());
-
-        context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = this.active ? 16777215 : 10526880;
         if (mouseX >= this.getX() && mouseY >= this.getY() && mouseX <= this.getX()+this.getWidth() && mouseY <= this.getY() + this.getHeight()) {
 
@@ -67,11 +64,11 @@ public class ColoredCycleButton extends PressableWidget {
             double dy = instance.wheelRadius+instance.wheelCoords[0] - instance.clickedY;
             double saturation = Math.sqrt(dx * dx + dy * dy) / instance.wheelRadius;
             double lightness = (instance.sliderClickedY - instance.sliderCoords[1] - instance.sliderPadding) / (instance.sliderDimensions[1] - instance.sliderPadding*2);
-            context.drawBorder(this.getX(),this.getY(), this.getWidth(), this.getHeight(), saturation < 0.25 && lightness < 0.25 ? Color.BLACK.getRGB() : Color.white.getRGB());
+            context.drawStrokedRectangle(this.getX(),this.getY(), this.getWidth(), this.getHeight(), saturation < 0.25 && lightness < 0.25 ? Color.BLACK.getRGB() : Color.white.getRGB());
             i = 10526880;
         }
         if (!isAdding) {
-            this.drawMessage(context, minecraftClient.textRenderer, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
+            context.drawCenteredTextWithShadow(minecraftClient.textRenderer, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
         }
 
         if (instance.cycleTooltipTimer > 0) {
@@ -142,8 +139,8 @@ public class ColoredCycleButton extends PressableWidget {
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        super.onClick(mouseX, mouseY);
+    public void onClick(net.minecraft.client.gui.Click click, boolean doubled) {
+        super.onClick(click, doubled);
     }
 
     @Override
@@ -152,8 +149,8 @@ public class ColoredCycleButton extends PressableWidget {
     }
 
     @Override
-    public void onPress() {
-        if (Screen.hasShiftDown()) {
+    public void onPress(net.minecraft.client.input.AbstractInput input) {
+        if (input.hasShift()) {
             this.cycle(-1);
         } else {
             this.cycle(1);

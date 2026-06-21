@@ -8,7 +8,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelBaker;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.ScreenTexts;
@@ -30,9 +30,9 @@ public class ChangeFireHeightScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
         this.setFocused(null); // clear previous focus/outline; a genuinely-clicked widget re-acquires it via super
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     public void onClose() {
@@ -52,9 +52,10 @@ public class ChangeFireHeightScreen extends Screen {
         onClose();
     }
     @Override
-    public void resize(MinecraftClient client, int width, int height) {
+    public void resize(int width, int height) {
+        MinecraftClient client = MinecraftClient.getInstance();
 //        Main.setScale(width, height, client);
-        super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
 
@@ -63,66 +64,17 @@ public class ChangeFireHeightScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-        MatrixStack matrixStack = context.getMatrices();
-        matrixStack.push();
-        GameRenderer gameRenderer = MinecraftClient.getInstance().gameRenderer;
-        gameRenderer.loadProjectionMatrix(gameRenderer.getBasicProjectionMatrix(((GameRendererMixin)gameRenderer).callGetFov(gameRenderer.getCamera(), MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true), false)));
-        matrixStack.loadIdentity();
-
-
-        var modelView = RenderSystem.getModelViewStack();
-        modelView.pushMatrix();
-        modelView.identity();
-        RenderSystem.applyModelViewMatrix();
-
-        matrixStack.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
-
-        RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
-        RenderSystem.depthFunc(519);
-        RenderSystem.depthMask(false);
-        RenderSystem.enableBlend();
-        Sprite sprite = ModelLoader.FIRE_1.getSprite();
-        RenderSystem.setShaderTexture(0, sprite.getAtlasId());
-        float f = sprite.getMinU();
-        float g = sprite.getMaxU();
-        float h = (f + g) / 2.0F;
-        float i = sprite.getMinV();
-        float j = sprite.getMaxV();
-        float k = (i + j) / 2.0F;
-        float l = sprite.getAnimationFrameDelta();
-        float m = MathHelper.lerp(l, f, h);
-        float n = MathHelper.lerp(l, g, h);
-        float o = MathHelper.lerp(l, i, k);
-        float p = MathHelper.lerp(l, j, k);
-        float q = 1.0F;
-
-        for (int r = 0; r < 2; r++) {
-            matrixStack.push();
-            float s = -0.5F;
-            float t = 0.5F;
-            float u = -0.5F;
-            float v = 0.5F;
-            float w = -0.5F;
-            matrixStack.translate((float)(-(r * 2 - 1)) * 0.24F, -0.3F, 0.0F);
-            matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float)(r * 2 - 1) * 10.0F));
-            Matrix4f matrix4f = matrixStack.peek().getPositionMatrix();
-            BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-            bufferBuilder.vertex(matrix4f, -0.5F, -0.5F, -0.5F).texture(n, p).color(1.0F, 1.0F, 1.0F, 0.9F);
-            bufferBuilder.vertex(matrix4f, 0.5F, -0.5F, -0.5F).texture(m, p).color(1.0F, 1.0F, 1.0F, 0.9F);
-            bufferBuilder.vertex(matrix4f, 0.5F, 0.5F, -0.5F).texture(m, o).color(1.0F, 1.0F, 1.0F, 0.9F);
-            bufferBuilder.vertex(matrix4f, -0.5F, 0.5F, -0.5F).texture(n, o).color(1.0F, 1.0F, 1.0F, 0.9F);
-            BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-            matrixStack.pop();
-        }
-
-
-        modelView.popMatrix();
-        RenderSystem.applyModelViewMatrix();
-
-        RenderSystem.disableBlend();
-        RenderSystem.depthMask(true);
-        RenderSystem.depthFunc(515);
-
+        // 2D preview of the (animated) fire overlay sprite; the height slider shifts it vertically so
+        // the user can see the effect. (The old immediate-mode 3D overlay quads can't be drawn in the
+        // 1.21.5+ 2D GUI without a special-element renderer; this conveys the same adjustment.)
+        Sprite sprite = MinecraftClient.getInstance().getAtlasManager().getSprite(ModelBaker.FIRE_1);
+        double fireHeight = FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider());
+        int size = 120;
+        int cx = this.width / 2;
+        int baseY = this.height / 2 + 60;
+        int offsetY = (int) Math.round(fireHeight * size);
+        context.drawSpriteStretched(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, sprite,
+                cx - size / 2, baseY - size + offsetY, size, size);
 
         if (ticks % 4 == 0) counter++;
         ticks++;

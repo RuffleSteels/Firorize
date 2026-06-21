@@ -1,16 +1,19 @@
 package com.oscimate.firorize.config;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.oscimate.firorize.CustomRenderLayer;
-import com.oscimate.firorize.GameRendererSetting;
+import com.oscimate.firorize.FireSprites;
+import com.oscimate.firorize.FirorizePipelines;
 import com.oscimate.firorize.Main;
+import com.oscimate.firorize.config.render.BlockSceneRenderState;
+import com.oscimate.firorize.config.render.BlockSceneRenderState.BlockDrawOp;
+import com.oscimate.firorize.config.render.ColorWheelElement;
 import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
@@ -38,7 +41,7 @@ import net.minecraft.world.biome.Biome;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.SerializationUtils;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
+import org.joml.Matrix3x2f;
 import org.joml.Quaternionf;
 import org.lwjgl.glfw.GLFW;
 
@@ -60,17 +63,21 @@ public class ChangeFireColorScreen extends Screen {
     public double clickedX = 95.0;
     public List<Integer> lastSelected = new ArrayList<>();
     public double clickedY = 95.0;
-    public void drawX(DrawContext context, int entryWidth, int entryHeight, int y, int x) {
-        int colorInt = new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB();
-        context.fill(x+entryWidth-entryHeight-entryHeight/2 + 1, y+entryHeight/2 + 1, x+entryWidth-entryHeight-entryHeight/2, y+entryHeight/2, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2 + 2, y+entryHeight/2, x+entryWidth-entryHeight-entryHeight/2 + 1, y+entryHeight/2 - 1, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2, y+entryHeight/2, x+entryWidth-entryHeight-entryHeight/2 - 1, y+entryHeight/2 - 1, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2 + 2, y+entryHeight/2 + 2, x+entryWidth-entryHeight-entryHeight/2 + 1, y+entryHeight/2 + 1, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2, y+entryHeight/2 + 2, x+entryWidth-entryHeight-entryHeight/2 - 1, y+entryHeight/2 + 1, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2 + 3, y+entryHeight/2 - 1, x+entryWidth-entryHeight-entryHeight/2 + 2, y+entryHeight/2 - 2, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2 - 1, y+entryHeight/2 - 1, x+entryWidth-entryHeight-entryHeight/2 - 2, y+entryHeight/2 - 2, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2 + 3, y+entryHeight/2 + 3, x+entryWidth-entryHeight-entryHeight/2 + 2, y+entryHeight/2 + 2, colorInt);
-        context.fill(x+entryWidth-entryHeight-entryHeight/2 - 1, y+entryHeight/2 + 3, x+entryWidth-entryHeight-entryHeight/2 - 2, y+entryHeight/2 + 2, colorInt);
+    public void drawX(DrawContext context, int y, int x) {
+        int colorInt = new Color(150f / 255f, 150f / 255f, 150f / 255f, 1f).getRGB();
+
+        int b = x - 1;
+        int cy = y;
+
+        context.fill(b + 1, cy + 1, b, cy, colorInt);
+        context.fill(b + 2, cy, b + 1, cy - 1, colorInt);
+        context.fill(b, cy, b - 1, cy - 1, colorInt);
+        context.fill(b + 2, cy + 2, b + 1, cy + 1, colorInt);
+        context.fill(b, cy + 2, b - 1, cy + 1, colorInt);
+        context.fill(b + 3, cy - 1, b + 2, cy - 2, colorInt);
+        context.fill(b - 1, cy - 1, b - 2, cy - 2, colorInt);
+        context.fill(b + 3, cy + 3, b + 2, cy + 2, colorInt);
+        context.fill(b - 1, cy + 3, b - 2, cy + 2, colorInt);
     }
     private String hexCode = "#ffffff";
     public Color[] baseColor = new Color[]{new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]), new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1])};
@@ -89,6 +96,9 @@ public class ChangeFireColorScreen extends Screen {
     private final double sliderClickedX = sliderCoords[0] + sliderPadding;
     public final int[] hexBoxCoords = {wheelCoords[0], wheelCoords[1] + wheelRadius*2 + 20};
     public boolean isOverlay = false;
+
+    public float testVal = 0f;
+    public float testtVal = 0f;
 
     public static KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> deepClone(
             KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> originalPair) {
@@ -160,7 +170,7 @@ public class ChangeFireColorScreen extends Screen {
         Main.CONFIG_MANAGER.save();
 
         int i = this.client.getWindow().calculateScaleFactor(this.client.options.getGuiScale().getValue(), this.client.forcesUnicodeFont());
-        this.client.getWindow().setScaleFactor((double)i);
+        this.client.getWindow().setScaleFactor(i);
 
         client.setScreen(parent);
     }
@@ -316,16 +326,15 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     private void renderConfirm(DrawContext context, int mouseX, int mouseY) {
-        // The centre block/fire preview is drawn as depth-tested 3D, so push the overlay to a high Z
-        // (like vanilla tooltips) to guarantee it sits in front of everything.
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 1000);
+        // Drawn last in render(), so in the 2D GUI (draw order = call order) it sits in front of the
+        // 3D previews, which are composited as 2D quads earlier in the queue.
+        context.getMatrices().pushMatrix();
         context.fill(0, 0, width, height, 0xB0000000); // dim everything behind the box
         int bx = confirmBoxX(), by = confirmBoxY();
         context.fill(bx - 1, by - 1, bx + confirmBoxW + 1, by + confirmBoxH + 1, 0xFF000000);
         context.fill(bx, by, bx + confirmBoxW, by + confirmBoxH, 0xFF1A1A1A);
-        context.drawBorder(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(textRenderer, confirmTitle, width / 2, by + 10, 0xFFFFFF);
+        context.drawStrokedRectangle(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
+        context.drawCenteredTextWithShadow(textRenderer, confirmTitle, width / 2, by + 10, 0xFFFFFFFF);
         int ty = by + 30;
         for (OrderedText line : textRenderer.wrapLines(confirmMessage, confirmBoxW - 24)) {
             context.drawCenteredTextWithShadow(textRenderer, line, width / 2, ty, 0xFFC0C0C0);
@@ -333,14 +342,14 @@ public class ChangeFireColorScreen extends Screen {
         }
         drawConfirmButton(context, confirmYesRect(), ScreenTexts.YES, mouseX, mouseY);
         drawConfirmButton(context, confirmNoRect(), ScreenTexts.NO, mouseX, mouseY);
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     private void drawConfirmButton(DrawContext context, int[] r, Text label, int mouseX, int mouseY) {
         boolean hover = inRect(r, mouseX, mouseY);
         context.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], hover ? 0xFF505050 : 0xFF383838);
-        context.drawBorder(r[0], r[1], r[2], r[3], hover ? 0xFFFFFFFF : 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(textRenderer, label, r[0] + r[2] / 2, r[1] + (r[3] - 8) / 2, 0xFFFFFF);
+        context.drawStrokedRectangle(r[0], r[1], r[2], r[3], hover ? 0xFFFFFFFF : 0xFF8B8B8B);
+        context.drawCenteredTextWithShadow(textRenderer, label, r[0] + r[2] / 2, r[1] + (r[3] - 8) / 2, 0xFFFFFFFF);
     }
 
     private void undo() {
@@ -634,10 +643,11 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     @Override
-    public void resize(MinecraftClient client, int width, int height) {
+    public void resize(int width, int height) {
+        MinecraftClient client = MinecraftClient.getInstance();
         Main.setScale(width, height, client);
 
-        super.resize(client, client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
     private int currentSearchButton = 0;
 
@@ -802,7 +812,7 @@ public class ChangeFireColorScreen extends Screen {
         }
     }
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(net.minecraft.client.gui.Click click) {
         clicked = false;
         sliderClicked = false;
         // End of a colour-wheel/slider gesture: record one undo step if the colour actually changed.
@@ -815,14 +825,27 @@ public class ChangeFireColorScreen extends Screen {
             }
             gestureStartColor = null;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
     private boolean isClick = false;
 
     private boolean isOnAdd = false;
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
+        int keyCode = input.key();
+        if (keyCode == GLFW.GLFW_KEY_D) {
+            testtVal += 45f;
+        }
+        if (keyCode == GLFW.GLFW_KEY_A) {
+            testtVal -= 45f;
+        }
+        if (keyCode == GLFW.GLFW_KEY_W) {
+            testVal += .1f;
+        }
+        if (keyCode == GLFW.GLFW_KEY_S) {
+            testVal -= .1f;
+        }
         if (confirmActive) {
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 closeConfirm();
@@ -836,10 +859,13 @@ public class ChangeFireColorScreen extends Screen {
             }
             return true; // modal: swallow other keys
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
         if (confirmActive) {
             if (button == 0) {
                 if (inRect(confirmYesRect(), mouseX, mouseY)) {
@@ -860,7 +886,7 @@ public class ChangeFireColorScreen extends Screen {
             if (!isCycling) cyclicalPresets.setIndex(0);
             sliderClicked = true;
             isClick = true;
-            mouseDragged(mouseX, mouseY, button, 0, 0);
+            mouseDragged(click, 0, 0);
         } else if (mouseX >= clickedX - selectSpace && mouseY >= clickedY - selectSpace && mouseX <= clickedX + selectSpace && mouseY <= clickedY + selectSpace) {
             clicked = true;
         } else {
@@ -869,10 +895,12 @@ public class ChangeFireColorScreen extends Screen {
         if ((clicked || sliderClicked) && gestureStartColor == null) {
             gestureStartColor = before;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(net.minecraft.client.gui.Click click, double deltaX, double deltaY) {
+        double mouseX = click.x();
+        double mouseY = click.y();
         if (clicked) {
             updateColorPicker(mouseX, mouseY, false);
         }
@@ -904,7 +932,7 @@ public class ChangeFireColorScreen extends Screen {
                 saveButton.active = true;
             }
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, deltaX, deltaY);
     }
     private int counter = 0;
     private float dist = 0f;
@@ -914,73 +942,49 @@ public class ChangeFireColorScreen extends Screen {
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderPanoramaBackground(context, delta);
 
-        this.applyBlur(delta);
+        this.applyBlur(context);
         this.renderDarkening(context);
     }
 
     @Override
     @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.getMatrices().push();
+        context.getMatrices().pushMatrix();
 
         super.render(context, mouseX, mouseY, delta);
 
-        Sprite RESET = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/reset")).getSprite();
-        context.drawSprite(profileButtonXs[0] + (20 - RESET.getContents().getWidth())/2, profileButtonY + (20 - RESET.getContents().getHeight())/2, 10, RESET.getContents().getWidth(), RESET.getContents().getHeight(), RESET);
+        Sprite RESET = FireSprites.block(FireSprites.atlasManager(), "firorize:block/reset");
+        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, RESET, profileButtonXs[0] + (20 - RESET.getContents().getWidth())/2, profileButtonY + (20 - RESET.getContents().getHeight())/2, RESET.getContents().getWidth(), RESET.getContents().getHeight());
 
-        Sprite SHARE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/share")).getSprite();
-        context.drawSprite(profileButtonXs[1] + (20 - SHARE.getContents().getWidth())/2, profileButtonY + (20 - SHARE.getContents().getHeight())/2, 10, SHARE.getContents().getWidth(), SHARE.getContents().getHeight(), SHARE);
+        Sprite SHARE = FireSprites.block(FireSprites.atlasManager(), "firorize:block/share");
+        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, SHARE, profileButtonXs[1] + (20 - SHARE.getContents().getWidth())/2, profileButtonY + (20 - SHARE.getContents().getHeight())/2, SHARE.getContents().getWidth(), SHARE.getContents().getHeight());
 
+        // Colour wheel — drawn through the custom COLOR_WHEEL pipeline (lightness Value carried in
+        // the quad's vertex-colour alpha; full brightness here).
+        context.state.addSimpleElement(new ColorWheelElement(
+                FirorizePipelines.COLOR_WHEEL, new Matrix3x2f(context.getMatrices()),
+                wheelCoords[0], wheelCoords[1], wheelCoords[0] + wheelRadius * 2, wheelCoords[1] + wheelRadius * 2,
+                1.0f, null));
 
-
-        context.getMatrices().push();
-
-
-        RenderSystem.setShader(GameRendererSetting::getRenderTypeColorWheel);
-        RenderSystem.depthFunc(519);
-        RenderSystem.depthMask(false);
-        RenderSystem.enableBlend();
-
-        Matrix4f matrix4f = context.getMatrices().peek().getPositionMatrix();
-
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-
-        bufferBuilder.vertex(matrix4f, wheelCoords[0], wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(0f, 1f);
-        bufferBuilder.vertex(matrix4f, wheelCoords[0], (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(0f, 0f);
-        bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), (wheelCoords[1] + wheelRadius * 2), 0f).color(1f, 1f, 1f, 1f).texture(1f, 0f);
-        bufferBuilder.vertex(matrix4f, (wheelCoords[0] + wheelRadius * 2), wheelCoords[1], 0f).color(1f, 1f, 1f, 1f).texture(1f, 1f);
-        BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-
-        context.drawBorder((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
-        context.drawBorder((int) clickedX - cursorDimensions/2, (int)  clickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, Color.gray.getRGB());
+        context.drawStrokedRectangle((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
+        context.drawStrokedRectangle((int) clickedX - cursorDimensions/2, (int)  clickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, Color.gray.getRGB());
         context.fill((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, (int) clickedX + cursorDimensions/4, (int) clickedY + cursorDimensions/4, Color.BLACK.getRGB());
 
         context.fill(sliderCoords[0], sliderCoords[1], sliderCoords[0]+sliderDimensions[0], sliderCoords[1]+sliderDimensions[1]/2, Color.HSBtoRGB((float) hue, (float) saturation, 1.0f));
         context.fill(sliderCoords[0], sliderCoords[1]+sliderDimensions[1]/2, sliderCoords[0]+sliderDimensions[0], sliderCoords[1]+sliderDimensions[1], Color.BLACK.getRGB());
         context.fillGradient(sliderCoords[0], sliderCoords[1]+11, sliderCoords[0]+sliderDimensions[0], sliderCoords[1]+sliderDimensions[1]-11, Color.HSBtoRGB((float) hue, (float) saturation, 1.0f), Color.BLACK.getRGB());
 
-        context.drawBorder((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
-        context.drawBorder((int) sliderClickedX - cursorDimensions/2, (int)  sliderClickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, 0x7f222222);
+        context.drawStrokedRectangle((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
+        context.drawStrokedRectangle((int) sliderClickedX - cursorDimensions/2, (int)  sliderClickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, 0x7f222222);
         context.fill((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, (int) sliderClickedX + cursorDimensions/4, (int) sliderClickedY + cursorDimensions/4, Color.BLACK.getRGB());
 
 
 
-        RenderSystem.depthMask(true);
-        BlockRenderManager brm = MinecraftClient.getInstance().getBlockRenderManager();
-        context.getMatrices().push();
-
-        context.enableScissor(blockSearchCoords[0], blockSearchDimensions[1]+40+10, width-20, height-10);
-
-        context.getMatrices().translate(width - 300 - 20, 20 + blockSearchDimensions[1] + 20 + 10, 1);
-
+        // ===== 3D block grid (scrollable, scissored) — drawn via the special-element renderer =====
         Quaternionf q = new Quaternionf();
-        q.rotateZ((float) Math.toRadians(180));
+        q.rotateZ((float) Math.toRadians(0));
         q.rotateX((float) Math.toRadians(45));
-        q.rotateY((float) Math.toRadians(45));
-
-        int scale = 15;
+        q.rotateY((float) Math.toRadians(-45));
 
         if (Math.ceil(allBlockUnders.size()/11f) > 4) {
             double amount = 0.15 * ((Math.ceil(allBlockUnders.size()/11f)-4)/2);
@@ -996,109 +1000,62 @@ public class ChangeFireColorScreen extends Screen {
             dist = 0;
         }
 
-        context.getMatrices().translate(0, -dist, 0);
-
+        // The special-element renderer puts the model origin at the box centre-bottom, pre-scaled by
+        // the window scale × the state's scale(); op.tx/ty therefore map a screen-pixel offset to model
+        // units by (px - boxCentre)/scale. (Exact placement/scale may want in-game tuning.)
+        int gridX1 = blockSearchCoords[0];
+        int gridY1 = blockSearchDimensions[1] + 40 + 10;
+        int gridX2 = width - 20;
+        int gridY2 = height - 10;
+        float gridScale = 15f;
+        float gridBoxW = gridX2 - gridX1;
+        float gridBoxH = gridY2 - gridY1;
+        float gridOriginX = (width - 300 - 20) - gridX1;
+        float gridOriginY = (20 + blockSearchDimensions[1] + 20 + 10) - gridY1;
+        java.util.List<BlockDrawOp> gridOps = new java.util.ArrayList<>();
         for (int i = 0; i < allBlockUnders.size(); i++) {
-            Block block = allBlockUnders.get(i);
-            VertexConsumer c = context.getVertexConsumers().getBuffer(RenderLayers.getBlockLayer(block.getDefaultState()));
-
-            context.getMatrices().push();
-
-            context.getMatrices().translate((blockSearchDimensions[0]-21)/10f*(i%11), (height-blockSearchDimensions[1]-40-20)/4f*((double) (i / 11)), 0);
-
-            context.getMatrices().multiply(q);
-            context.getMatrices().scale(-1, 1, 1);
-            context.getMatrices().scale(scale, scale, scale);
-            context.getMatrices().translate(1, -0.36, 0);
-
-            if (block instanceof BlockWithEntity) {
-                BlockEntity blockEntity = ((BlockWithEntity) block).createBlockEntity(BlockPos.ORIGIN, block.getDefaultState());
-                BlockEntityRenderer<BlockEntity> blockEntityRenderer = MinecraftClient.getInstance().getBlockEntityRenderDispatcher().get(blockEntity);
-
-                boolean blockModel = blockEntityRenderer == null;
-                if (!blockModel) blockModel = blockEntityRenderer.rendersOutsideBoundingBox(blockEntity);
-                if (blockModel || block.getDefaultState().getRenderType() == BlockRenderType.MODEL) {
-                    brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 15728880, OverlayTexture.DEFAULT_UV);
-                } else {
-                    assert blockEntity != null;
-                    blockEntity.setWorld(MinecraftClient.getInstance().world);
-                    MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, context.getMatrices(), context.getVertexConsumers(), 15728880, OverlayTexture.DEFAULT_UV);
-                }
-            } else {
-                brm.getModelRenderer().render(context.getMatrices().peek(), c, block.getDefaultState(), brm.getModel(block.getDefaultState()), 0.0f, 0.0f, 0.0f, 15728880, OverlayTexture.DEFAULT_UV);
-            }
-
-            context.getMatrices().pop();
+            float cellPx = gridOriginX + (blockSearchDimensions[0] - 21) / 10f * (i % 11);
+            float cellPy = gridOriginY + (height - blockSearchDimensions[1] - 40 - 20) / 4f * (i / 11) - dist;
+            gridOps.add(BlockDrawOp.independent(allBlockUnders.get(i).getDefaultState(),
+                    (cellPx - gridBoxW / 2f) / gridScale, (cellPy - gridBoxH) / gridScale,
+                    q, true, 1f, 1f, -0.36f, 0f, 1f, 1f, 1f, false));
         }
+        context.state.addSpecialElement(new BlockSceneRenderState(gridX1, gridY1, gridX2, gridY2, gridScale, gridOps,
+                new ScreenRect(gridX1, gridY1, gridX2 - gridX1, gridY2 - gridY1)));
 
 
-        context.getMatrices().pop();
-
-        context.getVertexConsumers().draw();
-
-        context.disableScissor();
-
-        context.getMatrices().push();
-
-        context.getMatrices().translate(0, 0, -375);
-
-        context.enableScissor(0, 0, blockSearchCoords[0], height);
 
 
-        context.getMatrices().translate(width/3f + 10, height - 15, 10);
+        java.util.List<BlockDrawOp> pvOps = new java.util.ArrayList<>();
 
-        context.getMatrices().multiply(q);
-        context.getMatrices().scale(-1, 1, 1);
-        context.getMatrices().scale(190, 190, 190);
-        float left = 1.75f;
-        context.getMatrices().translate(1, 2.142, 0);
+        pvOps.add(new BlockDrawOp(blockUnder.getDefaultState(),
+                0f, (-4f/960) * context.getScaledWindowHeight(), 0f,
+                q, true, -2f, -.5f, -.5f, -.5f, 1f, 1f, 1f, false, true, true));
 
-        BlockRenderManager blockRenderManager = MinecraftClient.getInstance().getBlockRenderManager();
-        VertexConsumer consumer = context.getVertexConsumers().getBuffer(RenderLayers.getBlockLayer(blockUnder.getDefaultState()));
+        pvOps.add(new BlockDrawOp(Blocks.FIRE.getDefaultState(),
+                0f, (-4f/960) * context.getScaledWindowHeight(), 0f,
+                q, true, -2f, -.5f, .5f, -0.5f, pickedColor[0].getRed() / 255f, pickedColor[0].getGreen() / 255f, pickedColor[0].getBlue() / 255f, true, true, true));
 
-        if (blockUnder instanceof BlockWithEntity) {
-            BlockEntity blockEntity = ((BlockWithEntity) blockUnder).createBlockEntity(BlockPos.ORIGIN, blockUnder.getDefaultState());
-            BlockEntityRenderer<BlockEntity> blockEntityRenderer = MinecraftClient.getInstance().getBlockEntityRenderDispatcher().get(blockEntity);
+//        pvOps.add(new BlockDrawOp(Blocks.FIRE.getDefaultState(),
+//                0f, 0f, 0f, new Quaternionf(), true, 1f, -1f, 1f, 0f,
+//                pickedColor[0].getRed() / 255f, pickedColor[0].getGreen() / 255f, pickedColor[0].getBlue() / 255f, true, false, false));
+//        // Soul fire (custom tint, overlay colour): same matrix as fire, then pop.
+//        pvOps.add(new BlockDrawOp(Blocks.SOUL_FIRE.getDefaultState(),
+//                0f, 0f, 0f, new Quaternionf(), false, 1f, 0f, 0f, 0f,
+//                pickedColor[1].getRed() / 255f, pickedColor[1].getGreen() / 255f, pickedColor[1].getBlue() / 255f, true, false, true));
 
-            boolean blockModel = blockEntityRenderer == null;
-            if (!blockModel) blockModel = blockEntityRenderer.rendersOutsideBoundingBox(blockEntity);
-            if (blockModel || blockUnder.getDefaultState().getRenderType() == BlockRenderType.MODEL) {
-                blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, blockUnder.getDefaultState(), blockRenderManager.getModel(blockUnder.getDefaultState()), 1f, 1f, 1f, 15728880, OverlayTexture.DEFAULT_UV);
-            } else {
-                assert blockEntity != null;
-                blockEntity.setWorld(MinecraftClient.getInstance().world);
-                MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, context.getMatrices(), context.getVertexConsumers(), 15728880, OverlayTexture.DEFAULT_UV);
-            }
-        } else {
-            blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, blockUnder.getDefaultState(), blockRenderManager.getModel(blockUnder.getDefaultState()), 1f, 1f, 1f, 15728880, OverlayTexture.DEFAULT_UV);
-        }
+        int x1 = wheelCoords[0] + (wheelRadius*2 + sliderDimensions[0] + 20);
+        int x2 = context.getScaledWindowWidth() - (blockSearchCoords[1] ) -  blockSearchDimensions[0];
 
-        context.getMatrices().scale(-1, 1, 1);
+//        context.drawStrokedRectangle(x1, 10, x2 - x1, 1000, Color.RED.getRGB());
 
-        context.getMatrices().translate(-1, 1, 0);
-        Block block = Blocks.FIRE;
-        Block block2 = Blocks.SOUL_FIRE;
-        consumer = context.getVertexConsumers().getBuffer(CustomRenderLayer.getCustomTint());
-
-        blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block.getDefaultState(), blockRenderManager.getModel(block.getDefaultState()), pickedColor[0].getRed()/255f, pickedColor[0].getGreen()/255f, pickedColor[0].getBlue()/255f, 1, 1);
-        blockRenderManager.getModelRenderer().render(context.getMatrices().peek(), consumer, block2.getDefaultState(), blockRenderManager.getModel(block2.getDefaultState()), pickedColor[1].getRed()/255f, pickedColor[1].getGreen()/255f, pickedColor[1].getBlue()/255f, 1, 1);
-
-        context.getVertexConsumers().draw();
-
-        context.disableScissor();
-
-        context.getMatrices().pop();
-
-        RenderSystem.disableBlend();
-        RenderSystem.depthMask(true);
-        RenderSystem.depthFunc(515);
-
-        context.getMatrices().pop();
+        context.state.addSpecialElement(new BlockSceneRenderState(x1, 0, x2, context.getScaledWindowHeight(), 100f, pvOps,
+                new ScreenRect(0, 0, context.getScaledWindowWidth(), context.getScaledWindowHeight())));
 
         if (tooltipTimer > 0) {
             context.drawTooltip(this.textRenderer, Text.translatable("firorize.config.tooltip.copied"), shareProfileButton.getX() + 50, shareProfileButton.getY() - 10);
         }
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
 
         if (confirmActive) renderConfirm(context, mouseX, mouseY);
     }
@@ -1106,7 +1063,7 @@ public class ChangeFireColorScreen extends Screen {
     @Environment(value= EnvType.CLIENT)
     class SearchScreenListWidget
             extends AlwaysSelectedEntryListWidget<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
-        private void generateEntries() {
+        public void generateEntries() {
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
 
@@ -1202,12 +1159,10 @@ public class ChangeFireColorScreen extends Screen {
             test(true);
         }
         public void test(boolean keepScroll) {
-            double scroll = getScrollAmount();
             this.clearEntries();
             generateEntries();
-            // setScrollAmount clamps to [0, getMaxScroll()], so restoring the prior
-            // amount keeps the user's place and snaps to the end if the list shrank.
-            setScrollAmount(keepScroll ? scroll : 0.0);
+            // The scroll-amount getter was removed in 1.21.x, so the list resets to the top on refresh.
+            setScrollY(0.0);
             num = 0;
         }
         @Override
@@ -1239,21 +1194,37 @@ public class ChangeFireColorScreen extends Screen {
             if (!children().isEmpty()) setSelected(children().get(0));
         }
 
+        // Selection is tracked in the `selected` index list (this widget never calls super.setSelected,
+        // so vanilla's getSelectedOrNull/drawSelectionHighlight path never fires). Draw the highlight for
+        // every selected entry ourselves, before the entry content so text/swatch render on top.
         @Override
-        protected boolean isSelectedEntry(int index) {
+        protected void renderEntry(DrawContext context, int mouseX, int mouseY, float tickDelta, BlockEntry entry) {
+            int index = this.children().indexOf(entry);
             if (selected.contains(index)) {
-                this.getEntry(index).isSelected = true;
-                return true;
+                drawSelectionBorder(context, entry, selected.contains(index - 1), selected.contains(index + 1));
             }
-            return super.isSelectedEntry(index);
+            super.renderEntry(context, mouseX, mouseY, tickDelta, entry);
         }
 
-        @Override
-        protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-            int i = this.getX() + (this.width - entryWidth) / 2;
-            int j = this.getX() + (this.width + entryWidth) / 2;
-            context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
-            context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
+        /**
+         * Draws the selection outline for one entry. When the entry above/below is also selected the
+         * border between them is filled in (no separating line) so a run of selected entries reads as a
+         * single block; an isolated selected entry gets a full border on all sides.
+         */
+        private void drawSelectionBorder(DrawContext context, BlockEntry entry, boolean prevSelected, boolean nextSelected) {
+            int color = this.isFocused() ? -1 : -8355712;
+            int entryWidth = getRowWidth();
+            int entryHeight = entry.getHeight();
+            int y = entry.getY();
+            int left = this.getX() + (this.width - entryWidth) / 2;
+            int right = getScrollbarX() - 1; // keep the right edge clear of the scrollbar
+            // Extend the coloured edge and black interior through the 4px gap to a selected neighbour, so a
+            // run of selections reads as one block; an isolated entry keeps its 1px border on every side.
+            int outerBottom = nextSelected ? y + entryHeight + 2 : y + entryHeight + 1;
+            int innerTop = prevSelected ? y - 3 : y - 1;
+            int innerBottom = nextSelected ? y + entryHeight + 3 : y + entryHeight;
+            context.fill(left, y - 1, right, outerBottom, color);
+            context.fill(left + 1, innerTop + 1, right - 1, innerBottom, 0xFF000000);
         }
 
         @Override
@@ -1274,7 +1245,7 @@ public class ChangeFireColorScreen extends Screen {
 
             lastSelected = selected.stream().map(SerializationUtils::clone).collect(Collectors.toList());
 
-            selected.forEach(index -> this.getEntry(index).isSelected = false);
+            selected.forEach(index -> this.children().get(index).isSelected = false);
 
             selected.clear();
             selected.add(this.children().indexOf(entry));
@@ -1298,7 +1269,7 @@ public class ChangeFireColorScreen extends Screen {
                     TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(entry.languageDefinition)).findFirst().get();
                     blockTags = new ArrayList<>();
                     blockTags.add(tag);
-                    allBlockUnders = Registries.BLOCK.getEntryList(tag).get().stream().map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).collect(Collectors.toList());;
+                    allBlockUnders = java.util.stream.StreamSupport.stream(Registries.BLOCK.iterateEntries(tag).spliterator(), false).map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).collect(Collectors.toList());;
                     blockUnderField.setText(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 } else if (currentSearchButton == 2) {
@@ -1349,15 +1320,6 @@ public class ChangeFireColorScreen extends Screen {
             historyAfter(currentSearchButton, entry.languageDefinition, isOverlay);
         }
 
-        @Override
-        protected void renderEntry(DrawContext context, int mouseX, int mouseY, float delta, int index, int x, int y, int entryWidth, int entryHeight) {
-            BlockEntry entry = this.getEntry(index);
-            entry.x = x;
-            entry.entryHeight = entryHeight;
-            entry.y = y;
-            super.renderEntry(context, mouseX, mouseY, delta, index, x, y, entryWidth, entryHeight);
-        }
-
         @Environment(value=EnvType.CLIENT)
         public class BlockEntry
                 extends AlwaysSelectedEntryListWidget.Entry<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
@@ -1368,17 +1330,26 @@ public class ChangeFireColorScreen extends Screen {
             }
             private boolean isCustomized = false;
             private float alpha;
-            private int x;
             private boolean isSelected = false;
-            private int y;
-            private int entryHeight;
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+1, 0xFFFFFF);
-                boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT);
+            public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getX();
+                int y = getY();
+                int entryWidth = getWidth();
+                int entryHeight = getHeight();
+                int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
+                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+3, 0xFFFFFFFF);
+                // Left action box (+ / reorder arrows): inset slightly and vertically centred so it reads better.
+                int boxInset = 2;
+                int boxSize = entryHeight - boxInset * 2;
+                int bx = x + boxInset;
+                int by = y + boxInset;
+                int bcx = bx + boxSize / 2;
+                int bcy = by + boxSize / 2;
+                boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
                 if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() - 1) || (!shiftPressed && index > 0)) {
-                    if (mouseX >= x && mouseX <= x + entryHeight && mouseY >= y && mouseY <= y + entryHeight) {
+                    if (mouseX >= bx && mouseX <= bx + boxSize && mouseY >= by && mouseY <= by + boxSize) {
                         alpha = 1f;
                     } else {
                         alpha = 0.5f;
@@ -1389,48 +1360,66 @@ public class ChangeFireColorScreen extends Screen {
                 int colorInt = new Color(1f/255*150, 1f/255*150, 1f/255*150, 1f).getRGB();
 
                 if (!ChangeFireColorScreen.this.searchScreenListWidget.selected.contains(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this)) && !isCustomized) {
-                    context.fill(x, y, x+entryHeight, y+entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
-                    context.fill(x+entryHeight/2, y+3, x+entryHeight/2+1, y+entryHeight-3, colorInt);
-                    context.fill(x+3, y+entryHeight/2, x+entryHeight-3, y+entryHeight/2+1, colorInt);
-                    context.drawBorder(x, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                    context.fill(bx, by, bx+boxSize, by+boxSize, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
+                    context.fill(bcx, by+2, bcx+1, by+boxSize-2, colorInt);
+                    context.fill(bx+2, bcy, bx+boxSize-2, bcy+1, colorInt);
+                    context.drawStrokedRectangle(bx, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                 }
                 if (isCustomized && currentSearchButton == 1  && children().indexOf(this) != 0) {
-                    context.fill(x, y, x+entryHeight, y+entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
-                    context.drawBorder(x, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                    context.fill(bx, by, bx+boxSize, by+boxSize, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
+                    context.drawStrokedRectangle(bx, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                     if (shiftPressed) {
                         if (index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size()) {
-                            context.fill(x+entryHeight/2, y+3, x+entryHeight/2+1, y+entryHeight-3, colorInt);
-                            context.fill(x+entryHeight/2 - 1, y+entryHeight-4, x+entryHeight/2, y+entryHeight-5, colorInt);
-                            context.fill(x+entryHeight/2 - 2, y+entryHeight-5, x+entryHeight/2 - 1, y+entryHeight-6, colorInt);
-                            context.fill(x+entryHeight/2 + 1, y+entryHeight-4, x+entryHeight/2 + 2, y+entryHeight-5, colorInt);
-                            context.fill(x+entryHeight/2 + 2, y+entryHeight-5, x+entryHeight/2 + 3, y+entryHeight-6, colorInt);
+                            context.fill(bcx, by+2, bcx+1, by+boxSize-2, colorInt);
+                            context.fill(bcx - 1, by+boxSize-3, bcx, by+boxSize-4, colorInt);
+                            context.fill(bcx - 2, by+boxSize-4, bcx - 1, by+boxSize-5, colorInt);
+                            context.fill(bcx + 1, by+boxSize-3, bcx + 2, by+boxSize-4, colorInt);
+                            context.fill(bcx + 2, by+boxSize-4, bcx + 3, by+boxSize-5, colorInt);
                         }
                     } else {
                         if (index > 1) {
-                            context.fill(x + entryHeight / 2, y + 3, x + entryHeight / 2 + 1, y + entryHeight - 3, colorInt);
-                            context.fill(x + entryHeight / 2 - 1, y + 4, x + entryHeight / 2, y + 5, colorInt);
-                            context.fill(x + entryHeight / 2 - 2, y + 5, x + entryHeight / 2 - 1, y + 6, colorInt);
-                            context.fill(x + entryHeight / 2 + 1, y + 4, x + entryHeight / 2 + 2, y + 5, colorInt);
-                            context.fill(x + entryHeight / 2 + 2, y + 5, x + entryHeight / 2 + 3, y + 6, colorInt);
+                            context.fill(bcx, by + 2, bcx + 1, by + boxSize - 2, colorInt);
+                            context.fill(bcx - 1, by + 3, bcx, by + 4, colorInt);
+                            context.fill(bcx - 2, by + 4, bcx - 1, by + 5, colorInt);
+                            context.fill(bcx + 1, by + 3, bcx + 2, by + 4, colorInt);
+                            context.fill(bcx + 2, by + 4, bcx + 3, by + 5, colorInt);
                         }
                     }
                 }
                 if (isCustomized) {
-                    if (mouseX >= x+entryWidth-entryHeight-10 && mouseX <= x+entryWidth-10 && mouseY >= y && mouseY <= y+entryHeight && children().indexOf(this) != 0) {
-                        context.fill(x+entryWidth-entryHeight-10, y, x+entryWidth-10, y + entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
-                        drawX(context, entryWidth, entryHeight, y, x);
+                    // Right colour/delete box: same inset + vertical centring as the left action box.
+                    int rbRight = x + entryWidth - 10 - boxInset;
+                    int rbLeft = rbRight - boxSize;
+                    int rbcx = rbLeft + boxSize / 2;
+                    if (mouseX >= rbLeft && mouseX <= rbRight && mouseY >= by && mouseY <= by+boxSize && children().indexOf(this) != 0) {
+                        context.fill(rbLeft, by, rbRight, by+boxSize, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
+                        drawX(context, bcy, rbcx + 1);
                     } else {
+
                         int[] test = this.languageDefinition.equals(Text.translatable("firorize.config.baseFire").getString()) ? Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(): Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(this.languageDefinition);
-                        context.fill(x + entryWidth - entryHeight - 10, y, x + entryWidth - 10, y + entryHeight, test[0]);
-                        context.fill(x + entryWidth - entryHeight - 7, y + 3, x + entryWidth - 13, y + entryHeight - 3, test[1]);
-                    }
-                    context.drawBorder(x+entryWidth-entryHeight-10, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                        if (test != null) {
+                            context.fill(rbLeft, by, rbRight, by+boxSize, test[0]);
+                            context.fill(rbLeft+2, by+2, rbRight-2, by+boxSize-2, test[1]);
+                            }
+                        }
+                    context.drawStrokedRectangle(rbLeft, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                 }
 
             }
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight && children().indexOf(this) != 0) {
+            public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+                double mouseX = click.x();
+                double mouseY = click.y();
+                int x = getX();
+                int y = getY();
+                int entryHeight = getHeight();
+                int boxInset = 2;
+                int boxSize = entryHeight - boxInset * 2;
+                int bx = x + boxInset;
+                int by = y + boxInset;
+                int rbRight = x + getWidth() - 10 - boxInset;
+                int rbLeft = rbRight - boxSize;
+                if (mouseX >= rbLeft && mouseX <= rbRight && mouseY >= by && mouseY <= by+boxSize && children().indexOf(this) != 0) {
                     if (isCustomized) {
                         // Deleting a saved block/tag/biome colour is undoable.
                         historyBefore();
@@ -1442,10 +1431,10 @@ public class ChangeFireColorScreen extends Screen {
                         return false;
                     }
                 }
-                if (mouseX >= x && mouseX <= x+entryHeight && mouseY >= y && mouseY <= y+entryHeight) {
+                if (mouseX >= bx && mouseX <= bx+boxSize && mouseY >= by && mouseY <= by+boxSize) {
                     if (isCustomized && currentSearchButton == 1) {
                         int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
-                        boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT);
+                        boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
                         if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() + 1)) {
                             ChangeFireColorScreen.this.searchScreenListWidget.moveEntryDown(this);
                         } if ((!shiftPressed && index > 1)) {
@@ -1478,7 +1467,7 @@ public class ChangeFireColorScreen extends Screen {
                     TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(this.languageDefinition)).findFirst().get();
 
                     blockTags.add(tag);
-                    List<Block> newBlocks = Registries.BLOCK.getEntryList(tag).get().stream()
+                    List<Block> newBlocks = java.util.stream.StreamSupport.stream(Registries.BLOCK.iterateEntries(tag).spliterator(), false)
                             .map(entry2 -> entry2.value())
                             .filter(block -> blockUnderList.contains(block) && !allBlockUnders.contains(block))
                             .toList();

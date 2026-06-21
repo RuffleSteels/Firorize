@@ -86,6 +86,7 @@ class PresetListWidget
 
     @Override
     public void setSelected(@Nullable PresetListWidget.PresetEntry entry) {
+        if (entry == null) return;
         if (!entry.equals(getSelectedOrNull())) {
             // Switching to a different profile: undo/redo history does not carry across profiles.
             instance.clearHistory();
@@ -105,13 +106,14 @@ class PresetListWidget
         if (isConstruct) {
             instance.searchScreenListWidget.test(false);
         } else {
-            instance.changeSearchOption(client.world == null ? 0 : Main.CONFIG_MANAGER.getPriorityOrder().get(0));
-            if (client.world == null) {
-                instance.searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
-                instance.searchOptions[1].active = false;
-                instance.searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
-                instance.searchOptions[2].active = false;
-                instance.searchOptions[0].active = false;
+            // Only biomes need a world (the biome registry is world/server-provided); blocks and tags
+            // are available without one. Avoid starting on the biomes tab when there is no world, but
+            // still regenerate the current tab so the list reflects the newly selected profile.
+            int firstOption = Main.CONFIG_MANAGER.getPriorityOrder().getFirst();
+            if (client.world != null) {
+                instance.changeSearchOption(firstOption);
+            } else {
+                instance.searchScreenListWidget.test(false);
             }
         }
 
@@ -123,11 +125,14 @@ class PresetListWidget
     }
 
     @Override
-    protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
+    protected void drawSelectionHighlight(DrawContext context, PresetEntry entry, int color) {
+        int entryWidth = getRowWidth();
+        int entryHeight = entry.getHeight();
+        int y = entry.getY();
         int i = this.getX() + (this.width - entryWidth) / 2;
         int j = this.getX() + (this.width + entryWidth) / 2;
-        context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
-        context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
+        context.fill(i, y - 2, j, y + entryHeight + 2, color);
+        context.fill(i + 1, y - 1, j - 1, y + entryHeight + 1, 0xFF000000);
     }
 
     @Override
@@ -149,20 +154,12 @@ class PresetListWidget
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         super.renderWidget(context, mouseX, mouseY, delta);
-        context.getMatrices().push();
-        context.getMatrices().scale(2f, 2f, 2f);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().scale(2f, 2f);
         context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
-    @Override
-    protected void renderEntry(DrawContext context, int mouseX, int mouseY, float delta, int index, int x, int y, int entryWidth, int entryHeight) {
-        PresetListWidget.PresetEntry entry = this.getEntry(index);
-        entry.x = x;
-        entry.entryHeight = entryHeight;
-        entry.y = y;
-        super.renderEntry(context, mouseX, mouseY, delta, index, x, y, entryWidth, entryHeight);
-    }
 
     @Environment(value=EnvType.CLIENT)
     public class PresetEntry
@@ -171,18 +168,21 @@ class PresetListWidget
         public PresetEntry(String languageDefinition) {
             this.languageDefinition = languageDefinition;
         }
-        private int x;
-        private int y;
-        private int entryHeight;
-
         @Override
         public Text getNarration() {
             return Text.translatable("narrator.select", this.languageDefinition);
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight) {
+        public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+            double mouseX = click.x();
+            double mouseY = click.y();
+            int x = getX();
+            int y = getY();
+            int entryHeight = getHeight();
+            int closeWidth = entryHeight - 4;
+
+            if (mouseX >= x+getWidth()-closeWidth-4 && mouseX <= x+getWidth()-4 && mouseY >= y && mouseY <= y+entryHeight) {
                 if (!languageDefinition.equals("Initial")) {
                     // Deleting a profile is destructive and not undoable — confirm first, in a box
                     // drawn over the config screen (not a separate world-backed screen).
@@ -193,7 +193,7 @@ class PresetListWidget
                             Text.translatable("firorize.config.confirm.deleteProfile.message"),
                             () -> {
                                 Main.CONFIG_MANAGER.getFireColorPresets().remove(toDelete);
-                                PresetListWidget.this.children().remove(self);
+                                PresetListWidget.this.removeEntry(self); // removeEntry relayouts; children().remove did not refresh live
                                 // setSelected updates currentPreset to the new selection; save afterwards
                                 // so the persisted currentPreset never dangles at the deleted profile.
                                 PresetListWidget.this.setSelected(PresetListWidget.this.children().get(0));
@@ -203,22 +203,27 @@ class PresetListWidget
                 }
             }
             setSelected(this);
-            return super.mouseClicked(mouseX, mouseY, button);
+            return super.mouseClicked(click, doubled);
         }
         private float alphaa;
         @Override
-        public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            int x = getX();
+            int y = getY();
+            int entryWidth = getWidth();
+            int entryHeight = getHeight();
             if (!languageDefinition.equals("Initial")) {
-                if (mouseX >= x+entryWidth-entryHeight-10 && mouseX <= x+entryWidth-10 && mouseY >= y && mouseY <= y+entryHeight) {
+                if (mouseX >= x+entryWidth-entryHeight-4 && mouseX <= x+entryWidth-4 && mouseY >= y && mouseY <= y+entryHeight) {
                     alphaa = 1f;
                 } else {
                     alphaa = 0.5f;
                 }
-                context.fill(x+entryWidth-entryHeight-10, y, x+entryWidth-10, y + entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alphaa).getRGB());
-                instance.drawX(context, entryWidth, entryHeight, y, x);
-                context.drawBorder(x+entryWidth-entryHeight-10, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                int closeWidth = entryHeight - 4;
+                context.fill(x+entryWidth-closeWidth-4, y + (entryHeight / 2) - (closeWidth / 2), x+entryWidth-4, y + (entryHeight / 2) + (closeWidth / 2), new Color(1f/255*44, 1f/255*44, 1f/255*44, alphaa).getRGB());
+                instance.drawX(context, y + entryHeight / 2, x + entryWidth - 4 - closeWidth / 2);
+                context.drawStrokedRectangle(x+entryWidth-closeWidth-4, y + (entryHeight / 2) - (closeWidth / 2), closeWidth, closeWidth, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
             }
-            context.drawCenteredTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y+1, 0xFFFFFF);
+            context.drawCenteredTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y + (entryHeight - 8) / 2, 0xFFFFFFFF);
         }
     }
 }

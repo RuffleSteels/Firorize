@@ -1,7 +1,6 @@
-#version 150
+#version 330
 
-uniform vec4 ColorModulator;
-uniform float Value;
+#moj_import <minecraft:dynamictransforms.glsl>
 
 out vec4 fragColor;
 
@@ -15,6 +14,10 @@ vec3 hsv2rgb(vec3 c) {
 }
 
 void main() {
+    // Value (lightness) is carried per-vertex through the quad colour's alpha channel,
+    // since the new pipeline system has no per-draw float uniforms.
+    float Value = vertexColor.a;
+
     vec3 wheelColor = vec3(0.0);
     float dist = distance(texCoord0, vec2(0.5));
     if (dist <= 0.5) {

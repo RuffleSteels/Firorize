@@ -1,15 +1,11 @@
-#version 150
+#version 330
 
-#moj_import <fog.glsl>
+#moj_import <minecraft:fog.glsl>
 
 uniform sampler2D Sampler0;
 
-uniform vec4 ColorModulator;
-uniform float FogStart;
-uniform float FogEnd;
-uniform vec4 FogColor;
-
-in float vertexDistance;
+in float sphericalVertexDistance;
+in float cylindricalVertexDistance;
 in vec4 vertexColor;
 in vec2 texCoord0;
 
@@ -55,7 +51,7 @@ void main() {
         if (textureColor.a < 0.1) {
             discard;
         }
-        fragColor = linear_fog(textureColor, vertexDistance, FogStart, FogEnd, FogColor);
+        fragColor = apply_fog(textureColor, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
     } else {
         vec3 initialHSV = RGBtoHSV(vertexColor.rgb);
         float v = initialHSV.y * 100 - 50;
@@ -113,7 +109,7 @@ void main() {
             discard;
         }
 
-        fragColor = linear_fog(final, vertexDistance, FogStart, FogEnd, FogColor);
+        fragColor = apply_fog(final, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
     }
 
 
