@@ -1,6 +1,5 @@
 package com.oscimate.firorize.config;
 
-import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.FirorizePipelines;
 import com.oscimate.firorize.Main;
 import com.oscimate.firorize.config.render.BlockSceneRenderState;
@@ -11,7 +10,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.Screen;
@@ -22,7 +20,6 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.SpriteIdentifier;
@@ -79,6 +76,96 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(b + 3, cy + 3, b + 2, cy + 2, colorInt);
         context.fill(b - 1, cy + 3, b - 2, cy + 2, colorInt);
     }
+
+    /** A tiny pixel-art "WWW" globe (9×9), drawn top-left at (px,py). Marks online-imported profiles. */
+    public void drawGlobe(DrawContext context, int px, int py) {
+        final int size = 9, cx = 4, cy = 4;
+        final double r = 4.3;
+        final int ocean = 0xFF3A78C2;
+        final int line = 0xFFDDEEFF;
+        for (int gy = 0; gy < size; gy++) {
+            for (int gx = 0; gx < size; gx++) {
+                int dx = gx - cx, dy = gy - cy;
+                if (dx * dx + dy * dy > r * r) continue;
+                boolean grid = gx == cx || gy == cy
+                        || ((gx == 2 || gx == 6) && Math.abs(dy) <= 3)
+                        || ((gy == 2 || gy == 6) && Math.abs(dx) <= 3);
+                context.fill(px + gx, py + gy, px + gx + 1, py + gy + 1, grid ? line : ocean);
+            }
+        }
+    }
+
+    /** A tiny pixel-art head-and-shoulders silhouette (9×9), drawn top-left at (px,py). Marks
+     *  profiles sent by another player via the inbox. */
+    public void drawPerson(DrawContext context, int px, int py) {
+        final int body = 0xFFDDE3EC;
+        // Head: a 3×3 block centred near the top.
+        context.fill(px + 3, py + 1, px + 6, py + 4, body);
+        // Shoulders: a rounded trapezoid below, narrower at the top.
+        context.fill(px + 2, py + 5, px + 7, py + 6, body);
+        context.fill(px + 1, py + 6, px + 8, py + 9, body);
+    }
+
+    // The button glyphs are authored on a coarse logical grid and blown up to 2px blocks so they read
+    // as chunky Minecraft-style pixels, matching the globe/person markers.
+    private static final int ICON_SCALE = 2;
+    private static final int ICON_COLOR = 0xFFDDE3EC;
+
+    /** Pixel-art "reset" glyph (a circular arrow), top-left at (px,py). */
+    public void drawResetIcon(DrawContext context, int px, int py) {
+        boolean[][] g = new boolean[9][9];
+        double cx = 4, cy = 4, outer = 4.2, inner = 2.0;
+        for (int gy = 0; gy < 9; gy++) {
+            for (int gx = 0; gx < 9; gx++) {
+                double d = Math.hypot(gx - cx, gy - cy);
+                if (d >= inner && d <= outer && !(gx >= 5 && gy <= 3)) g[gy][gx] = true; // open top-right
+            }
+        }
+        // Downward arrowhead at the top opening (clockwise reset).
+        g[1][4] = g[1][5] = g[1][6] = true;
+        g[2][5] = true;
+        blitGrid(context, px, py, g);
+    }
+
+    /** Pixel-art envelope ("email inbox") glyph, top-left at (px,py). */
+    public void drawInboxIcon(DrawContext context, int px, int py) {
+        boolean[][] g = new boolean[7][9]; // 7 rows × 9 cols
+        for (int x = 0; x < 9; x++) { set(g, x, 0); set(g, x, 6); }   // top + bottom edges
+        for (int y = 0; y < 7; y++) { set(g, 0, y); set(g, 8, y); }   // left + right edges
+        markLine(g, 0, 0, 4, 3);   // flap: corners down to the centre
+        markLine(g, 8, 0, 4, 3);
+        blitGrid(context, px, py, g);
+    }
+
+    /** Bresenham line plotted onto the logical grid. */
+    private void markLine(boolean[][] g, int x0, int y0, int x1, int y1) {
+        int dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, err = dx + dy;
+        while (true) {
+            set(g, x0, y0);
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * err;
+            if (e2 >= dy) { err += dy; x0 += sx; }
+            if (e2 <= dx) { err += dx; y0 += sy; }
+        }
+    }
+
+    private void set(boolean[][] g, int x, int y) {
+        if (y >= 0 && y < g.length && x >= 0 && x < g[y].length) g[y][x] = true;
+    }
+
+    /** Renders each set cell of the logical grid as an {@link #ICON_SCALE}px block. */
+    private void blitGrid(DrawContext context, int px, int py, boolean[][] g) {
+        for (int gy = 0; gy < g.length; gy++) {
+            for (int gx = 0; gx < g[gy].length; gx++) {
+                if (g[gy][gx]) {
+                    context.fill(px + gx * ICON_SCALE, py + gy * ICON_SCALE,
+                            px + (gx + 1) * ICON_SCALE, py + (gy + 1) * ICON_SCALE, ICON_COLOR);
+                }
+            }
+        }
+    }
+
     private String hexCode = "#ffffff";
     public Color[] baseColor = new Color[]{new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]), new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1])};
     public static Color[] pickedColor = {new Color(Color.decode("#ffffff").getRGB(), true), new Color(Color.decode("#ffffff").getRGB(), true)};
@@ -468,8 +555,10 @@ public class ChangeFireColorScreen extends Screen {
     public Color[] tempColor;
     public ButtonWidget addColorButton;
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
-    public ButtonWidget shareProfileButton;
+    public ButtonWidget shareBottomButton;
     public ButtonWidget resetProfileButton;
+    public ButtonWidget browseOnlineButton;
+    public ButtonWidget inboxButton;
     private final KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> comparedCurrentFire;
     public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
     public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80;
@@ -506,12 +595,26 @@ public class ChangeFireColorScreen extends Screen {
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this, false);this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
-        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30, wheelCoords[0], 15, this, textRenderer);
+        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, textRenderer);
+
+        // Two button rows stack directly under the profile list (the list height above was shrunk by
+        // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
+        // Inbox icon button to its right (together spanning the list width).
+        this.browseOnlineButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
+                .dimensions(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
+
+        int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
+        int inboxSize = 20, row2Gap = 2;
+        int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
+        this.shareBottomButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
+                .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
+        this.inboxButton = new ButtonWidget.Builder(Text.literal(""), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
+                .dimensions(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
+        // Pull the inbox count so the notification badge is up to date when this screen opens.
+        OnlinePresetsClient.refreshInboxCount();
 
         this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[0], profileButtonY, 20, 20).build();
-
-        this.shareProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> saveProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
-        this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
+        this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
         this.addDrawableChild(addButton);
 //        textFieldWidget.setChangedListener(this::updateCursor);
         updateCursor(this.hexCode);
@@ -540,7 +643,9 @@ public class ChangeFireColorScreen extends Screen {
 
 
         this.addDrawableChild(presetListWidget);
-        this.addDrawableChild(shareProfileButton);
+        this.addDrawableChild(browseOnlineButton);
+        this.addDrawableChild(inboxButton);
+        this.addDrawableChild(shareBottomButton);
         this.addDrawableChild(searchOptions[0]);
         this.addDrawableChild(searchOptions[1]);
         this.addDrawableChild(searchOptions[2]);
@@ -563,12 +668,16 @@ public class ChangeFireColorScreen extends Screen {
             this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
         }
 
-        shareProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
-        shareProfileButton.setTooltipDelay(Duration.ofMillis(750L));
+        shareBottomButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
+        shareBottomButton.setTooltipDelay(Duration.ofMillis(750L));
         addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
         addButton.setTooltipDelay(Duration.ofMillis(750L));
         resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
         resetProfileButton.setTooltipDelay(Duration.ofMillis(750L));
+        browseOnlineButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.onlinePresets")));
+        browseOnlineButton.setTooltipDelay(Duration.ofMillis(750L));
+        inboxButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.inboxButton")));
+        inboxButton.setTooltipDelay(Duration.ofMillis(750L));
         overlayToggles[0].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.baseToggle")));
         overlayToggles[0].setTooltipDelay(Duration.ofMillis(750L));
         overlayToggles[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.overlayToggle")));
@@ -590,20 +699,15 @@ public class ChangeFireColorScreen extends Screen {
     }
 
 
-    private int tooltipTimer = 0;
-
     public int cycleTooltipTimer = 0;
 
-
+    /** Set by {@link PresetListWidget} while hovering an imported profile's globe; drawn once then cleared. */
+    public net.minecraft.text.Text globeTooltip = null;
 
     @Override
     public void tick() {
         super.tick();
 
-
-        if (tooltipTimer > 0) {
-            tooltipTimer--;
-        }
         if (cycleTooltipTimer > 0) {
             cycleTooltipTimer--;
         }
@@ -618,17 +722,6 @@ public class ChangeFireColorScreen extends Screen {
             oos.flush();
             return Base64.getEncoder().encodeToString(baos.toByteArray());
         }
-    }
-
-
-    private void saveProfile() {
-        try {
-            MinecraftClient.getInstance().keyboard.setClipboard(serializeToString(KeyValuePair.of(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getPriorityOrder())));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        tooltipTimer = 40;
-        shareProfileButton.setFocused(false);
     }
 
     @Override
@@ -813,6 +906,8 @@ public class ChangeFireColorScreen extends Screen {
     }
     @Override
     public boolean mouseReleased(net.minecraft.client.gui.Click click) {
+        addDragging = false;
+        dragAdded.clear();
         clicked = false;
         sliderClicked = false;
         // End of a colour-wheel/slider gesture: record one undo step if the colour actually changed.
@@ -831,21 +926,17 @@ public class ChangeFireColorScreen extends Screen {
 
     private boolean isOnAdd = false;
 
+    // Drag-to-add across the search list's left + boxes, so a run of entries can be selected by
+    // dragging over their + icons instead of clicking each one. Tracked at the screen level because
+    // the screen always receives mouseDragged (the entries' mouseClicked returns false, so the list
+    // widget never becomes the drag target).
+    private boolean addDragging = false;
+    private final java.util.Set<String> dragAdded = new java.util.HashSet<>();
+
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
         int keyCode = input.key();
-        if (keyCode == GLFW.GLFW_KEY_D) {
-            testtVal += 45f;
-        }
-        if (keyCode == GLFW.GLFW_KEY_A) {
-            testtVal -= 45f;
-        }
-        if (keyCode == GLFW.GLFW_KEY_W) {
-            testVal += .1f;
-        }
-        if (keyCode == GLFW.GLFW_KEY_S) {
-            testVal -= .1f;
-        }
+
         if (confirmActive) {
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 closeConfirm();
@@ -895,12 +986,28 @@ public class ChangeFireColorScreen extends Screen {
         if ((clicked || sliderClicked) && gestureStartColor == null) {
             gestureStartColor = before;
         }
-        return super.mouseClicked(click, doubled);
+        boolean result = super.mouseClicked(click, doubled);
+        // Begin a drag-to-add gesture if the press landed on a search entry's left + box. The press
+        // itself already handled the first entry, so seed the de-dup set with it.
+        SearchScreenListWidget.BlockEntry addBoxEntry = searchScreenListWidget == null ? null : searchScreenListWidget.entryAtAddBox(mouseX, mouseY);
+        if (addBoxEntry != null) {
+            addDragging = true;
+            dragAdded.clear();
+            dragAdded.add(addBoxEntry.languageDefinition);
+        }
+        return result;
     }
     @Override
     public boolean mouseDragged(net.minecraft.client.gui.Click click, double deltaX, double deltaY) {
         double mouseX = click.x();
         double mouseY = click.y();
+        if (addDragging) {
+            SearchScreenListWidget.BlockEntry e = searchScreenListWidget.entryAtAddBox(mouseX, mouseY);
+            if (e != null && dragAdded.add(e.languageDefinition)) {
+                e.addViaDrag();
+            }
+            return true;
+        }
         if (clicked) {
             updateColorPicker(mouseX, mouseY, false);
         }
@@ -953,11 +1060,9 @@ public class ChangeFireColorScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-        Sprite RESET = FireSprites.block(FireSprites.atlasManager(), "firorize:block/reset");
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, RESET, profileButtonXs[0] + (20 - RESET.getContents().getWidth())/2, profileButtonY + (20 - RESET.getContents().getHeight())/2, RESET.getContents().getWidth(), RESET.getContents().getHeight());
-
-        Sprite SHARE = FireSprites.block(FireSprites.atlasManager(), "firorize:block/share");
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, SHARE, profileButtonXs[1] + (20 - SHARE.getContents().getWidth())/2, profileButtonY + (20 - SHARE.getContents().getHeight())/2, SHARE.getContents().getWidth(), SHARE.getContents().getHeight());
+        // Reset and Inbox button icons, hand-drawn in the same pixel-art style as the globe/person markers.
+        drawResetIcon(context, profileButtonXs[0] + 1, profileButtonY + 1);
+        drawInboxIcon(context, inboxButton.getX() + 1, inboxButton.getY() + 3);
 
         // Colour wheel — drawn through the custom COLOR_WHEEL pipeline (lightness Value carried in
         // the quad's vertex-colour alpha; full brightness here).
@@ -1007,15 +1112,15 @@ public class ChangeFireColorScreen extends Screen {
         int gridY1 = blockSearchDimensions[1] + 40 + 10;
         int gridX2 = width - 20;
         int gridY2 = height - 10;
-        float gridScale = 15f;
+        float gridScale = -15f;
         float gridBoxW = gridX2 - gridX1;
         float gridBoxH = gridY2 - gridY1;
-        float gridOriginX = (width - 300 - 20) - gridX1;
-        float gridOriginY = (20 + blockSearchDimensions[1] + 20 + 10) - gridY1;
+        float gridOriginX = (width - 300 - 20 - 10) - gridX1;
+        float gridOriginY = (20 + blockSearchDimensions[1] + 20 + 10) - gridY1 + 24;
         java.util.List<BlockDrawOp> gridOps = new java.util.ArrayList<>();
         for (int i = 0; i < allBlockUnders.size(); i++) {
             float cellPx = gridOriginX + (blockSearchDimensions[0] - 21) / 10f * (i % 11);
-            float cellPy = gridOriginY + (height - blockSearchDimensions[1] - 40 - 20) / 4f * (i / 11) - dist;
+            float cellPy = gridOriginY + (height - blockSearchDimensions[1] - 40 - 20) / 7f * Math.floorDiv(i, 11) - dist;
             gridOps.add(BlockDrawOp.independent(allBlockUnders.get(i).getDefaultState(),
                     (cellPx - gridBoxW / 2f) / gridScale, (cellPy - gridBoxH) / gridScale,
                     q, true, 1f, 1f, -0.36f, 0f, 1f, 1f, 1f, false));
@@ -1051,12 +1156,38 @@ public class ChangeFireColorScreen extends Screen {
         context.state.addSpecialElement(new BlockSceneRenderState(x1, 0, x2, context.getScaledWindowHeight(), 100f, pvOps,
                 new ScreenRect(0, 0, context.getScaledWindowWidth(), context.getScaledWindowHeight())));
 
-        if (tooltipTimer > 0) {
-            context.drawTooltip(this.textRenderer, Text.translatable("firorize.config.tooltip.copied"), shareProfileButton.getX() + 50, shareProfileButton.getY() - 10);
+        if (globeTooltip != null) {
+            context.drawTooltip(this.textRenderer, globeTooltip, mouseX, mouseY);
+            globeTooltip = null;
         }
         context.getMatrices().popMatrix();
 
+        drawInboxBadge(context);
         if (confirmActive) renderConfirm(context, mouseX, mouseY);
+    }
+
+    /** Red notification badge on the Inbox button showing how many items are waiting (capped "9+"). */
+    private void drawInboxBadge(DrawContext context) {
+        int count = OnlinePresetsClient.inboxCount();
+        if (count <= 0 || inboxButton == null) return;
+        int cx = inboxButton.getX() + inboxButton.getWidth() - 5;
+        int cy = inboxButton.getY() + 3;
+        drawDisc(context, cx, cy, 5.5, 0xFF101010); // dark outline for contrast
+        drawDisc(context, cx, cy, 4.5, 0xFFCC2222);
+        String label = count > 9 ? "9+" : Integer.toString(count);
+        context.drawText(this.textRenderer, label, cx - this.textRenderer.getWidth(label) / 2, cy - 3, 0xFFFFFFFF, false);
+    }
+
+    /** Filled circle of radius {@code r} centred at (cx,cy). */
+    private void drawDisc(DrawContext context, int cx, int cy, double r, int color) {
+        int rr = (int) Math.ceil(r);
+        for (int gy = -rr; gy <= rr; gy++) {
+            for (int gx = -rr; gx <= rr; gx++) {
+                if (gx * gx + gy * gy <= r * r) {
+                    context.fill(cx + gx, cy + gy, cx + gx + 1, cy + gy + 1, color);
+                }
+            }
+        }
     }
 
     @Environment(value= EnvType.CLIENT)
@@ -1320,6 +1451,14 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         @Environment(value=EnvType.CLIENT)
+        /** The entry whose left + (add) box contains (mx,my), or null. Used for click-drag multi-add. */
+        BlockEntry entryAtAddBox(double mx, double my) {
+            BlockEntry e = getEntryAtPosition(mx, my);
+            if (e == null) return null;
+            int boxSize = e.getHeight();
+            return (mx >= e.getX() && mx <= e.getX() + boxSize && my >= e.getY() && my <= e.getY() + boxSize) ? e : null;
+        }
+
         public class BlockEntry
                 extends AlwaysSelectedEntryListWidget.Entry<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
             private final String languageDefinition;
@@ -1412,7 +1551,7 @@ public class ChangeFireColorScreen extends Screen {
                 int x = getX();
                 int y = getY();
                 int entryHeight = getHeight();
-                int boxInset = 2;
+                int boxInset = 0;
                 int boxSize = entryHeight - boxInset * 2;
                 int bx = x + boxInset;
                 int by = y + boxInset;
@@ -1441,7 +1580,9 @@ public class ChangeFireColorScreen extends Screen {
                         }
                     }
                     else if ((!isFocused() && !isSelected && !selected.isEmpty())) {
-                        this.onAddButton();
+                        if (!selected.contains(children().indexOf(this))) {
+                            this.onAddButton();
+                        }
                     } else {
                         ChangeFireColorScreen.this.searchScreenListWidget.setSelected(this);
                         return false;
@@ -1487,6 +1628,18 @@ public class ChangeFireColorScreen extends Screen {
                     ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
                 }
             }
+            /** Adds this entry during a + box click-drag, mirroring a + click in multi-add mode. */
+            void addViaDrag() {
+                if (isCustomized) return; // already coloured; don't reorder/replace on a drag
+                int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
+                if (selected.contains(index)) return;
+                if (selected.isEmpty()) {
+                    ChangeFireColorScreen.this.searchScreenListWidget.setSelected(this);
+                } else {
+                    onAddButton();
+                }
+            }
+
             @Override
             public Text getNarration() {
                 return Text.translatable("narrator.select", this.languageDefinition);

@@ -9,6 +9,8 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 public class ConfigManager {
     public long currentFireHeightSlider = -1;
@@ -57,6 +59,42 @@ public class ConfigManager {
     }
 
     public ArrayList<Integer> priorityOrder;
+
+    // Names of local profiles that were imported from the online gallery; drives the globe marker in
+    // the preset list. Persisted in firorize.json. LinkedHashSet keeps a stable order for the JSON.
+    public LinkedHashSet<String> importedProfiles;
+
+    public LinkedHashSet<String> getImportedProfiles() {
+        return importedProfiles;
+    }
+
+    public void setImportedProfiles(LinkedHashSet<String> importedProfiles) {
+        this.importedProfiles = importedProfiles;
+    }
+
+    // Author (Minecraft username) of each imported profile, keyed by local profile name; powers the
+    // "Created by …" globe tooltip. Kept in lockstep with importedProfiles. Persisted in firorize.json.
+    public LinkedHashMap<String, String> importedAuthors;
+
+    public LinkedHashMap<String, String> getImportedAuthors() {
+        return importedAuthors;
+    }
+
+    public void setImportedAuthors(LinkedHashMap<String, String> importedAuthors) {
+        this.importedAuthors = importedAuthors;
+    }
+
+    // Subset of importedProfiles that arrived via the Inbox (sent by another player). Drives the
+    // person silhouette + "Sent by …" marker instead of the globe + "Created by …". Persisted.
+    public LinkedHashSet<String> inboxImports;
+
+    public LinkedHashSet<String> getInboxImports() {
+        return inboxImports;
+    }
+
+    public void setInboxImports(LinkedHashSet<String> inboxImports) {
+        this.inboxImports = inboxImports;
+    }
 
     public KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColors() {
         return blockFireColors;
@@ -181,6 +219,24 @@ public class ConfigManager {
             save();
         } else {
             setCurrentPreset(jsonOutput.getCurrentPreset());
+        }
+        if (jsonOutput.getImportedProfiles() == null) {
+            setImportedProfiles(new LinkedHashSet<>());
+            save();
+        } else {
+            setImportedProfiles(jsonOutput.getImportedProfiles());
+        }
+        if (jsonOutput.getImportedAuthors() == null) {
+            setImportedAuthors(new LinkedHashMap<>());
+            save();
+        } else {
+            setImportedAuthors(jsonOutput.getImportedAuthors());
+        }
+        if (jsonOutput.getInboxImports() == null) {
+            setInboxImports(new LinkedHashSet<>());
+            save();
+        } else {
+            setInboxImports(jsonOutput.getInboxImports());
         }
     }
 

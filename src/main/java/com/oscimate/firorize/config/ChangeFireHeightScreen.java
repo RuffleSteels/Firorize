@@ -1,8 +1,7 @@
 package com.oscimate.firorize.config;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+
 import com.oscimate.firorize.Main;
-import com.oscimate.firorize.mixin.fire_overlays.client.GameRendererMixin;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -13,16 +12,11 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
 
 public class ChangeFireHeightScreen extends Screen {
     private Screen parent;
-
-    private int counter = 16;
-    private int ticks = 0;
 
     protected ChangeFireHeightScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
@@ -58,29 +52,38 @@ public class ChangeFireHeightScreen extends Screen {
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
-
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-
         super.render(context, mouseX, mouseY, delta);
 
-        // 2D preview of the (animated) fire overlay sprite; the height slider shifts it vertically so
-        // the user can see the effect. (The old immediate-mode 3D overlay quads can't be drawn in the
-        // 1.21.5+ 2D GUI without a special-element renderer; this conveys the same adjustment.)
-        Sprite sprite = MinecraftClient.getInstance().getAtlasManager().getSprite(ModelBaker.FIRE_1);
-        double fireHeight = FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider());
-        int size = 120;
-        int cx = this.width / 2;
-        int baseY = this.height / 2 + 60;
-        int offsetY = (int) Math.round(fireHeight * size);
-        context.drawSpriteStretched(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, sprite,
-                cx - size / 2, baseY - size + offsetY, size, size);
+        MatrixStack matrices = new MatrixStack();
 
-        if (ticks % 4 == 0) counter++;
-        ticks++;
-        if (counter > 32) {
-            counter = 0;
-            ticks = 0;
+        Sprite sprite = client.getAtlasManager().getSprite(ModelBaker.FIRE_1);
+
+
+        VertexConsumer vertexConsumer = client.getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayers.fireScreenEffect(sprite.getAtlasId()));
+        float f = sprite.getMinU();
+        float g = sprite.getMaxU();
+        float h = sprite.getMinV();
+        float i = sprite.getMaxV();
+        float j = 1.0F;
+        matrices.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider() - (client.world == null ? 2 : 0)), 0.0);
+
+        for (int k = 0; k < 2; k++) {
+            matrices.push();
+            float l = -0.5F;
+            float m = 0.5F;
+            float n = -0.5F;
+            float o = 0.5F;
+            float p = -0.5F;
+            matrices.translate(-(k * 2 - 1) * 0.24F, -0.3F, 0.0F);
+            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((k * 2 - 1) * 10.0F));
+            Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+            vertexConsumer.vertex(matrix4f, -0.5F, -0.5F, -0.5F).texture(g, i).color(1.0F, 1.0F, 1.0F, 0.9F);
+            vertexConsumer.vertex(matrix4f, 0.5F, -0.5F, -0.5F).texture(f, i).color(1.0F, 1.0F, 1.0F, 0.9F);
+            vertexConsumer.vertex(matrix4f, 0.5F, 0.5F, -0.5F).texture(f, h).color(1.0F, 1.0F, 1.0F, 0.9F);
+            vertexConsumer.vertex(matrix4f, -0.5F, 0.5F, -0.5F).texture(g, h).color(1.0F, 1.0F, 1.0F, 0.9F);
+            matrices.pop();
         }
     }
 

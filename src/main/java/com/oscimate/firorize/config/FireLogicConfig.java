@@ -4,6 +4,8 @@ import com.oscimate.firorize.Main;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 public class FireLogicConfig {
 
@@ -54,4 +56,22 @@ public class FireLogicConfig {
     }
 
     public KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]> getCurrentBlockFireColours() {return blockFireColors;}
+
+    public LinkedHashSet<String> importedProfiles = Main.CONFIG_MANAGER.getImportedProfiles();
+
+    public LinkedHashSet<String> getImportedProfiles() {
+        return importedProfiles;
+    }
+
+    public LinkedHashMap<String, String> importedAuthors = Main.CONFIG_MANAGER.getImportedAuthors();
+
+    public LinkedHashMap<String, String> getImportedAuthors() {
+        return importedAuthors;
+    }
+
+    public LinkedHashSet<String> inboxImports = Main.CONFIG_MANAGER.getInboxImports();
+
+    public LinkedHashSet<String> getInboxImports() {
+        return inboxImports;
+    }
 }

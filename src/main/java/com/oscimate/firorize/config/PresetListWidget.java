@@ -193,6 +193,9 @@ class PresetListWidget
                             Text.translatable("firorize.config.confirm.deleteProfile.message"),
                             () -> {
                                 Main.CONFIG_MANAGER.getFireColorPresets().remove(toDelete);
+                                Main.CONFIG_MANAGER.getImportedProfiles().remove(toDelete); // drop the online marker too
+                                Main.CONFIG_MANAGER.getImportedAuthors().remove(toDelete);   // and its recorded author
+                                Main.CONFIG_MANAGER.getInboxImports().remove(toDelete);      // and the friend-import flag
                                 PresetListWidget.this.removeEntry(self); // removeEntry relayouts; children().remove did not refresh live
                                 // setSelected updates currentPreset to the new selection; save afterwards
                                 // so the persisted currentPreset never dangles at the deleted profile.
@@ -206,6 +209,7 @@ class PresetListWidget
             return super.mouseClicked(click, doubled);
         }
         private float alphaa;
+
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int x = getX();
@@ -223,7 +227,29 @@ class PresetListWidget
                 instance.drawX(context, y + entryHeight / 2, x + entryWidth - 4 - closeWidth / 2);
                 context.drawStrokedRectangle(x+entryWidth-closeWidth-4, y + (entryHeight / 2) - (closeWidth / 2), closeWidth, closeWidth, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
             }
-            context.drawCenteredTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y + (entryHeight - 8) / 2, 0xFFFFFFFF);
+            // Marker for imported profiles (drawn on the left; the name is centred). A person silhouette
+            // for profiles sent by a friend via the inbox, otherwise the globe for the public gallery.
+            if (Main.CONFIG_MANAGER.getImportedProfiles().contains(languageDefinition)) {
+                int iconX = x + 4;
+                int iconY = y + (entryHeight - 9) / 2;
+                boolean fromFriend = Main.CONFIG_MANAGER.getInboxImports().contains(languageDefinition);
+                if (fromFriend) {
+                    instance.drawPerson(context, iconX, iconY);
+                } else {
+                    instance.drawGlobe(context, iconX, iconY);
+                }
+                // Hovering shows who the profile came from.
+                if (mouseX >= iconX && mouseX <= iconX + 9 && mouseY >= iconY && mouseY <= iconY + 9) {
+                    String author = Main.CONFIG_MANAGER.getImportedAuthors().get(languageDefinition);
+                    if (author == null || author.isBlank()) {
+                        instance.globeTooltip = Text.translatable("firorize.config.tooltip.importedOnline");
+                    } else {
+                        instance.globeTooltip = Text.translatable(
+                                fromFriend ? "firorize.config.tooltip.sentBy" : "firorize.config.tooltip.createdBy", author);
+                    }
+                }
+            }
+            context.drawCenteredTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y + (entryHeight - 8) / 2 +1, 0xFFFFFFFF);
         }
     }
 }
