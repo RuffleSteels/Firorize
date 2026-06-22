@@ -45,6 +45,7 @@
   "firorize.config.confirm.deleteProfile.message": "確定要刪除此設定檔嗎？此操作無法復原。",
   "firorize.config.button.communityProfiles": "社群設定檔",
   "firorize.config.button.share": "分享",
+  "firorize.config.button.inbox": "收件匣",
   "firorize.config.button.uploadPreset": "上傳",
   "firorize.config.button.importPreset": "匯入",
   "firorize.config.tooltip.onlinePresets": "瀏覽並匯入社群分享的火焰設定檔",

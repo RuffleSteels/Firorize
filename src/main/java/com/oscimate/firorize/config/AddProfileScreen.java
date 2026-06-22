@@ -50,19 +50,22 @@ public class AddProfileScreen extends Screen {
     @Override
     protected void init() {
         parent.isPresetAdd = false;
+        // Box sized snugly to its content: title, name field, the two buttons, and a reserved line
+        // for the validation message — no dead space at the bottom.
+        int pad = 10;
         boxW = Math.min(300, width - 40);
-        boxH = 120;
+        boxH = 96;
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
 
-        this.presetNameField = new PlaceholderField(this.textRenderer, boxX + 20, boxY + 34, boxW - 40, 20, ScreenTexts.DONE);
+        this.presetNameField = new PlaceholderField(this.textRenderer, boxX + pad, boxY + 28, boxW - pad * 2, 20, ScreenTexts.DONE);
         presetNameField.setMaxLength(Integer.MAX_VALUE);
 
-        int btnW = (boxW - 40 - 6) / 2;
+        int btnW = (boxW - pad * 2 - 6) / 2;
         this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting())
-                .dimensions(boxX + 20, boxY + 64, btnW, 20).build();
+                .dimensions(boxX + pad, boxY + 54, btnW, 20).build();
         this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button -> addFromNew())
-                .dimensions(boxX + 20 + btnW + 6, boxY + 64, btnW, 20).build();
+                .dimensions(boxX + pad + btnW + 6, boxY + 54, btnW, 20).build();
 
         this.addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), button -> close())
                 .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
@@ -154,7 +157,7 @@ public class AddProfileScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(textRenderer, getTitle(), width / 2, boxY + 9, 0xFFFFFFFF);
+        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
@@ -163,7 +166,7 @@ public class AddProfileScreen extends Screen {
 
         // Validation feedback as red text in the dialog (matching the other dialogs), not a tooltip.
         if (nameError != null) {
-            context.drawCenteredTextWithShadow(textRenderer, nameError, width / 2, boxY + boxH - 18, 0xFFE08080);
+            context.drawCenteredTextWithShadow(textRenderer, nameError, width / 2, boxY + boxH - 14, 0xFFE08080);
         }
     }
 }

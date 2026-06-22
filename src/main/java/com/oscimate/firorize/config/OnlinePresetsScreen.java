@@ -1,11 +1,14 @@
 package com.oscimate.firorize.config;
 
+import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.texture.Sprite;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -56,6 +59,7 @@ public class OnlinePresetsScreen extends Screen {
     private int privacyX, privacyY, privacyW, privacyH;
 
     private int boxX, boxY, boxW, boxH;
+    private int refreshIconX, refreshIconY;
 
     public OnlinePresetsScreen(ChangeFireColorScreen parent, View view) {
         super(Text.translatable(view == View.INBOX ? "firorize.config.title.inbox" : "firorize.config.title.communityProfiles"));
@@ -83,9 +87,10 @@ public class OnlinePresetsScreen extends Screen {
             listY = boxY + 46;
             listH = boxH - 46 - 34;
         } else {
-            // Room for the wrapped inbox description under the title, and the Send button at the bottom.
-            listY = boxY + 46;
-            listH = boxH - 46 - 30;
+            // Room for the wrapped inbox description under the title (which sits lower than the
+            // title/buttons row), and the Send button at the bottom.
+            listY = boxY + 52;
+            listH = boxH - 52 - 30;
         }
 
         listWidget = new OnlinePresetListWidget(boxX + 10, listY, boxW - 20, listH, this, this.textRenderer);
@@ -114,9 +119,12 @@ public class OnlinePresetsScreen extends Screen {
         addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), b -> close())
                 .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
-        // Refresh: re-pulls the current view from the Worker.
-        ButtonWidget refreshButton = new ButtonWidget.Builder(Text.literal("⟳"), b -> { state = null; load(); })
-                .dimensions(boxX + boxW - 40, boxY + 6, 16, 16).build();
+        // Refresh: re-pulls the current view from the Worker. Same 16×16 footprint as the close
+        // button beside it; the refresh.png sprite is drawn over it in render() (see drawRefreshIcon).
+        refreshIconX = boxX + boxW - 42;
+        refreshIconY = boxY + 6;
+        ButtonWidget refreshButton = new ButtonWidget.Builder(Text.empty(), b -> { state = null; load(); })
+                .dimensions(refreshIconX, refreshIconY, 16, 16).build();
         refreshButton.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(Text.translatable("firorize.config.tooltip.refresh")));
         addDrawableChild(refreshButton);
 
@@ -300,7 +308,7 @@ public class OnlinePresetsScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(textRenderer, getTitle(), width / 2, boxY + 9, 0xFFFFFFFF);
+        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
@@ -308,9 +316,9 @@ public class OnlinePresetsScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         if (view == View.INBOX) {
-            int dy = boxY + 22;
-            for (net.minecraft.text.OrderedText line : textRenderer.wrapLines(Text.translatable("firorize.config.label.inboxDescription"), boxW - 24)) {
-                context.drawCenteredTextWithShadow(textRenderer, line, width / 2, dy, 0xFF9A9A9A);
+            int dy = boxY + 28; // padded below the title so it clears the refresh/close buttons
+            for (net.minecraft.text.OrderedText line : textRenderer.wrapLines(Text.translatable("firorize.config.label.inboxDescription"), boxW - 20)) {
+                context.drawTextWithShadow(textRenderer, line, boxX + 10, dy, 0xFF9A9A9A);
                 dy += 10;
             }
         }
@@ -326,12 +334,26 @@ public class OnlinePresetsScreen extends Screen {
             context.drawCenteredTextWithShadow(textRenderer, flashText, width / 2, boxY + boxH - 40, flashError ? 0xFFE08080 : 0xFF80E080);
         }
 
+        // refresh.png sprite, centred over its (label-less) button.
+        drawRefreshIcon(context, refreshIconX, refreshIconY);
+
         // Privacy policy link: small, gray, underlined; brighter on hover.
         int privacyColor = overPrivacy(mouseX, mouseY) ? 0xFFCFCFCF : 0xFF8C8C8C;
         context.getMatrices().pushMatrix();
         context.getMatrices().scale(PRIVACY_SCALE, PRIVACY_SCALE);
         context.drawText(textRenderer, privacyText, Math.round(privacyX / PRIVACY_SCALE), Math.round(privacyY / PRIVACY_SCALE), privacyColor, false);
         context.getMatrices().popMatrix();
+    }
+
+    /** Draws the {@code firorize:block/refresh} sprite centred in the 16×16 refresh button at (px,py).
+     *  Rendered smaller than the button so it doesn't crowd the edges. Uses the block atlas the same
+     *  way {@link UndoButton} draws its icon. */
+    private static final int REFRESH_ICON_SIZE = 11;
+    private void drawRefreshIcon(DrawContext context, int px, int py) {
+        Sprite refresh = FireSprites.block(FireSprites.atlasManager(), "firorize:block/refresh");
+        int off = (16 - REFRESH_ICON_SIZE) / 2;
+        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, refresh,
+                px + off, py + off, REFRESH_ICON_SIZE, REFRESH_ICON_SIZE);
     }
 
     private Text statusText() {

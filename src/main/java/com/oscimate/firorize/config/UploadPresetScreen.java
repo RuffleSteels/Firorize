@@ -215,7 +215,7 @@ public class UploadPresetScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(textRenderer, getTitle(), width / 2, boxY + 9, 0xFFFFFFFF);
+        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
@@ -223,8 +223,8 @@ public class UploadPresetScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         // Selected profile, for confirmation.
-        context.drawCenteredTextWithShadow(textRenderer,
-                Text.translatable("firorize.config.label.profileName", profileName), width / 2, boxY + 28, 0xFFB0B0B0);
+        context.drawTextWithShadow(textRenderer,
+                Text.translatable("firorize.config.label.profileName", profileName), boxX + 10, boxY + 28, 0xFFB0B0B0);
 
         if (status != null) {
             context.drawCenteredTextWithShadow(textRenderer, status, width / 2, boxY + boxH - 44, statusError ? 0xFFE08080 : 0xFF80E080);

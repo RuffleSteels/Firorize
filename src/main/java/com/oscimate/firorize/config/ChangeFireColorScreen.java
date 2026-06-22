@@ -1,5 +1,6 @@
 package com.oscimate.firorize.config;
 
+import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.FirorizePipelines;
 import com.oscimate.firorize.Main;
 import com.oscimate.firorize.config.render.BlockSceneRenderState;
@@ -10,6 +11,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.Screen;
@@ -20,6 +22,7 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.SpriteIdentifier;
@@ -106,64 +109,15 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(px + 1, py + 6, px + 8, py + 9, body);
     }
 
-    // The button glyphs are authored on a coarse logical grid and blown up to 2px blocks so they read
-    // as chunky Minecraft-style pixels, matching the globe/person markers.
-    private static final int ICON_SCALE = 2;
-    private static final int ICON_COLOR = 0xFFDDE3EC;
-
-    /** Pixel-art "reset" glyph (a circular arrow), top-left at (px,py). */
+    /** Draws the reset.png sprite centred in the 20×20 reset-profile button at (px,py). Uses the
+     *  block atlas the same way {@link UndoButton} draws its icon. */
+    // Even size so (20 - size) splits evenly: the sprite is then pixel-exact centred in the button.
+    private static final int RESET_ICON_SIZE = 14;
     public void drawResetIcon(DrawContext context, int px, int py) {
-        boolean[][] g = new boolean[9][9];
-        double cx = 4, cy = 4, outer = 4.2, inner = 2.0;
-        for (int gy = 0; gy < 9; gy++) {
-            for (int gx = 0; gx < 9; gx++) {
-                double d = Math.hypot(gx - cx, gy - cy);
-                if (d >= inner && d <= outer && !(gx >= 5 && gy <= 3)) g[gy][gx] = true; // open top-right
-            }
-        }
-        // Downward arrowhead at the top opening (clockwise reset).
-        g[1][4] = g[1][5] = g[1][6] = true;
-        g[2][5] = true;
-        blitGrid(context, px, py, g);
-    }
-
-    /** Pixel-art envelope ("email inbox") glyph, top-left at (px,py). */
-    public void drawInboxIcon(DrawContext context, int px, int py) {
-        boolean[][] g = new boolean[7][9]; // 7 rows × 9 cols
-        for (int x = 0; x < 9; x++) { set(g, x, 0); set(g, x, 6); }   // top + bottom edges
-        for (int y = 0; y < 7; y++) { set(g, 0, y); set(g, 8, y); }   // left + right edges
-        markLine(g, 0, 0, 4, 3);   // flap: corners down to the centre
-        markLine(g, 8, 0, 4, 3);
-        blitGrid(context, px, py, g);
-    }
-
-    /** Bresenham line plotted onto the logical grid. */
-    private void markLine(boolean[][] g, int x0, int y0, int x1, int y1) {
-        int dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
-        int sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, err = dx + dy;
-        while (true) {
-            set(g, x0, y0);
-            if (x0 == x1 && y0 == y1) break;
-            int e2 = 2 * err;
-            if (e2 >= dy) { err += dy; x0 += sx; }
-            if (e2 <= dx) { err += dx; y0 += sy; }
-        }
-    }
-
-    private void set(boolean[][] g, int x, int y) {
-        if (y >= 0 && y < g.length && x >= 0 && x < g[y].length) g[y][x] = true;
-    }
-
-    /** Renders each set cell of the logical grid as an {@link #ICON_SCALE}px block. */
-    private void blitGrid(DrawContext context, int px, int py, boolean[][] g) {
-        for (int gy = 0; gy < g.length; gy++) {
-            for (int gx = 0; gx < g[gy].length; gx++) {
-                if (g[gy][gx]) {
-                    context.fill(px + gx * ICON_SCALE, py + gy * ICON_SCALE,
-                            px + (gx + 1) * ICON_SCALE, py + (gy + 1) * ICON_SCALE, ICON_COLOR);
-                }
-            }
-        }
+        Sprite reset = FireSprites.block(FireSprites.atlasManager(), "firorize:block/reset");
+        int off = (20 - RESET_ICON_SIZE) / 2; // centred in the 20×20 button
+        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, reset,
+                px + off, py + off, RESET_ICON_SIZE, RESET_ICON_SIZE);
     }
 
     private String hexCode = "#ffffff";
@@ -421,7 +375,7 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(bx - 1, by - 1, bx + confirmBoxW + 1, by + confirmBoxH + 1, 0xFF000000);
         context.fill(bx, by, bx + confirmBoxW, by + confirmBoxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(textRenderer, confirmTitle, width / 2, by + 10, 0xFFFFFFFF);
+        context.drawTextWithShadow(textRenderer, confirmTitle, bx + 12, by + 10, 0xFFFFFFFF);
         int ty = by + 30;
         for (OrderedText line : textRenderer.wrapLines(confirmMessage, confirmBoxW - 24)) {
             context.drawCenteredTextWithShadow(textRenderer, line, width / 2, ty, 0xFFC0C0C0);
@@ -599,22 +553,27 @@ public class ChangeFireColorScreen extends Screen {
 
         // Two button rows stack directly under the profile list (the list height above was shrunk by
         // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
-        // Inbox icon button to its right (together spanning the list width).
+        // "Inbox" text button to its right (together spanning the list width).
         this.browseOnlineButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
                 .dimensions(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
 
         int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
-        int inboxSize = 20, row2Gap = 2;
+        int row2Gap = 2;
+        // Inbox button wraps narrowly to its label and stays right-aligned at the end of the row;
+        // Share fills the remaining width to its left.
+        Text inboxLabel = Text.translatable("firorize.config.button.inbox");
+        int inboxSize = textRenderer.getWidth(inboxLabel) + 12;
         int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
         this.shareBottomButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
                 .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
-        this.inboxButton = new ButtonWidget.Builder(Text.literal(""), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
+        this.inboxButton = new ButtonWidget.Builder(inboxLabel, button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
                 .dimensions(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
         // Pull the inbox count so the notification badge is up to date when this screen opens.
         OnlinePresetsClient.refreshInboxCount();
 
-        this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[0], profileButtonY, 20, 20).build();
-        this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
+        // Right-aligned: Add flush against the panel's right edge, Reset directly to its left.
+        this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
+        this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
         this.addDrawableChild(addButton);
 //        textFieldWidget.setChangedListener(this::updateCursor);
         updateCursor(this.hexCode);
@@ -1060,9 +1019,8 @@ public class ChangeFireColorScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-        // Reset and Inbox button icons, hand-drawn in the same pixel-art style as the globe/person markers.
-        drawResetIcon(context, profileButtonXs[0] + 1, profileButtonY + 1);
-        drawInboxIcon(context, inboxButton.getX() + 1, inboxButton.getY() + 3);
+        // Reset-profile button icon (reset.png), centred in its 20×20 button.
+        drawResetIcon(context, profileButtonXs[1], profileButtonY);
 
         // Colour wheel — drawn through the custom COLOR_WHEEL pipeline (lightness Value carried in
         // the quad's vertex-colour alpha; full brightness here).
@@ -1091,10 +1049,10 @@ public class ChangeFireColorScreen extends Screen {
         q.rotateX((float) Math.toRadians(45));
         q.rotateY((float) Math.toRadians(-45));
 
-        if (Math.ceil(allBlockUnders.size()/11f) > 4) {
+        if (Math.ceil(allBlockUnders.size()/11f) > 7) {
             double amount = 0.15 * ((Math.ceil(allBlockUnders.size()/11f)-4)/2);
             dist = (float) (dist + (forwards ? amount : -amount));
-            if (dist > (31 * (Math.ceil(allBlockUnders.size()/11f)-4))) {
+            if (dist > (10 * (Math.ceil(allBlockUnders.size()/11f)-4))) {
                 counter++;
                 forwards = false;
             } else if (dist < 1) {

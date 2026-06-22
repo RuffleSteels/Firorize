@@ -102,8 +102,8 @@ public class BlockSceneRenderer extends SpecialGuiElementRenderer<BlockSceneRend
     private static void setFrontLighting() {
         if (lightingBuffer == null) {
             GpuDevice device = RenderSystem.getDevice();
-            Vector3f light0 = new Vector3f(0.2f, 1.0f, 0.7f).normalize();
-            Vector3f light1 = new Vector3f(-0.2f, 1.0f, -0.7f).normalize();
+            Vector3f light0 = new Vector3f(1f, -1.0f, 0.7f).normalize();
+            Vector3f light1 = new Vector3f(-1f, -1.0f, -0.7f).normalize();
             try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
                 ByteBuffer data = Std140Builder.onStack(stack, DiffuseLighting.UBO_SIZE)
                         .putVec3(light0).putVec3(light1).get();
