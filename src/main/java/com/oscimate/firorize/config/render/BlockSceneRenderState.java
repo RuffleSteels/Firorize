@@ -1,29 +1,32 @@
 package com.oscimate.firorize.config.render;
 
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.gui.render.state.special.SpecialGuiElementRenderState;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 import org.joml.Quaternionf;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * A 3D "scene" of block models drawn inside the config screen via {@link BlockSceneRenderer}. Since
- * 1.21.5 the GUI matrix stack is 2D, so block models must be rendered through a registered
- * {@code SpecialGuiElementRenderer} into an offscreen texture and composited back. Each {@link BlockDrawOp}
- * carries its own transform (matching the old immediate-mode {@code translate→rotate→scale→translate}
- * sequence) and tint; {@code customTint} ops are drawn through {@code FirorizePipelines.getCustomTint()}.
+ * A 3D "scene" of block models drawn inside the config screen via {@link BlockSceneRenderer}. The GUI
+ * matrix stack is 2D, so block models are rendered through a registered Picture-in-Picture renderer
+ * into an offscreen texture and composited back. Each {@link BlockDrawOp} carries its own transform
+ * (matching the old immediate-mode {@code translate→rotate→scale→translate} sequence) and tint;
+ * {@code customTint} ops are drawn through {@code FirorizePipelines.getCustomTint()}.
+ *
+ * <p>Coordinate components follow the {@link PictureInPictureRenderState} convention: {@code x0/y0}
+ * is the top-left and {@code x1/y1} the bottom-right.
  */
 public record BlockSceneRenderState(
-        int x1, int y1, int x2, int y2, float scale,
+        int x0, int y0, int x1, int y1, float scale,
         List<BlockDrawOp> ops,
-        @Nullable ScreenRect scissorArea,
-        @Nullable ScreenRect bounds
-) implements SpecialGuiElementRenderState {
+        @Nullable ScreenRectangle scissorArea,
+        @Nullable ScreenRectangle bounds
+) implements PictureInPictureRenderState {
 
-    public BlockSceneRenderState(int x1, int y1, int x2, int y2, float scale, List<BlockDrawOp> ops, @Nullable ScreenRect scissorArea) {
-        this(x1, y1, x2, y2, scale, ops, scissorArea, SpecialGuiElementRenderState.createBounds(x1, y1, x2, y2, scissorArea));
+    public BlockSceneRenderState(int x0, int y0, int x1, int y1, float scale, List<BlockDrawOp> ops, @Nullable ScreenRectangle scissorArea) {
+        this(x0, y0, x1, y1, scale, ops, scissorArea, PictureInPictureRenderState.getBounds(x0, y0, x1, y1, scissorArea));
     }
 
     /**
