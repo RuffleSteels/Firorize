@@ -5,13 +5,13 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.oscimate.firorize.ColorizeMath;
 import com.oscimate.firorize.Main;
-import net.minecraft.client.resource.metadata.AnimationFrameResourceMetadata;
-import net.minecraft.client.resource.metadata.AnimationResourceMetadata;
+import net.minecraft.client.resources.metadata.animation.AnimationFrame;
+import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.client.renderer.texture.TextureAtlasSpriteDimensions;
-import net.minecraft.client.renderer.texture.TextureAtlasSpriteLoader;
+import net.minecraft.client.resources.metadata.animation.FrameSize;
+import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Final;
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 
 @Mixin(SpriteLoader.class)
 public class SpriteLoaderMixin {
-    @Shadow @Final private Identifier id;
+    @Shadow @Final private Identifier location;
     @Unique
     public ByteBuffer deepCopy(ByteBuffer source, ByteBuffer target) {
         int sourceP = source.position();
@@ -53,23 +53,23 @@ public class SpriteLoaderMixin {
 
     @Unique
     ArrayList<Identifier> validIds = new ArrayList<>(List.of(
-            Identifier.of("firorize:block/blank_fire_overlay_0"),
-            Identifier.of("firorize:block/blank_fire_overlay_1"),
-            Identifier.of("firorize:block/blank_fire_0"),
-            Identifier.of("firorize:block/blank_fire_1")
+            Identifier.parse("firorize:block/blank_fire_overlay_0"),
+            Identifier.parse("firorize:block/blank_fire_overlay_1"),
+            Identifier.parse("firorize:block/blank_fire_0"),
+            Identifier.parse("firorize:block/blank_fire_1")
     ));
 
     @Inject(method = "stitch", at = @At("HEAD"))
     @SuppressWarnings("deprecation") // TextureAtlas.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
-    private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
-        if (id.equals(TextureAtlas.BLOCK_ATLAS_TEXTURE)) {
+    private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.Preparations> cir, @Local LocalRef<List<SpriteContents>> sprites) {
+        if (location.equals(TextureAtlas.LOCATION_BLOCKS)) {
             // Animation for the generated fire sprites, matching blank_fire_{0,1}.png.mcmeta
             // (32 frames of 16x16, reordered 16..31 then 0..15). getMetadata() was removed in 1.21.11.
-            List<AnimationFrameResourceMetadata> fireFrames = new ArrayList<>();
-            for (int f = 16; f < 32; f++) fireFrames.add(new AnimationFrameResourceMetadata(f));
-            for (int f = 0; f < 16; f++) fireFrames.add(new AnimationFrameResourceMetadata(f));
-            AnimationResourceMetadata fireAnimation =
-                    new AnimationResourceMetadata(Optional.of(fireFrames), Optional.of(16), Optional.of(16), 1, false);
+            List<AnimationFrame> fireFrames = new ArrayList<>();
+            for (int f = 16; f < 32; f++) fireFrames.add(new AnimationFrame(f));
+            for (int f = 0; f < 16; f++) fireFrames.add(new AnimationFrame(f));
+            AnimationMetadataSection fireAnimation =
+                    new AnimationMetadataSection(Optional.of(fireFrames), Optional.of(16), Optional.of(16), 1, false);
 
             List<int[]> ints = Stream.concat(
                     Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
@@ -95,9 +95,9 @@ public class SpriteLoaderMixin {
 
             for (int z = 0; z < 4; z++) {
                 for (SpriteContents spriteContents : sp) {
-                    if (validIds.contains(spriteContents.getId())) {
-                        if (spriteContents.getId().equals(validIds.get(z))) {
-                            boolean isOverlay = validIds.subList(0, 2).contains(spriteContents.getId());
+                    if (validIds.contains(spriteContents.name())) {
+                        if (spriteContents.name().equals(validIds.get(z))) {
+                            boolean isOverlay = validIds.subList(0, 2).contains(spriteContents.name());
 
                             ByteBuffer original = MemoryUtil.memByteBuffer((((NativeImageInvoker) (Object) ((SpriteContentsInvoker) spriteContents).getImage())).getPointer(), (int) (((NativeImageInvoker) (Object) ((SpriteContentsInvoker) spriteContents).getImage())).getSizeBytes());
 
@@ -157,13 +157,13 @@ public class SpriteLoaderMixin {
                                     }
                                 }
 
-                                int num = spriteContents.getId().toString().contains("1") ? 1 : 0;
+                                int num = spriteContents.name().toString().contains("1") ? 1 : 0;
 
                                 if (!isOverlay) {
                                     all.add(new SpriteContents(
-                                            Identifier.of("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1])),
-                                            new SpriteDimensions(16, 16),
-                                            NativeImageInvoker.invokeInit(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer),
+                                            Identifier.parse("block/fire_" + num + "_" + Math.abs(ints.get(i)[0]) + "_" + Math.abs(ints.get(i)[1])),
+                                            new FrameSize(16, 16),
+                                            new NativeImage(NativeImage.Format.RGBA, 16, 16 * 32, false, pointer),
                                             Optional.of(fireAnimation),
                                             List.of(),
                                             Optional.empty()));
