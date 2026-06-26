@@ -7,8 +7,11 @@ name: Check Build
 on:
   # Build on branch pushes and PRs, but not on tag pushes — a tag added to an
   # already-pushed commit would otherwise duplicate the run for that commit.
+  # Match all branches explicitly: this runs on every branch push and, because
+  # tags aren't branches, naturally skips tag pushes (a `tags-ignore`-only
+  # filter stopped branch pushes from triggering at all).
   push:
-    tags-ignore: ['**']
+    branches: ['**']
   pull_request:
 
 jobs:
