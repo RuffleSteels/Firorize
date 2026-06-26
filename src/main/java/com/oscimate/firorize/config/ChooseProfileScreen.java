@@ -1,15 +1,15 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.narration.NarrationElementOutput;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public class ChooseProfileScreen extends Screen {
     private int boxX, boxY, boxW, boxH;
 
     public ChooseProfileScreen(Screen origin, OnlinePresetsScreen online) {
-        super(Text.translatable("firorize.config.title.chooseProfile"));
+        super(Component.translatable("firorize.config.title.chooseProfile"));
         this.origin = origin;
         this.online = online;
         this.names = new ArrayList<>(Main.CONFIG_MANAGER.getFireColorPresets().keySet());
@@ -52,16 +52,16 @@ public class ChooseProfileScreen extends Screen {
         addDrawableChild(list);
 
         int btnW = (boxW - 20 - 6) / 2;
-        ButtonWidget uploadButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.uploadOnline"), b -> proceed(false))
+        Button uploadButton = new Button.Builder(Component.translatable("firorize.config.button.uploadOnline"), b -> proceed(false))
                 .dimensions(boxX + 10, boxY + boxH - 26, btnW, 20).build();
-        ButtonWidget sendButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.sendToFriend"), b -> proceed(true))
+        Button sendButton = new Button.Builder(Component.translatable("firorize.config.button.sendToFriend"), b -> proceed(true))
                 .dimensions(boxX + 10 + btnW + 6, boxY + boxH - 26, btnW, 20).build();
         uploadButton.active = !names.isEmpty();
         sendButton.active = !names.isEmpty();
         addDrawableChild(uploadButton);
         addDrawableChild(sendButton);
 
-        addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), b -> close())
+        addDrawableChild(new Button.Builder(Component.literal("x"), b -> close())
                 .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         super.init();
@@ -86,13 +86,13 @@ public class ChooseProfileScreen extends Screen {
 
     @Override
     public void resize(int width, int height) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         Main.setScale(width, height, client);
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Overlay the screen we came from (the config editor, or the online dialog) dimmed, rather than
         // cutting through to the blurred game.
         ChangeFireColorScreen.renderModalBackdrop(context, origin, delta);
@@ -100,20 +100,20 @@ public class ChooseProfileScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         if (names.isEmpty()) {
-            context.drawCenteredTextWithShadow(textRenderer, Text.translatable("firorize.config.status.noProfiles"),
+            context.drawCenteredTextWithShadow(font, Component.translatable("firorize.config.status.noProfiles"),
                     width / 2, boxY + boxH / 2 - 4, 0xFFC0C0C0);
         }
     }
 
     /** Compact scrollable list of profile names with single-selection, styled like the online list. */
-    private final class ProfileList extends ClickableWidget {
+    private final class ProfileList extends AbstractWidget {
         private static final int ROW_H = 18;
         private static final int SCROLLBAR_W = 4;
 
@@ -122,7 +122,7 @@ public class ChooseProfileScreen extends Screen {
         private int selected = -1;
 
         ProfileList(int x, int y, int width, int height) {
-            super(x, y, width, height, Text.empty());
+            super(x, y, width, height, Component.empty());
         }
 
         void select(int index) {
@@ -147,7 +147,7 @@ public class ChooseProfileScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        protected void renderWidget(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
             clampScroll();
             int left = getX(), top = getY(), right = getX() + getWidth(), bottom = getY() + getHeight();
             context.fill(left, top, right, bottom, 0xFF141414);
@@ -161,8 +161,8 @@ public class ChooseProfileScreen extends Screen {
                             && mouseY >= top && mouseY <= bottom;
                     if (sel || hover) context.fill(left, y, left + rowW, y + ROW_H, sel ? 0xFF3A5A8A : 0xFF262626);
                     context.drawStrokedRectangle(left, y, rowW, ROW_H, sel ? 0xFFB0C4E0 : 0xFF333333);
-                    String name = textRenderer.trimToWidth(names.get(i), rowW - 12);
-                    context.drawTextWithShadow(textRenderer, Text.literal(name), left + 6, y + (ROW_H - 8) / 2, 0xFFFFFFFF);
+                    String name = font.trimToWidth(names.get(i), rowW - 12);
+                    context.drawTextWithShadow(font, Component.literal(name), left + 6, y + (ROW_H - 8) / 2, 0xFFFFFFFF);
                 }
                 y += ROW_H;
             }
@@ -170,7 +170,7 @@ public class ChooseProfileScreen extends Screen {
             renderScrollbar(context);
         }
 
-        private void renderScrollbar(DrawContext context) {
+        private void renderScrollbar(GuiGraphicsExtractor context) {
             int max = maxScroll();
             if (max <= 0) return;
             int viewport = getHeight();
@@ -237,7 +237,7 @@ public class ChooseProfileScreen extends Screen {
         }
 
         @Override
-        protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+        protected void appendClickableNarrations(NarrationElementOutput builder) {
         }
     }
 }

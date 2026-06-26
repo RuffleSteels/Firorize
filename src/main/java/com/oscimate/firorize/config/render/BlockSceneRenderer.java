@@ -8,7 +8,7 @@ import com.oscimate.firorize.FirorizePipelines;
 import com.oscimate.firorize.test.TestModel;
 import net.fabricmc.fabric.api.renderer.v1.render.BlockVertexConsumerProvider;
 import net.fabricmc.fabric.api.renderer.v1.render.FabricBlockModelRenderer;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.SpecialGuiElementRenderer;
 import net.minecraft.client.render.BlockRenderLayers;
 import net.minecraft.client.render.DiffuseLighting;
@@ -18,7 +18,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.EmptyBlockRenderView;
 import org.joml.Vector3f;
 
@@ -48,7 +48,7 @@ public class BlockSceneRenderer extends SpecialGuiElementRenderer<BlockSceneRend
 
     @Override
     protected void render(BlockSceneRenderState scene, MatrixStack matrices) {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         setFrontLighting();
         BlockRenderManager brm = mc.getBlockRenderManager();
 

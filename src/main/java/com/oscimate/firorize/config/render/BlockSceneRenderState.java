@@ -1,6 +1,6 @@
 package com.oscimate.firorize.config.render;
 
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.render.state.special.SpecialGuiElementRenderState;
 import org.joml.Quaternionf;

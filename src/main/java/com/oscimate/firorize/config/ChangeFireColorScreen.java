@@ -10,15 +10,15 @@ import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
@@ -26,18 +26,18 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.EmptyBlockView;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.biome.Biome;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.SerializationUtils;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,7 @@ public class ChangeFireColorScreen extends Screen {
     public double clickedX = 95.0;
     public List<Integer> lastSelected = new ArrayList<>();
     public double clickedY = 95.0;
-    public void drawX(DrawContext context, int y, int x) {
+    public void drawX(GuiGraphicsExtractor context, int y, int x) {
         int colorInt = new Color(150f / 255f, 150f / 255f, 150f / 255f, 1f).getRGB();
 
         int b = x - 1;
@@ -81,7 +81,7 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     /** A tiny pixel-art "WWW" globe (9×9), drawn top-left at (px,py). Marks online-imported profiles. */
-    public void drawGlobe(DrawContext context, int px, int py) {
+    public void drawGlobe(GuiGraphicsExtractor context, int px, int py) {
         final int size = 9, cx = 4, cy = 4;
         final double r = 4.3;
         final int ocean = 0xFF3A78C2;
@@ -100,7 +100,7 @@ public class ChangeFireColorScreen extends Screen {
 
     /** A tiny pixel-art head-and-shoulders silhouette (9×9), drawn top-left at (px,py). Marks
      *  profiles sent by another player via the inbox. */
-    public void drawPerson(DrawContext context, int px, int py) {
+    public void drawPerson(GuiGraphicsExtractor context, int px, int py) {
         final int body = 0xFFDDE3EC;
         // Head: a 3×3 block centred near the top.
         context.fill(px + 3, py + 1, px + 6, py + 4, body);
@@ -113,7 +113,7 @@ public class ChangeFireColorScreen extends Screen {
      *  block atlas the same way {@link UndoButton} draws its icon. */
     // Even size so (20 - size) splits evenly: the sprite is then pixel-exact centred in the button.
     private static final int RESET_ICON_SIZE = 14;
-    public void drawResetIcon(DrawContext context, int px, int py) {
+    public void drawResetIcon(GuiGraphicsExtractor context, int px, int py) {
         Sprite reset = FireSprites.block(FireSprites.atlasManager(), "firorize:block/reset");
         int off = (20 - RESET_ICON_SIZE) / 2; // centred in the 20×20 button
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, reset,
@@ -192,7 +192,7 @@ public class ChangeFireColorScreen extends Screen {
 
     private final ArrayList<Integer> comparedPriorityOrder;
     protected ChangeFireColorScreen(Screen parent) {
-        super(Text.translatable("options.videoTitle"));
+        super(Component.translatable("options.videoTitle"));
         this.comparedCurrentFire = deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors());
         this.comparedPriorityOrder = new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder());
         this.parent = parent;
@@ -201,7 +201,7 @@ public class ChangeFireColorScreen extends Screen {
         Main.inConfig = false;
         if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder())
                 || !fireColorsEqual(comparedCurrentFire, Main.CONFIG_MANAGER.getCurrentBlockFireColors()))) {
-            MinecraftClient.getInstance().reloadResources();  }
+            Minecraft.getInstance().reloadResources();  }
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
@@ -216,18 +216,18 @@ public class ChangeFireColorScreen extends Screen {
         client.setScreen(parent);
     }
     private boolean onBaseColor = true;
-    public TextFieldWidget textFieldWidget;
-    public TextFieldWidget blockUnderField;
+    public EditBox textFieldWidget;
+    public EditBox blockUnderField;
     public ColoredCycleButton cyclicalPresets;
     private Block blockUnder = Blocks.NETHERRACK;
     private List<Block> allBlockUnders = new ArrayList<>();
     public String input = "";
     public ChangeFireColorScreen.SearchScreenListWidget searchScreenListWidget;
     public PresetListWidget presetListWidget;
-    private List<Block> blockUnderList = Registries.BLOCK.stream().filter(block -> {
+    private List<Block> blockUnderList = BuiltInRegistries.BLOCK.stream().filter(block -> {
         BlockState state = block.getDefaultState();
         for (Direction direction : Direction.values()) {
-            if (state.isSideSolidFullSquare(EmptyBlockView.INSTANCE, BlockPos.ORIGIN, direction)) {
+            if (state.isSideSolidFullSquare(EmptyBlockGetter.INSTANCE, BlockPos.ORIGIN, direction)) {
                 return true;
             }
         }
@@ -235,11 +235,11 @@ public class ChangeFireColorScreen extends Screen {
     }).toList();
     private final int[] blockSearchCoords = {0, 18};
     private final int[] blockSearchDimensions = {300, 320};
-    private ButtonWidget[] overlayToggles = new ButtonWidget[2];
-    public ButtonWidget undoButton;
-    public ButtonWidget redoButton;
+    private Button[] overlayToggles = new Button[2];
+    public Button undoButton;
+    public Button redoButton;
     private boolean colorRedo = false;
-    private ButtonWidget saveButton;
+    private Button saveButton;
 
     /** Maximum number of undo steps retained. Edit this to change history depth. */
     public static final int MAX_HISTORY = 50;
@@ -327,19 +327,19 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     public String baseEntryName() {
-        return Text.translatable("firorize.config.baseFire").getString();
+        return Component.translatable("firorize.config.baseFire").getString();
     }
 
     // ---- In-screen confirmation dialog (drawn over this screen, not a separate Screen) ----
     private boolean confirmActive = false;
-    private Text confirmTitle;
-    private Text confirmMessage;
+    private Component confirmTitle;
+    private Component confirmMessage;
     private Runnable confirmOnYes;
     private final int confirmBoxW = 280;
     private final int confirmBoxH = 110;
 
     /** Shows a modal confirm box over the current screen; runs onYes only if the user confirms. */
-    public void showConfirm(Text title, Text message, Runnable onYes) {
+    public void showConfirm(Component title, Component message, Runnable onYes) {
         this.confirmTitle = title;
         this.confirmMessage = message;
         this.confirmOnYes = onYes;
@@ -366,7 +366,7 @@ public class ChangeFireColorScreen extends Screen {
         return mx >= r[0] && mx <= r[0] + r[2] && my >= r[1] && my <= r[1] + r[3];
     }
 
-    private void renderConfirm(DrawContext context, int mouseX, int mouseY) {
+    private void renderConfirm(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         // Drawn last in render(), so in the 2D GUI (draw order = call order) it sits in front of the
         // 3D previews, which are composited as 2D quads earlier in the queue.
         context.getMatrices().pushMatrix();
@@ -375,22 +375,22 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(bx - 1, by - 1, bx + confirmBoxW + 1, by + confirmBoxH + 1, 0xFF000000);
         context.fill(bx, by, bx + confirmBoxW, by + confirmBoxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(textRenderer, confirmTitle, bx + 12, by + 10, 0xFFFFFFFF);
+        context.drawTextWithShadow(font, confirmTitle, bx + 12, by + 10, 0xFFFFFFFF);
         int ty = by + 30;
-        for (OrderedText line : textRenderer.wrapLines(confirmMessage, confirmBoxW - 24)) {
-            context.drawCenteredTextWithShadow(textRenderer, line, width / 2, ty, 0xFFC0C0C0);
+        for (FormattedCharSequence line : font.wrapLines(confirmMessage, confirmBoxW - 24)) {
+            context.drawCenteredTextWithShadow(font, line, width / 2, ty, 0xFFC0C0C0);
             ty += 11;
         }
-        drawConfirmButton(context, confirmYesRect(), ScreenTexts.YES, mouseX, mouseY);
-        drawConfirmButton(context, confirmNoRect(), ScreenTexts.NO, mouseX, mouseY);
+        drawConfirmButton(context, confirmYesRect(), CommonComponents.YES, mouseX, mouseY);
+        drawConfirmButton(context, confirmNoRect(), CommonComponents.NO, mouseX, mouseY);
         context.getMatrices().popMatrix();
     }
 
-    private void drawConfirmButton(DrawContext context, int[] r, Text label, int mouseX, int mouseY) {
+    private void drawConfirmButton(GuiGraphicsExtractor context, int[] r, Component label, int mouseX, int mouseY) {
         boolean hover = inRect(r, mouseX, mouseY);
         context.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], hover ? 0xFF505050 : 0xFF383838);
         context.drawStrokedRectangle(r[0], r[1], r[2], r[3], hover ? 0xFFFFFFFF : 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(textRenderer, label, r[0] + r[2] / 2, r[1] + (r[3] - 8) / 2, 0xFFFFFFFF);
+        context.drawCenteredTextWithShadow(font, label, r[0] + r[2] / 2, r[1] + (r[3] - 8) / 2, 0xFFFFFFFF);
     }
 
     private void undo() {
@@ -489,9 +489,9 @@ public class ChangeFireColorScreen extends Screen {
         textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
         updateCursor("#" + Integer.toHexString(RGB).substring(2));
     }
-    public ButtonWidget[] searchOptions = new ButtonWidget[3];
+    public Button[] searchOptions = new Button[3];
     private List<TagKey<Block>> blockTags = new ArrayList<>();
-    private List<RegistryKey<Biome>> biomeKeys = new ArrayList<>();
+    private List<ResourceKey<Biome>> biomeKeys = new ArrayList<>();
     public void handlePickedColor(Color[] input) {
         // Colour-wheel history is now recorded per gesture in mouseReleased; this hook no longer
         // couples colour setting (or list selection) to the undo button.
@@ -505,16 +505,16 @@ public class ChangeFireColorScreen extends Screen {
         handlePickedColor(ChangeFireColorScreen.pickedColor);
         ChangeFireColorScreen.pickedColor[index] = pickedColor;
     }
-    public ButtonWidget addButton;
+    public Button addButton;
     public Color[] tempColor;
-    public ButtonWidget addColorButton;
+    public Button addColorButton;
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
-    public ButtonWidget shareBottomButton;
-    public ButtonWidget resetProfileButton;
-    public ButtonWidget browseOnlineButton;
-    public ButtonWidget inboxButton;
+    public Button shareBottomButton;
+    public Button resetProfileButton;
+    public Button browseOnlineButton;
+    public Button inboxButton;
     private final KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> comparedCurrentFire;
-    public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
+    public Button[] movableArrowButtons = new Button[6];
     public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80;
 
     public int profileButtonXInitial = (wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20;
@@ -524,76 +524,76 @@ public class ChangeFireColorScreen extends Screen {
     protected void init() {
         Main.inConfig = true;
 
-        invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.textRenderer, wheelCoords[0] + 50 + 20, hexBoxCoords[1],wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, ScreenTexts.DONE);
+        invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.font, wheelCoords[0] + 50 + 20, hexBoxCoords[1],wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, CommonComponents.DONE);
 
         invisibleTextFieldWidget.visible = false;
 
-        invisibleTextFieldWidget.setPlaceholder(Text.translatable("firorize.config.placeholder.newColorPresetField"));
+        invisibleTextFieldWidget.setPlaceholder(Component.translatable("firorize.config.placeholder.newColorPresetField"));
 
-        addColorButton = new ButtonWidget.Builder(Text.literal("+"), button -> cyclicalPresets.addColor()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, hexBoxCoords[1], 20, 20).build();
+        addColorButton = new Button.Builder(Component.literal("+"), button -> cyclicalPresets.addColor()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, hexBoxCoords[1], 20, 20).build();
 
         this.cyclicalPresets = ColoredCycleButton.builder()
-                .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, textRenderer);
+                .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, font);
 
         blockSearchCoords[0] = width - 300 - 20;
         undoButton = new UndoButton(hexBoxCoords[0] - 22, hexBoxCoords[1], 20, 20, button -> undo());
         redoButton = new RedoButton(hexBoxCoords[0], hexBoxCoords[1], 20, 20, button -> redo());
-        saveButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.applyButton"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
+        saveButton = new Button.Builder(Component.translatable("firorize.config.button.applyButton"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
         this.addDrawableChild(saveButton);
 
         saveButton.active = false;
-        this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
+        this.addDrawableChild(new Button.Builder(CommonComponents.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
         this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, 15);
         this.addDrawableChild(searchScreenListWidget);
-        textFieldWidget = new CustomTextFieldWidget(this.textRenderer, hexBoxCoords[0] + 20+1, hexBoxCoords[1]+1, 48, 18, ScreenTexts.DONE, this, true);
-        blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this, false);this.addDrawableChild(textFieldWidget);
+        textFieldWidget = new CustomTextFieldWidget(this.font, hexBoxCoords[0] + 20+1, hexBoxCoords[1]+1, 48, 18, CommonComponents.DONE, this, true);
+        blockUnderField = new CustomTextFieldWidget(this.font, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, CommonComponents.DONE, this, false);this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
-        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, textRenderer);
+        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, font);
 
         // Two button rows stack directly under the profile list (the list height above was shrunk by
         // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
         // "Inbox" text button to its right (together spanning the list width).
-        this.browseOnlineButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
+        this.browseOnlineButton = new Button.Builder(Component.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
                 .dimensions(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
 
         int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
         int row2Gap = 2;
         // Inbox button wraps narrowly to its label and stays right-aligned at the end of the row;
         // Share fills the remaining width to its left.
-        Text inboxLabel = Text.translatable("firorize.config.button.inbox");
-        int inboxSize = textRenderer.getWidth(inboxLabel) + 12;
+        Component inboxLabel = Component.translatable("firorize.config.button.inbox");
+        int inboxSize = font.getWidth(inboxLabel) + 12;
         int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
-        this.shareBottomButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
+        this.shareBottomButton = new Button.Builder(Component.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
                 .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
-        this.inboxButton = new ButtonWidget.Builder(inboxLabel, button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
+        this.inboxButton = new Button.Builder(inboxLabel, button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
                 .dimensions(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
         // Pull the inbox count so the notification badge is up to date when this screen opens.
         OnlinePresetsClient.refreshInboxCount();
 
         // Right-aligned: Add flush against the panel's right edge, Reset directly to its left.
-        this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
-        this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
+        this.resetProfileButton = new Button.Builder(Component.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
+        this.addButton = new Button.Builder(Component.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
         this.addDrawableChild(addButton);
 //        textFieldWidget.setChangedListener(this::updateCursor);
         updateCursor(this.hexCode);
 
-        overlayToggles[0] = new ButtonWidget.Builder(Text.translatable("firorize.config.button.baseButton"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
-        overlayToggles[1]  = new ButtonWidget.Builder(Text.translatable("firorize.config.button.overlayButton"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
+        overlayToggles[0] = new Button.Builder(Component.translatable("firorize.config.button.baseButton"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
+        overlayToggles[1]  = new Button.Builder(Component.translatable("firorize.config.button.overlayButton"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
 
-        searchOptions[0] = new MoveableButton(this, this.textRenderer, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.blocks"),  0);
-        searchOptions[1]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.tags"), 1);
-        searchOptions[2]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.biomes"), 2);
+        searchOptions[0] = new MoveableButton(this, this.font, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Component.translatable("firorize.config.title.blocks"),  0);
+        searchOptions[1]  = new MoveableButton(this, this.font, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Component.translatable("firorize.config.title.tags"), 1);
+        searchOptions[2]  = new MoveableButton(this, this.font, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Component.translatable("firorize.config.title.biomes"), 2);
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 2; j++) {
                 if (2*i+j != 0 && 2*i+j != 5) {
                     int finalJ = j;
                     MoveableButton button = ((MoveableButton) searchOptions[i]);
-                    movableArrowButtons[2 * i + j] = new ButtonWidget.Builder(Text.literal(""), buttonn -> button.move(finalJ != 0)).dimensions(button.getXX()[j], button.getYY(), button.getHeight(), 13).build();
+                    movableArrowButtons[2 * i + j] = new Button.Builder(Component.literal(""), buttonn -> button.move(finalJ != 0)).dimensions(button.getXX()[j], button.getYY(), button.getHeight(), 13).build();
                     this.addDrawableChild(movableArrowButtons[2 * i + j]);
 
-                    movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
+                    movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.priorityArrow")));
                     movableArrowButtons[2 * i + j].setTooltipDelay(Duration.ofMillis(750L));
                 }
             }
@@ -618,34 +618,34 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(resetProfileButton);
 
         if (client.world == null) {
-            searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
+            searchOptions[1].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.movableButton")));
             searchOptions[1].active = false;
-            searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
+            searchOptions[2].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.movableButton")));
             searchOptions[2].active = false;
             searchOptions[0].active = false;
         } else {
             this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
         }
 
-        shareBottomButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
+        shareBottomButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.shareProfileButton")));
         shareBottomButton.setTooltipDelay(Duration.ofMillis(750L));
-        addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
+        addButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.addProfileButton")));
         addButton.setTooltipDelay(Duration.ofMillis(750L));
-        resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
+        resetProfileButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.resetProfileButton")));
         resetProfileButton.setTooltipDelay(Duration.ofMillis(750L));
-        browseOnlineButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.onlinePresets")));
+        browseOnlineButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.onlinePresets")));
         browseOnlineButton.setTooltipDelay(Duration.ofMillis(750L));
-        inboxButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.inboxButton")));
+        inboxButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.inboxButton")));
         inboxButton.setTooltipDelay(Duration.ofMillis(750L));
-        overlayToggles[0].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.baseToggle")));
+        overlayToggles[0].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.baseToggle")));
         overlayToggles[0].setTooltipDelay(Duration.ofMillis(750L));
-        overlayToggles[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.overlayToggle")));
+        overlayToggles[1].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.overlayToggle")));
         overlayToggles[1].setTooltipDelay(Duration.ofMillis(750L));
-        saveButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.applyButton")));
+        saveButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.applyButton")));
         saveButton.setTooltipDelay(Duration.ofMillis(750L));
-        undoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.undoButton")));
+        undoButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.undoButton")));
         undoButton.setTooltipDelay(Duration.ofMillis(750L));
-        redoButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.redoButton")));
+        redoButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.redoButton")));
         redoButton.setTooltipDelay(Duration.ofMillis(750L));
 
         toggle(true);
@@ -661,7 +661,7 @@ public class ChangeFireColorScreen extends Screen {
     public int cycleTooltipTimer = 0;
 
     /** Set by {@link PresetListWidget} while hovering an imported profile's globe; drawn once then cleared. */
-    public net.minecraft.text.Text globeTooltip = null;
+    public net.minecraft.network.chat.Component globeTooltip = null;
 
     @Override
     public void tick() {
@@ -696,7 +696,7 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     public void resize(int width, int height) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         Main.setScale(width, height, client);
 
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
@@ -738,7 +738,7 @@ public class ChangeFireColorScreen extends Screen {
         } else {
             if (currentSearchButton == 0) {
                 allBlockUnders.forEach(block -> {
-                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).put(Registries.BLOCK.getId(block).toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).put(BuiltInRegistries.BLOCK.getId(block).toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
                 });
                 num = allBlockUnders.size();
             } else if (currentSearchButton == 1) {
@@ -770,7 +770,7 @@ public class ChangeFireColorScreen extends Screen {
     }
     public void updateBlockUnder(String blockUnderTag) {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;
-        String string = Registries.BLOCK.getId(blockUnder).toString();
+        String string = BuiltInRegistries.BLOCK.getId(blockUnder).toString();
         buffer = false;
         if (onBaseColor || Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(blockUnderTag)) {
 
@@ -815,7 +815,7 @@ public class ChangeFireColorScreen extends Screen {
                     int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
                     saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
                 } else {
-                    String string = currentSearchButton == 0 ? Registries.BLOCK.getId(blockUnder).toString() : currentSearchButton == 1 ? blockTags.get(0).id().toString() : biomeKeys.get(0).getValue().toString();
+                    String string = currentSearchButton == 0 ? BuiltInRegistries.BLOCK.getId(blockUnder).toString() : currentSearchButton == 1 ? blockTags.get(0).id().toString() : biomeKeys.get(0).getValue().toString();
                     if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(string)) {
                         int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(string);
                         saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
@@ -1012,7 +1012,7 @@ public class ChangeFireColorScreen extends Screen {
     /** Renders this config screen as a backdrop for a child modal dialog (the caller then draws its own
      *  dim overlay and box on top). Suppresses the deferred colour-wheel/3D elements so they don't
      *  composite over the dialog. Passes -1,-1 for the mouse so no config widget shows a hover state. */
-    public void renderAsBackdrop(DrawContext context, float delta) {
+    public void renderAsBackdrop(GuiGraphicsExtractor context, float delta) {
         boolean prev = renderingAsBackdrop;
         renderingAsBackdrop = true;
         try {
@@ -1026,7 +1026,7 @@ public class ChangeFireColorScreen extends Screen {
      *  the existing config screen rather than cutting through to the blurred game. A
      *  {@link ChangeFireColorScreen} uses {@link #renderAsBackdrop} (suppressing its deferred elements);
      *  any other screen renders normally. */
-    public static void renderModalBackdrop(DrawContext context, @Nullable Screen behind, float delta) {
+    public static void renderModalBackdrop(GuiGraphicsExtractor context, @Nullable Screen behind, float delta) {
         if (behind instanceof ChangeFireColorScreen cfc) {
             cfc.renderAsBackdrop(context, delta);
         } else if (behind != null) {
@@ -1035,7 +1035,7 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         this.renderPanoramaBackground(context, delta);
 
         this.applyBlur(context);
@@ -1044,7 +1044,7 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
         context.getMatrices().pushMatrix();
 
@@ -1154,7 +1154,7 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         if (globeTooltip != null) {
-            context.drawTooltip(this.textRenderer, globeTooltip, mouseX, mouseY);
+            context.drawTooltip(this.font, globeTooltip, mouseX, mouseY);
             globeTooltip = null;
         }
         context.getMatrices().popMatrix();
@@ -1164,7 +1164,7 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     /** Red notification badge on the Inbox button showing how many items are waiting (capped "9+"). */
-    private void drawInboxBadge(DrawContext context) {
+    private void drawInboxBadge(GuiGraphicsExtractor context) {
         int count = OnlinePresetsClient.inboxCount();
         if (count <= 0 || inboxButton == null) return;
         int cx = inboxButton.getX() + inboxButton.getWidth() - 5;
@@ -1172,11 +1172,11 @@ public class ChangeFireColorScreen extends Screen {
         drawDisc(context, cx, cy, 5.5, 0xFF101010); // dark outline for contrast
         drawDisc(context, cx, cy, 4.5, 0xFFCC2222);
         String label = count > 9 ? "9+" : Integer.toString(count);
-        context.drawText(this.textRenderer, label, cx - this.textRenderer.getWidth(label) / 2, cy - 3, 0xFFFFFFFF, false);
+        context.drawText(this.font, label, cx - this.font.getWidth(label) / 2, cy - 3, 0xFFFFFFFF, false);
     }
 
     /** Filled circle of radius {@code r} centred at (cx,cy). */
-    private void drawDisc(DrawContext context, int cx, int cy, double r, int color) {
+    private void drawDisc(GuiGraphicsExtractor context, int cx, int cy, double r, int color) {
         int rr = (int) Math.ceil(r);
         for (int gy = -rr; gy <= rr; gy++) {
             for (int gx = -rr; gx <= rr; gx++) {
@@ -1189,27 +1189,27 @@ public class ChangeFireColorScreen extends Screen {
 
     @Environment(value= EnvType.CLIENT)
     class SearchScreenListWidget
-            extends AlwaysSelectedEntryListWidget<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
+            extends ObjectSelectionList<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
         public void generateEntries() {
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> first = new ArrayList<>();
             List<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> second = new ArrayList<>();
 
-            BlockEntry base = new BlockEntry(Text.translatable("firorize.config.baseFire").getString());
+            BlockEntry base = new BlockEntry(Component.translatable("firorize.config.baseFire").getString());
             base.isCustomized = true;
             first.add(base);
 
             if (currentSearchButton == 0) {
                 blockUnderList.forEach((block) -> {
-                    String string = Registries.BLOCK.getId(block).toString();
+                    String string = BuiltInRegistries.BLOCK.getId(block).toString();
                     if (string.contains(input)) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
-                        if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).containsKey(Registries.BLOCK.getId(block).toString())) {
+                        if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).containsKey(BuiltInRegistries.BLOCK.getId(block).toString())) {
                             second.add(blockEntry);
                         }
                     }
                 });
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).keyList().forEach(string -> {
-                    if (blockUnderList.stream().map(block -> Registries.BLOCK.getId(block).toString()).toList().contains(string)) {
+                    if (blockUnderList.stream().map(block -> BuiltInRegistries.BLOCK.getId(block).toString()).toList().contains(string)) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         first.add(blockEntry);
                         blockEntry.isCustomized = true;
@@ -1259,7 +1259,7 @@ public class ChangeFireColorScreen extends Screen {
                     }
                 });
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).keyList().forEach(string -> {
-                    if (Main.biomeKeyList.contains(RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(string)))) {
+                    if (Main.biomeKeyList.contains(ResourceKey.create(Registries.BIOME, Identifier.tryParse(string)))) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         first.add(blockEntry);
                         blockEntry.isCustomized = true;
@@ -1278,7 +1278,7 @@ public class ChangeFireColorScreen extends Screen {
                 this.centerScrollOn(this.getSelectedOrNull());
             }
         }
-        public SearchScreenListWidget(MinecraftClient client, int width, int height, int x, int y) {
+        public SearchScreenListWidget(Minecraft client, int width, int height, int x, int y) {
             super(client, width, height, x, y);
             generateEntries();
         }
@@ -1326,7 +1326,7 @@ public class ChangeFireColorScreen extends Screen {
         // so vanilla's getSelectedOrNull/drawSelectionHighlight path never fires). Draw the highlight for
         // every selected entry ourselves, before the entry content so text/swatch render on top.
         @Override
-        protected void renderEntry(DrawContext context, int mouseX, int mouseY, float tickDelta, BlockEntry entry) {
+        protected void renderEntry(GuiGraphicsExtractor context, int mouseX, int mouseY, float tickDelta, BlockEntry entry) {
             int index = this.children().indexOf(entry);
             if (selected.contains(index)) {
                 drawSelectionBorder(context, entry, selected.contains(index - 1), selected.contains(index + 1));
@@ -1339,7 +1339,7 @@ public class ChangeFireColorScreen extends Screen {
          * border between them is filled in (no separating line) so a run of selected entries reads as a
          * single block; an isolated selected entry gets a full border on all sides.
          */
-        private void drawSelectionBorder(DrawContext context, BlockEntry entry, boolean prevSelected, boolean nextSelected) {
+        private void drawSelectionBorder(GuiGraphicsExtractor context, BlockEntry entry, boolean prevSelected, boolean nextSelected) {
             int color = this.isFocused() ? -1 : -8355712;
             int entryWidth = getRowWidth();
             int entryHeight = entry.getHeight();
@@ -1390,18 +1390,18 @@ public class ChangeFireColorScreen extends Screen {
                 onBaseColor = false;
                 if (currentSearchButton == 0) {
                     allBlockUnders = new ArrayList<>();
-                    allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(entry.languageDefinition)));
+                    allBlockUnders.add(BuiltInRegistries.BLOCK.get(Identifier.tryParse(entry.languageDefinition)));
                     blockUnderField.setText(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 } else if (currentSearchButton == 1) {
                     TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(entry.languageDefinition)).findFirst().get();
                     blockTags = new ArrayList<>();
                     blockTags.add(tag);
-                    allBlockUnders = java.util.stream.StreamSupport.stream(Registries.BLOCK.iterateEntries(tag).spliterator(), false).map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).collect(Collectors.toList());;
+                    allBlockUnders = java.util.stream.StreamSupport.stream(BuiltInRegistries.BLOCK.iterateEntries(tag).spliterator(), false).map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).collect(Collectors.toList());;
                     blockUnderField.setText(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 } else if (currentSearchButton == 2) {
-                    RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(entry.languageDefinition));
+                    ResourceKey<Biome> key = ResourceKey.create(Registries.BIOME, Identifier.tryParse(entry.languageDefinition));
                     biomeKeys = new ArrayList<>();
                     biomeKeys.add(key);
                     blockUnderField.setText(entry.languageDefinition);
@@ -1458,7 +1458,7 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         public class BlockEntry
-                extends AlwaysSelectedEntryListWidget.Entry<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
+                extends ObjectSelectionList.Entry<ChangeFireColorScreen.SearchScreenListWidget.BlockEntry> {
             private final String languageDefinition;
             private boolean realSelect = true;
             public BlockEntry(String languageDefinition) {
@@ -1469,13 +1469,13 @@ public class ChangeFireColorScreen extends Screen {
             private boolean isSelected = false;
 
             @Override
-            public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 int x = getX();
                 int y = getY();
                 int entryWidth = getWidth();
                 int entryHeight = getHeight();
                 int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
-                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+3, 0xFFFFFFFF);
+                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.font, Component.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+3, 0xFFFFFFFF);
                 // Left action box (+ / reorder arrows): inset slightly and vertically centred so it reads better.
                 int boxInset = 2;
                 int boxSize = entryHeight - boxInset * 2;
@@ -1532,7 +1532,7 @@ public class ChangeFireColorScreen extends Screen {
                         drawX(context, bcy, rbcx + 1);
                     } else {
 
-                        int[] test = this.languageDefinition.equals(Text.translatable("firorize.config.baseFire").getString()) ? Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(): Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(this.languageDefinition);
+                        int[] test = this.languageDefinition.equals(Component.translatable("firorize.config.baseFire").getString()) ? Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight(): Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(this.languageDefinition);
                         if (test != null) {
                             context.fill(rbLeft, by, rbRight, by+boxSize, test[0]);
                             context.fill(rbLeft+2, by+2, rbRight-2, by+boxSize-2, test[1]);
@@ -1599,13 +1599,13 @@ public class ChangeFireColorScreen extends Screen {
                 ChangeFireColorScreen.this.counter = 0;
                 if (currentSearchButton == 0) {
                     if (clear) allBlockUnders.clear();
-                    allBlockUnders.add(Registries.BLOCK.get(Identifier.tryParse(this.languageDefinition)));
+                    allBlockUnders.add(BuiltInRegistries.BLOCK.get(Identifier.tryParse(this.languageDefinition)));
                 } else if (currentSearchButton == 1) {
                     if (clear) blockTags.clear();
                     TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(this.languageDefinition)).findFirst().get();
 
                     blockTags.add(tag);
-                    List<Block> newBlocks = java.util.stream.StreamSupport.stream(Registries.BLOCK.iterateEntries(tag).spliterator(), false)
+                    List<Block> newBlocks = java.util.stream.StreamSupport.stream(BuiltInRegistries.BLOCK.iterateEntries(tag).spliterator(), false)
                             .map(entry2 -> entry2.value())
                             .filter(block -> blockUnderList.contains(block) && !allBlockUnders.contains(block))
                             .toList();
@@ -1613,7 +1613,7 @@ public class ChangeFireColorScreen extends Screen {
                     allBlockUnders = Stream.concat(allBlockUnders.stream(), newBlocks.stream()).collect(Collectors.toList());;
                 } else if (currentSearchButton == 2) {
                     if (clear) biomeKeys.clear();
-                    RegistryKey<Biome> key = RegistryKey.of(RegistryKeys.BIOME, Identifier.tryParse(this.languageDefinition));
+                    ResourceKey<Biome> key = ResourceKey.create(Registries.BIOME, Identifier.tryParse(this.languageDefinition));
                     biomeKeys.add(key);
                 }
                 if (clear) {
@@ -1639,8 +1639,8 @@ public class ChangeFireColorScreen extends Screen {
             }
 
             @Override
-            public Text getNarration() {
-                return Text.translatable("narrator.select", this.languageDefinition);
+            public Component getNarration() {
+                return Component.translatable("narrator.select", this.languageDefinition);
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.oscimate.firorize.config;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -17,9 +17,9 @@ public final class RelativeTime {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public static Text format(String dateCreated) {
+    public static Component format(String dateCreated) {
         if (dateCreated == null || dateCreated.isBlank()) {
-            return Text.translatable("firorize.time.justNow");
+            return Component.translatable("firorize.time.justNow");
         }
         Instant then;
         try {
@@ -27,12 +27,12 @@ public final class RelativeTime {
             if (normalized.length() > 19) normalized = normalized.substring(0, 19);
             then = LocalDateTime.parse(normalized, FMT).toInstant(ZoneOffset.UTC);
         } catch (RuntimeException e) {
-            return Text.literal(dateCreated);
+            return Component.literal(dateCreated);
         }
 
         long sec = Duration.between(then, Instant.now()).getSeconds();
         if (sec < 0) sec = 0;
-        if (sec < 45) return Text.translatable("firorize.time.justNow");
+        if (sec < 45) return Component.translatable("firorize.time.justNow");
 
         long minutes = sec / 60;
         if (minutes < 60) return unit(minutes, "minute");
@@ -47,8 +47,8 @@ public final class RelativeTime {
         return unit(days / 365, "year");
     }
 
-    private static Text unit(long n, String name) {
-        if (n <= 1) return Text.translatable("firorize.time." + name + "Ago");
-        return Text.translatable("firorize.time." + name + "sAgo", n);
+    private static Component unit(long n, String name) {
+        if (n <= 1) return Component.translatable("firorize.time." + name + "Ago");
+        return Component.translatable("firorize.time." + name + "sAgo", n);
     }
 }

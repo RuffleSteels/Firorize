@@ -3,7 +3,7 @@ package com.oscimate.firorize.config;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
  * anywhere.
  *
  * <p>All requests are sent asynchronously off the render thread; callers must marshal the result
- * back onto the client thread (via {@code MinecraftClient.getInstance().execute(...)}) before
+ * back onto the client thread (via {@code Minecraft.getInstance().execute(...)}) before
  * touching screen state.
  */
 public final class OnlinePresetsClient {
@@ -60,7 +60,7 @@ public final class OnlinePresetsClient {
 
     /** Reads the local player's identity from their Minecraft session, or null if unavailable. */
     public static McAuth currentIdentity() {
-        Session session = MinecraftClient.getInstance().getSession();
+        Session session = Minecraft.getInstance().getSession();
         UUID uuid = session.getUuidOrNull();
         String name = session.getUsername();
         if (uuid == null || name == null || name.isBlank()) return null;

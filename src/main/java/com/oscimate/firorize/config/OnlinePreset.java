@@ -1,7 +1,7 @@
 package com.oscimate.firorize.config;
 
 import com.google.gson.annotations.SerializedName;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 /**
  * One published preset as returned by the online Worker (see {@link OnlinePresetsClient}).
@@ -37,7 +37,7 @@ public record OnlinePreset(
     }
 
     /** Human-friendly "3 days ago" string derived from the UTC {@code date_created}. */
-    public Text relativeTime() {
+    public Component relativeTime() {
         return RelativeTime.format(dateCreated);
     }
 }

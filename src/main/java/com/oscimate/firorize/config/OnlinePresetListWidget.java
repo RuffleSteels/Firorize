@@ -1,13 +1,13 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.narration.NarrationElementOutput;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.util.ArrayList;
@@ -25,10 +25,10 @@ import java.util.List;
  * {@link #setInbox} builds "Received" (Import / Dismiss) followed by "Sent" (Cancel). Non-interactive
  * <b>HEADER</b> rows separate the groups.
  *
- * <p>This deliberately does NOT extend {@code AlwaysSelectedEntryListWidget} (which assumes uniform
+ * <p>This deliberately does NOT extend {@code ObjectSelectionList} (which assumes uniform
  * entry heights) — it manages its own scroll offset and variable-height layout.
  */
-public class OnlinePresetListWidget extends ClickableWidget {
+public class OnlinePresetListWidget extends AbstractWidget {
     private static final int PAD = 6;
     private static final int GAP = 3;
     private static final int HEADER_H = 22;
@@ -45,16 +45,16 @@ public class OnlinePresetListWidget extends ClickableWidget {
     private static final int CONFIRM_DELETE_MS = 3000;
 
     private final OnlinePresetsScreen screen;
-    private final TextRenderer textRenderer;
+    private final Font font;
     private final List<Row> rows = new ArrayList<>();
 
     private double scrollY = 0;
     private boolean draggingScrollbar = false;
 
-    public OnlinePresetListWidget(int x, int y, int width, int height, OnlinePresetsScreen screen, TextRenderer textRenderer) {
-        super(x, y, width, height, Text.empty());
+    public OnlinePresetListWidget(int x, int y, int width, int height, OnlinePresetsScreen screen, Font font) {
+        super(x, y, width, height, Component.empty());
         this.screen = screen;
-        this.textRenderer = textRenderer;
+        this.font = font;
     }
 
     /**
@@ -66,11 +66,11 @@ public class OnlinePresetListWidget extends ClickableWidget {
         rows.clear();
         boolean haveMine = mine != null && !mine.isEmpty();
         if (haveMine) {
-            rows.add(new Row(RowKind.HEADER, null, Text.translatable("firorize.config.label.myUploads")));
+            rows.add(new Row(RowKind.HEADER, null, Component.translatable("firorize.config.label.myUploads")));
             for (OnlinePreset p : mine) rows.add(new Row(RowKind.UPLOAD_DELETE, p, null));
         }
         if (community != null && !community.isEmpty()) {
-            if (haveMine) rows.add(new Row(RowKind.HEADER, null, Text.translatable("firorize.config.label.community")));
+            if (haveMine) rows.add(new Row(RowKind.HEADER, null, Component.translatable("firorize.config.label.community")));
             for (OnlinePreset p : community) rows.add(new Row(RowKind.BROWSE_IMPORT, p, null));
         }
         scrollY = 0;
@@ -80,11 +80,11 @@ public class OnlinePresetListWidget extends ClickableWidget {
     public void setInbox(List<OnlinePreset> received, List<OnlinePreset> sent) {
         rows.clear();
         if (received != null && !received.isEmpty()) {
-            rows.add(new Row(RowKind.HEADER, null, Text.translatable("firorize.config.label.inboxReceived")));
+            rows.add(new Row(RowKind.HEADER, null, Component.translatable("firorize.config.label.inboxReceived")));
             for (OnlinePreset p : received) rows.add(new Row(RowKind.INBOX_IMPORT, p, null));
         }
         if (sent != null && !sent.isEmpty()) {
-            rows.add(new Row(RowKind.HEADER, null, Text.translatable("firorize.config.label.inboxSent")));
+            rows.add(new Row(RowKind.HEADER, null, Component.translatable("firorize.config.label.inboxSent")));
             for (OnlinePreset p : sent) rows.add(new Row(RowKind.SENT_CANCEL, p, null));
         }
         scrollY = 0;
@@ -131,7 +131,7 @@ public class OnlinePresetListWidget extends ClickableWidget {
     // ---- rendering ----
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderWidget(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         clampScroll();
         int left = getX();
         int top = getY();
@@ -156,11 +156,11 @@ public class OnlinePresetListWidget extends ClickableWidget {
         renderScrollbar(context);
     }
 
-    private void renderHeader(DrawContext context, Row row, int x, int y) {
-        context.drawTextWithShadow(textRenderer, row.headerLabel, x + 1, y + SECTION_H - 10, 0xFF9090A0);
+    private void renderHeader(GuiGraphicsExtractor context, Row row, int x, int y) {
+        context.drawTextWithShadow(font, row.headerLabel, x + 1, y + SECTION_H - 10, 0xFF9090A0);
     }
 
-    private void renderRow(DrawContext context, Row row, int x, int y, int h, int mouseX, int mouseY) {
+    private void renderRow(GuiGraphicsExtractor context, Row row, int x, int y, int h, int mouseX, int mouseY) {
         int w = cardWidth();
         boolean headerHover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + HEADER_H
                 && mouseY >= getY() && mouseY <= getY() + getHeight();
@@ -172,31 +172,31 @@ public class OnlinePresetListWidget extends ClickableWidget {
         drawChevron(context, x + PAD, y + (HEADER_H - 7) / 2, row.expanded, 0xFFC0C0C0);
 
         // Relative time, right-aligned
-        Text time = row.preset.relativeTime();
-        int timeWidth = textRenderer.getWidth(time);
+        Component time = row.preset.relativeTime();
+        int timeWidth = font.getWidth(time);
         int titleX = x + PAD + 11;
         int titleMax = w - PAD - timeWidth - 6 - (titleX - x);
-        String title = textRenderer.trimToWidth(row.preset.displayTitle(), Math.max(8, titleMax));
-        context.drawTextWithShadow(textRenderer, Text.literal(title), titleX, y + (HEADER_H - 8) / 2, 0xFFFFFFFF);
-        context.drawTextWithShadow(textRenderer, time, x + w - PAD - timeWidth, y + (HEADER_H - 8) / 2, 0xFF909090);
+        String title = font.trimToWidth(row.preset.displayTitle(), Math.max(8, titleMax));
+        context.drawTextWithShadow(font, Component.literal(title), titleX, y + (HEADER_H - 8) / 2, 0xFFFFFFFF);
+        context.drawTextWithShadow(font, time, x + w - PAD - timeWidth, y + (HEADER_H - 8) / 2, 0xFF909090);
 
         if (row.expanded) {
             int ty = y + HEADER_H;
-            for (OrderedText line : row.descriptionLines()) {
-                context.drawTextWithShadow(textRenderer, line, x + PAD, ty, 0xFFC0C0C0);
+            for (FormattedCharSequence line : row.descriptionLines()) {
+                context.drawTextWithShadow(font, line, x + PAD, ty, 0xFFC0C0C0);
                 ty += LINE_H;
             }
             if (!row.descriptionLines().isEmpty()) ty += 2;
-            Text attribution = row.kind == RowKind.SENT_CANCEL
-                    ? Text.translatable("firorize.config.label.toRecipient", row.preset.displayRecipient())
-                    : Text.translatable("firorize.config.label.byAuthor", row.preset.displayAuthor());
-            context.drawTextWithShadow(textRenderer, attribution, x + PAD, ty, 0xFF7090C0);
+            Component attribution = row.kind == RowKind.SENT_CANCEL
+                    ? Component.translatable("firorize.config.label.toRecipient", row.preset.displayRecipient())
+                    : Component.translatable("firorize.config.label.byAuthor", row.preset.displayAuthor());
+            context.drawTextWithShadow(font, attribution, x + PAD, ty, 0xFF7090C0);
 
             // Primary (rightmost) and optional secondary action button.
             int[] primary = primaryRect(x, y, h, w);
             drawButton(context, primary, primaryLabel(row), isDanger(row) && row.confirmActionUntil > System.currentTimeMillis(),
                     mouseX, mouseY);
-            Text secondary = secondaryLabel(row);
+            Component secondary = secondaryLabel(row);
             if (secondary != null) {
                 int[] sec = secondaryRect(x, y, h, w);
                 drawButton(context, sec, secondary, false, mouseX, mouseY);
@@ -204,13 +204,13 @@ public class OnlinePresetListWidget extends ClickableWidget {
         }
     }
 
-    private void drawButton(DrawContext context, int[] btn, Text label, boolean confirming, int mouseX, int mouseY) {
+    private void drawButton(GuiGraphicsExtractor context, int[] btn, Component label, boolean confirming, int mouseX, int mouseY) {
         boolean hover = mouseX >= btn[0] && mouseX <= btn[0] + btn[2] && mouseY >= btn[1] && mouseY <= btn[1] + btn[3]
                 && mouseY >= getY() && mouseY <= getY() + getHeight();
         context.fill(btn[0], btn[1], btn[0] + btn[2], btn[1] + btn[3], hover ? 0xFF505050 : 0xFF383838);
         context.drawStrokedRectangle(btn[0], btn[1], btn[2], btn[3],
                 confirming ? 0xFFE08080 : (hover ? 0xFFFFFFFF : 0xFF8B8B8B));
-        context.drawCenteredTextWithShadow(textRenderer, label, btn[0] + btn[2] / 2, btn[1] + (btn[3] - 8) / 2,
+        context.drawCenteredTextWithShadow(font, label, btn[0] + btn[2] / 2, btn[1] + (btn[3] - 8) / 2,
                 confirming ? 0xFFE08080 : 0xFFFFFFFF);
     }
 
@@ -222,22 +222,22 @@ public class OnlinePresetListWidget extends ClickableWidget {
         return new int[]{x + w - PAD - ACTION_BTN_W * 2 - BTN_GAP, y + h - IMPORT_BTN_H - 6, ACTION_BTN_W, IMPORT_BTN_H};
     }
 
-    private Text primaryLabel(Row row) {
+    private Component primaryLabel(Row row) {
         return switch (row.kind) {
-            case BROWSE_IMPORT, INBOX_IMPORT -> Text.translatable("firorize.config.button.importPreset");
+            case BROWSE_IMPORT, INBOX_IMPORT -> Component.translatable("firorize.config.button.importPreset");
             case UPLOAD_DELETE -> row.confirmActionUntil > System.currentTimeMillis()
-                    ? Text.translatable("firorize.config.button.confirmDelete")
-                    : Text.translatable("firorize.config.button.deletePreset");
+                    ? Component.translatable("firorize.config.button.confirmDelete")
+                    : Component.translatable("firorize.config.button.deletePreset");
             case SENT_CANCEL -> row.confirmActionUntil > System.currentTimeMillis()
-                    ? Text.translatable("firorize.config.button.confirmDelete")
-                    : Text.translatable("firorize.config.button.cancelSend");
-            case HEADER -> Text.empty();
+                    ? Component.translatable("firorize.config.button.confirmDelete")
+                    : Component.translatable("firorize.config.button.cancelSend");
+            case HEADER -> Component.empty();
         };
     }
 
     /** Inbox rows get a secondary "Dismiss" button; everything else has just the primary. */
-    private Text secondaryLabel(Row row) {
-        return row.kind == RowKind.INBOX_IMPORT ? Text.translatable("firorize.config.button.dismiss") : null;
+    private Component secondaryLabel(Row row) {
+        return row.kind == RowKind.INBOX_IMPORT ? Component.translatable("firorize.config.button.dismiss") : null;
     }
 
     private boolean isDanger(Row row) {
@@ -245,7 +245,7 @@ public class OnlinePresetListWidget extends ClickableWidget {
     }
 
     /** Filled triangle: pointing down when expanded, right when collapsed. */
-    private void drawChevron(DrawContext context, int x, int y, boolean expanded, int color) {
+    private void drawChevron(GuiGraphicsExtractor context, int x, int y, boolean expanded, int color) {
         for (int r = 0; r < 4; r++) {
             if (expanded) {
                 context.fill(x + r, y + r, x + 7 - r, y + r + 1, color);
@@ -255,7 +255,7 @@ public class OnlinePresetListWidget extends ClickableWidget {
         }
     }
 
-    private void renderScrollbar(DrawContext context) {
+    private void renderScrollbar(GuiGraphicsExtractor context) {
         int max = maxScroll();
         if (max <= 0) return;
         int viewport = getHeight();
@@ -385,7 +385,7 @@ public class OnlinePresetListWidget extends ClickableWidget {
         KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> profile =
                 AddProfileScreen.deserializeFromString(preset.data());
         if (profile == null) {
-            screen.flashMessage(Text.translatable("firorize.config.status.importFailed"), true);
+            screen.flashMessage(Component.translatable("firorize.config.status.importFailed"), true);
             return;
         }
         String name = uniqueName(preset.displayTitle());
@@ -396,7 +396,7 @@ public class OnlinePresetListWidget extends ClickableWidget {
         Main.CONFIG_MANAGER.getImportedAuthors().put(name, author);
         if (dismissSendId > 0) Main.CONFIG_MANAGER.getInboxImports().add(name);
         Main.CONFIG_MANAGER.save();
-        screen.flashMessage(Text.translatable("firorize.config.status.imported", name), false);
+        screen.flashMessage(Component.translatable("firorize.config.status.imported", name), false);
         if (dismissSendId > 0) screen.deleteSend(dismissSendId);
     }
 
@@ -412,31 +412,31 @@ public class OnlinePresetListWidget extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+    protected void appendClickableNarrations(NarrationElementOutput builder) {
         // Narration intentionally minimal; the dialog title narrates the context.
     }
 
     private final class Row {
         final RowKind kind;
         final OnlinePreset preset;   // null for HEADER
-        final Text headerLabel;      // non-null only for HEADER
+        final Component headerLabel;      // non-null only for HEADER
         boolean expanded = false;
         long confirmActionUntil = 0;
-        private List<OrderedText> cachedLines;
+        private List<FormattedCharSequence> cachedLines;
         private int cachedWidth = -1;
 
-        private Row(RowKind kind, OnlinePreset preset, Text headerLabel) {
+        private Row(RowKind kind, OnlinePreset preset, Component headerLabel) {
             this.kind = kind;
             this.preset = preset;
             this.headerLabel = headerLabel;
         }
 
-        List<OrderedText> descriptionLines() {
+        List<FormattedCharSequence> descriptionLines() {
             String desc = preset.displayDescription();
             if (desc.isBlank()) return List.of();
             int w = wrapWidth();
             if (cachedLines == null || cachedWidth != w) {
-                cachedLines = textRenderer.wrapLines(Text.literal(desc), w);
+                cachedLines = font.wrapLines(Component.literal(desc), w);
                 cachedWidth = w;
             }
             return cachedLines;

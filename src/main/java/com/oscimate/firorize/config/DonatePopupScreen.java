@@ -2,16 +2,16 @@ package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ConfirmLinkScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.network.chat.Component;
 
 import java.time.Duration;
 
@@ -27,7 +27,7 @@ public class DonatePopupScreen extends Screen {
     private int boxX, boxY, boxW, boxH;
 
     public DonatePopupScreen(Screen parent) {
-        super(Text.translatable("firorize.donate.popup.title"));
+        super(Component.translatable("firorize.donate.popup.title"));
         this.parent = parent;
     }
 
@@ -50,18 +50,18 @@ public class DonatePopupScreen extends Screen {
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
 
-        ButtonWidget support = new ButtonWidget.Builder(
-                Text.translatable("firorize.donate.popup.support"),
+        Button support = new Button.Builder(
+                Component.translatable("firorize.donate.popup.support"),
                 button -> ConfirmLinkScreen.open(parent, DonationTracker.KOFI_URL))
                 .dimensions(boxX + pad, boxY + boxH - 50, boxW - pad * 2, 20).build();
-        support.setTooltip(Tooltip.of(Text.translatable("firorize.donate.tooltip")));
+        support.setTooltip(Tooltip.of(Component.translatable("firorize.donate.tooltip")));
         support.setTooltipDelay(Duration.ofMillis(750L));
 
-        ButtonWidget later = new ButtonWidget.Builder(
-                Text.translatable("firorize.donate.popup.later"), button -> close())
+        Button later = new Button.Builder(
+                Component.translatable("firorize.donate.popup.later"), button -> close())
                 .dimensions(boxX + pad, boxY + boxH - 26, boxW - pad * 2, 18).build();
 
-        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), button -> close())
+        this.addDrawableChild(new Button.Builder(Component.literal("x"), button -> close())
                 .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
         this.addDrawableChild(support);
         this.addDrawableChild(later);
@@ -76,14 +76,14 @@ public class DonatePopupScreen extends Screen {
 
     @Override
     public void resize(int width, int height) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         Main.setScale(width, height, client);
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
     @Override
     @SuppressWarnings("deprecation") // FireSprites uses the still-supported BLOCK_ATLAS_TEXTURE id
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Draw the config screen behind (deferred 3D/colour-wheel elements suppressed so they don't
         // composite over this popup), then dim and the box.
         ChangeFireColorScreen.renderModalBackdrop(context, parent, delta);
@@ -95,16 +95,16 @@ public class DonatePopupScreen extends Screen {
         // Ko-fi cup icon next to the heading.
         Sprite kofi = FireSprites.block(FireSprites.atlasManager(), "firorize:block/kofi");
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, kofi, boxX + 12, boxY + 9, 12, 12);
-        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 28, boxY + 11, 0xFFFFFFFF);
+        context.drawTextWithShadow(font, getTitle(), boxX + 28, boxY + 11, 0xFFFFFFFF);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
 
         int ty = boxY + 34;
-        for (OrderedText line : textRenderer.wrapLines(Text.translatable("firorize.donate.popup.body"), boxW - 24)) {
-            context.drawCenteredTextWithShadow(textRenderer, line, width / 2, ty, 0xFFC0C0C0);
+        for (FormattedCharSequence line : font.wrapLines(Component.translatable("firorize.donate.popup.body"), boxW - 24)) {
+            context.drawCenteredTextWithShadow(font, line, width / 2, ty, 0xFFC0C0C0);
             ty += 11;
         }
     }

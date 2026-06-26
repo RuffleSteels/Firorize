@@ -1,8 +1,8 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 
 /**
  * Tracks the total time the player spends on Firorize config screens and surfaces a gentle Ko-fi
@@ -27,7 +27,7 @@ public final class DonationTracker {
     private DonationTracker() {}
 
     public static void onConfigFrame() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         // The popup renders its parent config screen as a backdrop, which re-enters this method. Don't
         // accumulate (or re-trigger) while the popup is up; reset so its open duration isn't counted.

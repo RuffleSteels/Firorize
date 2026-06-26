@@ -1,12 +1,12 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.network.chat.Component;
 
-public class FireHeightSliderWidget extends SliderWidget {
+public class FireHeightSliderWidget extends AbstractSliderButton {
     @SuppressWarnings("this-escape") // updateMessage/applyValue are called after super() on a fully-set slider
-    public FireHeightSliderWidget(int x, int y, int width, int height, Text text, double value) {
+    public FireHeightSliderWidget(int x, int y, int width, int height, Component text, double value) {
         super(x, y, width, height, text, value);
 
         this.updateMessage();
@@ -28,10 +28,10 @@ public class FireHeightSliderWidget extends SliderWidget {
     @Override
     protected void applyValue() {
         long sliderValue = getSliderValue();
-        Text text = sliderValue == 0   ? Text.translatable(Main.MODID+".config.fireHeight.min") :
-                sliderValue == 50 ? Text.translatable(Main.MODID+".config.fireHeight.middle") :
-                        sliderValue == 100 ? Text.translatable(Main.MODID+".config.fireHeight.max") :
-                                Text.translatable("firorize.config.title.height").append(": " + sliderValue);
+        Component text = sliderValue == 0   ? Component.translatable(Main.MODID+".config.fireHeight.min") :
+                sliderValue == 50 ? Component.translatable(Main.MODID+".config.fireHeight.middle") :
+                        sliderValue == 100 ? Component.translatable(Main.MODID+".config.fireHeight.max") :
+                                Component.translatable("firorize.config.title.height").append(": " + sliderValue);
         this.setMessage(text);
     }
 }

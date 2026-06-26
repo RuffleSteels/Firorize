@@ -4,34 +4,34 @@ import com.oscimate.firorize.Colors;
 import com.oscimate.firorize.Main;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.narration.NarrationElementOutput;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 import java.awt.*;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class ColoredCycleButton extends PressableWidget {
+public class ColoredCycleButton extends AbstractButton {
     private int index;
     private final ArrayList<Colors> values;
     private final ChangeFireColorScreen instance;
     public boolean isAdding = false;
     private final int x;
     private final int y;
-    private final TextRenderer textRenderer;
+    private final Font font;
 
 
-    ColoredCycleButton(ChangeFireColorScreen instance, int x, int y, int width, int height, TextRenderer textRenderer) {
-        super(x, y, width, height, Text.literal(""));
-        this.textRenderer = textRenderer;
+    ColoredCycleButton(ChangeFireColorScreen instance, int x, int y, int width, int height, Font font) {
+        super(x, y, width, height, Component.literal(""));
+        this.font = font;
         this.x = x;
         this.y = y;
         this.instance = instance;
@@ -45,16 +45,16 @@ public class ColoredCycleButton extends PressableWidget {
             values.add(new Colors(key, value));
         }
 
-        this.setMessage(Text.translatable("firorize.config.title.color").append(": " + values.get(index).getName()));
+        this.setMessage(Component.translatable("firorize.config.title.color").append(": " + values.get(index).getName()));
 
     }
 
     @Override
-    protected void drawIcon(DrawContext context, int mouseX, int mouseY, float delta) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
+    protected void drawIcon(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        Minecraft minecraftClient = Minecraft.getInstance();
         // Fade the swatch via the colour's alpha channel (setShaderColor was removed in 1.21.5).
         int swatch = (ChangeFireColorScreen.pickedColor[instance.isOverlay ? 1 : 0].getRGB() & 0xFFFFFF)
-                | (MathHelper.ceil(this.alpha * 255.0F) << 24);
+                | (Mth.ceil(this.alpha * 255.0F) << 24);
         context.fill(instance.wheelCoords[0] + 50 + 20, instance.hexBoxCoords[1], instance.wheelCoords[0] + instance.wheelRadius*2  + instance.sliderDimensions[0], instance.hexBoxCoords[1] + 20, swatch);
 
         int i = this.active ? 16777215 : 10526880;
@@ -68,11 +68,11 @@ public class ColoredCycleButton extends PressableWidget {
             i = 10526880;
         }
         if (!isAdding) {
-            context.drawCenteredTextWithShadow(minecraftClient.textRenderer, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
+            context.drawCenteredTextWithShadow(minecraftClient.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, i | Mth.ceil(this.alpha * 255.0F) << 24);
         }
 
         if (instance.cycleTooltipTimer > 0) {
-            context.drawTooltip(textRenderer, Text.translatable(tooltip), instance.invisibleTextFieldWidget.getX() + 10, instance.invisibleTextFieldWidget.getY() + instance.invisibleTextFieldWidget.getHeight() + 5);
+            context.drawTooltip(font, Component.translatable(tooltip), instance.invisibleTextFieldWidget.getX() + 10, instance.invisibleTextFieldWidget.getY() + instance.invisibleTextFieldWidget.getHeight() + 5);
         }
     }
 
@@ -144,7 +144,7 @@ public class ColoredCycleButton extends PressableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+    protected void appendClickableNarrations(NarrationElementOutput builder) {
 
     }
 
@@ -160,7 +160,7 @@ public class ColoredCycleButton extends PressableWidget {
     private void cycle(int amount) {
         if (!isAdding && values.size() > 1) {
             instance.isCycling = true;
-            this.setIndex(MathHelper.floorMod(this.index + amount, this.values.size()));
+            this.setIndex(Mth.floorMod(this.index + amount, this.values.size()));
 
             if (this.index == 1 && !removing) {
                 instance.tempColor = ChangeFireColorScreen.pickedColor.clone();
@@ -191,15 +191,15 @@ public class ColoredCycleButton extends PressableWidget {
 
     public void setIndex(int index) {
         if (index == 0) {
-            instance.addColorButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addColorPresetButton")));
+            instance.addColorButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.addColorPresetButton")));
             instance.addColorButton.setTooltipDelay(Duration.ofMillis(750L));
-            instance.addColorButton.setMessage(Text.literal("+"));
+            instance.addColorButton.setMessage(Component.literal("+"));
         } else {
-            instance.addColorButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.removeColorPresetButton")));
+            instance.addColorButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.removeColorPresetButton")));
             instance.addColorButton.setTooltipDelay(Duration.ofMillis(750L));
-            instance.addColorButton.setMessage(Text.literal("x"));
+            instance.addColorButton.setMessage(Component.literal("x"));
         }
-        this.setMessage(Text.translatable("firorize.config.title.color").append(": " + this.values.get(index).getName()));
+        this.setMessage(Component.translatable("firorize.config.title.color").append(": " + this.values.get(index).getName()));
         this.index = index;
     }
 
@@ -222,14 +222,14 @@ public class ColoredCycleButton extends PressableWidget {
         }
 
 
-        public ColoredCycleButton build(ChangeFireColorScreen instance, int x, int y, int width, int height, TextRenderer textRenderer) {
+        public ColoredCycleButton build(ChangeFireColorScreen instance, int x, int y, int width, int height, Font font) {
                 return new ColoredCycleButton(
                         instance,
                         x,
                         y,
                         width,
                         height,
-                        textRenderer
+                        font
                 );
             }
     }

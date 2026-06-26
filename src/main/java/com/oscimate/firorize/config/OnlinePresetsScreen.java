@@ -2,14 +2,14 @@ package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ConfirmLinkScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,25 +44,25 @@ public class OnlinePresetsScreen extends Screen {
     private List<OnlinePreset> myUploads = List.of();
     private List<OnlinePreset> community = List.of();
     private PlaceholderField searchField;
-    private ButtonWidget uploadButton;
+    private Button uploadButton;
 
     // Inbox data.
     private List<OnlinePreset> inboxReceived = List.of();
     private List<OnlinePreset> inboxSent = List.of();
 
-    private Text flashText;
+    private Component flashText;
     private boolean flashError;
     private int flashTimer = 0;
 
     private static final float PRIVACY_SCALE = 0.82f;
-    private Text privacyText;
+    private Component privacyText;
     private int privacyX, privacyY, privacyW, privacyH;
 
     private int boxX, boxY, boxW, boxH;
     private int refreshIconX, refreshIconY;
 
     public OnlinePresetsScreen(ChangeFireColorScreen parent, View view) {
-        super(Text.translatable(view == View.INBOX ? "firorize.config.title.inbox" : "firorize.config.title.communityProfiles"));
+        super(Component.translatable(view == View.INBOX ? "firorize.config.title.inbox" : "firorize.config.title.communityProfiles"));
         this.parent = parent;
         this.view = view;
     }
@@ -78,8 +78,8 @@ public class OnlinePresetsScreen extends Screen {
         int listY;
         int listH;
         if (view == View.BROWSE) {
-            searchField = new PlaceholderField(this.textRenderer, boxX + 10, boxY + 24, boxW - 20, 16, Text.empty());
-            searchField.setPlaceholder(Text.translatable("firorize.config.placeholder.search"));
+            searchField = new PlaceholderField(this.font, boxX + 10, boxY + 24, boxW - 20, 16, Component.empty());
+            searchField.setPlaceholder(Component.translatable("firorize.config.placeholder.search"));
             searchField.setMaxLength(48);
             searchField.setChangedListener(s -> applyBrowse());
             addDrawableChild(searchField);
@@ -93,39 +93,39 @@ public class OnlinePresetsScreen extends Screen {
             listH = boxH - 52 - 30;
         }
 
-        listWidget = new OnlinePresetListWidget(boxX + 10, listY, boxW - 20, listH, this, this.textRenderer);
+        listWidget = new OnlinePresetListWidget(boxX + 10, listY, boxW - 20, listH, this, this.font);
         addDrawableChild(listWidget);
 
         if (view == View.BROWSE) {
-            uploadButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.uploadPreset"),
+            uploadButton = new Button.Builder(Component.translatable("firorize.config.button.uploadPreset"),
                     b -> client.setScreen(new ChooseProfileScreen(this, this)))
                     .dimensions(boxX + boxW - 10 - 100, boxY + boxH - 26, 100, 18).build();
             addDrawableChild(uploadButton);
         } else {
             // Inbox view: quick access to send a profile to a friend.
-            uploadButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.inboxSend"),
+            uploadButton = new Button.Builder(Component.translatable("firorize.config.button.inboxSend"),
                     b -> client.setScreen(new ChooseProfileScreen(this, this)))
                     .dimensions(boxX + boxW - 10 - 110, boxY + boxH - 26, 110, 18).build();
             addDrawableChild(uploadButton);
         }
 
         // Privacy policy: small gray underlined clickable text (not a button), bottom-left of the panel.
-        privacyText = Text.translatable("firorize.config.button.privacy").styled(s -> s.withUnderline(true));
-        privacyW = (int) Math.ceil(textRenderer.getWidth(privacyText) * PRIVACY_SCALE);
-        privacyH = (int) Math.ceil(textRenderer.fontHeight * PRIVACY_SCALE);
+        privacyText = Component.translatable("firorize.config.button.privacy").styled(s -> s.withUnderline(true));
+        privacyW = (int) Math.ceil(font.getWidth(privacyText) * PRIVACY_SCALE);
+        privacyH = (int) Math.ceil(font.fontHeight * PRIVACY_SCALE);
         privacyX = boxX + 10;
         privacyY = boxY + boxH - 16;
 
-        addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), b -> close())
+        addDrawableChild(new Button.Builder(Component.literal("x"), b -> close())
                 .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         // Refresh: re-pulls the current view from the Worker. Same 16×16 footprint as the close
         // button beside it; the refresh.png sprite is drawn over it in render() (see drawRefreshIcon).
         refreshIconX = boxX + boxW - 42;
         refreshIconY = boxY + 6;
-        ButtonWidget refreshButton = new ButtonWidget.Builder(Text.empty(), b -> { state = null; load(); })
+        Button refreshButton = new Button.Builder(Component.empty(), b -> { state = null; load(); })
                 .dimensions(refreshIconX, refreshIconY, 16, 16).build();
-        refreshButton.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(Text.translatable("firorize.config.tooltip.refresh")));
+        refreshButton.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(Component.translatable("firorize.config.tooltip.refresh")));
         addDrawableChild(refreshButton);
 
         super.init();
@@ -150,7 +150,7 @@ public class OnlinePresetsScreen extends Screen {
                 : CompletableFuture.completedFuture(List.of());
         OnlinePresetsClient.fetchPresets()
                 .thenCombine(mineF, KeyValuePair::of)
-                .whenComplete((pair, err) -> MinecraftClient.getInstance().execute(() -> {
+                .whenComplete((pair, err) -> Minecraft.getInstance().execute(() -> {
                     if (err != null) {
                         OnlinePresetsClient.LOGGER.error("Failed to fetch community profiles", err);
                         state = State.ERROR;
@@ -194,7 +194,7 @@ public class OnlinePresetsScreen extends Screen {
         state = State.LOADING;
         OnlinePresetsClient.fetchInbox(auth)
                 .thenCombine(OnlinePresetsClient.fetchSent(auth), KeyValuePair::of)
-                .whenComplete((pair, err) -> MinecraftClient.getInstance().execute(() -> {
+                .whenComplete((pair, err) -> Minecraft.getInstance().execute(() -> {
                     if (err != null) {
                         OnlinePresetsClient.LOGGER.error("Failed to load inbox", err);
                         state = State.ERROR;
@@ -211,17 +211,17 @@ public class OnlinePresetsScreen extends Screen {
     public void deleteUpload(int id) {
         OnlinePresetsClient.McAuth auth = OnlinePresetsClient.currentIdentity();
         if (auth == null) {
-            flashMessage(Text.translatable("firorize.config.status.signIn"), true);
+            flashMessage(Component.translatable("firorize.config.status.signIn"), true);
             return;
         }
         OnlinePresetsClient.deletePreset(auth, id)
-                .whenComplete((res, err) -> MinecraftClient.getInstance().execute(() -> {
+                .whenComplete((res, err) -> Minecraft.getInstance().execute(() -> {
                     if (err == null && res != null && res.success()) {
-                        flashMessage(Text.translatable("firorize.config.status.deleted"), false);
+                        flashMessage(Component.translatable("firorize.config.status.deleted"), false);
                         state = null;
                         load();
                     } else {
-                        flashMessage(Text.translatable("firorize.config.status.deleteFailed"), true);
+                        flashMessage(Component.translatable("firorize.config.status.deleteFailed"), true);
                     }
                 }));
     }
@@ -230,16 +230,16 @@ public class OnlinePresetsScreen extends Screen {
     public void deleteSend(int id) {
         OnlinePresetsClient.McAuth auth = OnlinePresetsClient.currentIdentity();
         if (auth == null) {
-            flashMessage(Text.translatable("firorize.config.status.signIn"), true);
+            flashMessage(Component.translatable("firorize.config.status.signIn"), true);
             return;
         }
         OnlinePresetsClient.deleteSend(auth, id)
-                .whenComplete((res, err) -> MinecraftClient.getInstance().execute(() -> {
+                .whenComplete((res, err) -> Minecraft.getInstance().execute(() -> {
                     if (err == null && res != null && res.success()) {
                         state = null;
                         load();
                     } else {
-                        flashMessage(Text.translatable("firorize.config.status.deleteFailed"), true);
+                        flashMessage(Component.translatable("firorize.config.status.deleteFailed"), true);
                     }
                 }));
     }
@@ -260,7 +260,7 @@ public class OnlinePresetsScreen extends Screen {
         }
     }
 
-    public void flashMessage(Text message, boolean error) {
+    public void flashMessage(Component message, boolean error) {
         this.flashText = message;
         this.flashError = error;
         this.flashTimer = 80;
@@ -293,13 +293,13 @@ public class OnlinePresetsScreen extends Screen {
 
     @Override
     public void resize(int width, int height) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         Main.setScale(width, height, client);
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Overlay the live config screen (dimmed) rather than cutting through to the blurred game.
         // renderAsBackdrop suppresses the config's deferred 3D/colour-wheel elements, which otherwise
         // composite in a later pass and would draw on top of this dialog.
@@ -308,31 +308,31 @@ public class OnlinePresetsScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
         super.render(context, mouseX, mouseY, delta);
 
         if (view == View.INBOX) {
             int dy = boxY + 28; // padded below the title so it clears the refresh/close buttons
-            for (net.minecraft.text.OrderedText line : textRenderer.wrapLines(Text.translatable("firorize.config.label.inboxDescription"), boxW - 20)) {
-                context.drawTextWithShadow(textRenderer, line, boxX + 10, dy, 0xFF9A9A9A);
+            for (net.minecraft.util.FormattedCharSequence line : font.wrapLines(Component.translatable("firorize.config.label.inboxDescription"), boxW - 20)) {
+                context.drawTextWithShadow(font, line, boxX + 10, dy, 0xFF9A9A9A);
                 dy += 10;
             }
         }
 
         int centerY = boxY + boxH / 2 - 14;
-        Text status = statusText();
+        Component status = statusText();
         if (status != null) {
             boolean err = state == State.ERROR;
-            context.drawCenteredTextWithShadow(textRenderer, status, width / 2, centerY, err ? 0xFFE08080 : 0xFFC0C0C0);
+            context.drawCenteredTextWithShadow(font, status, width / 2, centerY, err ? 0xFFE08080 : 0xFFC0C0C0);
         }
 
         if (flashTimer > 0 && flashText != null) {
-            context.drawCenteredTextWithShadow(textRenderer, flashText, width / 2, boxY + boxH - 40, flashError ? 0xFFE08080 : 0xFF80E080);
+            context.drawCenteredTextWithShadow(font, flashText, width / 2, boxY + boxH - 40, flashError ? 0xFFE08080 : 0xFF80E080);
         }
 
         // refresh.png sprite, centred over its (label-less) button.
@@ -342,7 +342,7 @@ public class OnlinePresetsScreen extends Screen {
         int privacyColor = overPrivacy(mouseX, mouseY) ? 0xFFCFCFCF : 0xFF8C8C8C;
         context.getMatrices().pushMatrix();
         context.getMatrices().scale(PRIVACY_SCALE, PRIVACY_SCALE);
-        context.drawText(textRenderer, privacyText, Math.round(privacyX / PRIVACY_SCALE), Math.round(privacyY / PRIVACY_SCALE), privacyColor, false);
+        context.drawText(font, privacyText, Math.round(privacyX / PRIVACY_SCALE), Math.round(privacyY / PRIVACY_SCALE), privacyColor, false);
         context.getMatrices().popMatrix();
     }
 
@@ -350,19 +350,19 @@ public class OnlinePresetsScreen extends Screen {
      *  Rendered smaller than the button so it doesn't crowd the edges. Uses the block atlas the same
      *  way {@link UndoButton} draws its icon. */
     private static final int REFRESH_ICON_SIZE = 11;
-    private void drawRefreshIcon(DrawContext context, int px, int py) {
+    private void drawRefreshIcon(GuiGraphicsExtractor context, int px, int py) {
         Sprite refresh = FireSprites.block(FireSprites.atlasManager(), "firorize:block/refresh");
         int off = (16 - REFRESH_ICON_SIZE) / 2;
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, refresh,
                 px + off, py + off, REFRESH_ICON_SIZE, REFRESH_ICON_SIZE);
     }
 
-    private Text statusText() {
-        if (state == State.LOADING) return Text.translatable("firorize.config.status.loading");
-        if (state == State.ERROR) return Text.translatable("firorize.config.status.loadFailed");
-        if (state == State.NEED_AUTH) return Text.translatable("firorize.config.status.signIn");
+    private Component statusText() {
+        if (state == State.LOADING) return Component.translatable("firorize.config.status.loading");
+        if (state == State.ERROR) return Component.translatable("firorize.config.status.loadFailed");
+        if (state == State.NEED_AUTH) return Component.translatable("firorize.config.status.signIn");
         if (state == State.LOADED && listWidget != null && listWidget.isEmpty()) {
-            return Text.translatable(view == View.INBOX ? "firorize.config.status.noInbox" : "firorize.config.status.noPresets");
+            return Component.translatable(view == View.INBOX ? "firorize.config.status.noInbox" : "firorize.config.status.noPresets");
         }
         return null;
     }

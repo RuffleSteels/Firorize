@@ -1,11 +1,11 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.io.IOException;
@@ -31,16 +31,16 @@ public class UploadPresetScreen extends Screen {
     private PlaceholderField titleField;
     private PlaceholderField descriptionField;
     private PlaceholderField recipientsField;
-    private ButtonWidget primaryButton;
+    private Button primaryButton;
 
     private boolean submitting = false;
-    private Text status;
+    private Component status;
     private boolean statusError;
 
     private int boxX, boxY, boxW, boxH;
 
     public UploadPresetScreen(Screen back, Screen origin, OnlinePresetsScreen online, String profileName, boolean privateMode) {
-        super(Text.translatable(privateMode ? "firorize.config.button.sendToFriend" : "firorize.config.button.uploadOnline"));
+        super(Component.translatable(privateMode ? "firorize.config.button.sendToFriend" : "firorize.config.button.uploadOnline"));
         this.back = back;
         this.origin = origin;
         this.online = online;
@@ -56,33 +56,33 @@ public class UploadPresetScreen extends Screen {
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
 
-        titleField = new PlaceholderField(this.textRenderer, boxX + 20, boxY + 46, boxW - 40, 20, Text.empty());
-        titleField.setPlaceholder(Text.translatable("firorize.config.placeholder.presetTitle"));
+        titleField = new PlaceholderField(this.font, boxX + 20, boxY + 46, boxW - 40, 20, Component.empty());
+        titleField.setPlaceholder(Component.translatable("firorize.config.placeholder.presetTitle"));
         titleField.setMaxLength(32);
         // Letters/numbers/spaces only (international letters allowed); no symbols/emoji. Empty allowed while typing.
         titleField.setTextPredicate(s -> s.matches("[\\p{L}\\p{N} ]*"));
         addDrawableChild(titleField);
 
-        descriptionField = new PlaceholderField(this.textRenderer, boxX + 20, boxY + 74, boxW - 40, 20, Text.empty());
-        descriptionField.setPlaceholder(Text.translatable("firorize.config.placeholder.presetDescription"));
+        descriptionField = new PlaceholderField(this.font, boxX + 20, boxY + 74, boxW - 40, 20, Component.empty());
+        descriptionField.setPlaceholder(Component.translatable("firorize.config.placeholder.presetDescription"));
         descriptionField.setMaxLength(150);
         addDrawableChild(descriptionField);
 
         if (privateMode) {
-            recipientsField = new PlaceholderField(this.textRenderer, boxX + 20, boxY + 102, boxW - 40, 20, Text.empty());
-            recipientsField.setPlaceholder(Text.translatable("firorize.config.placeholder.recipients"));
+            recipientsField = new PlaceholderField(this.font, boxX + 20, boxY + 102, boxW - 40, 20, Component.empty());
+            recipientsField.setPlaceholder(Component.translatable("firorize.config.placeholder.recipients"));
             recipientsField.setMaxLength(400);
             addDrawableChild(recipientsField);
         }
 
-        primaryButton = new ButtonWidget.Builder(
-                Text.translatable(privateMode ? "firorize.config.button.sendPreset" : "firorize.config.button.uploadPreset"), button -> submit())
+        primaryButton = new Button.Builder(
+                Component.translatable(privateMode ? "firorize.config.button.sendPreset" : "firorize.config.button.uploadPreset"), button -> submit())
                 .dimensions(boxX + (boxW - 120) / 2, boxY + boxH - 28, 120, 20).build();
         addDrawableChild(primaryButton);
 
-        addDrawableChild(new ButtonWidget.Builder(Text.literal("<"), button -> close())
+        addDrawableChild(new Button.Builder(Component.literal("<"), button -> close())
                 .dimensions(boxX + 6, boxY + 6, 16, 16).build());
-        addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), button -> client.setScreen(origin))
+        addDrawableChild(new Button.Builder(Component.literal("x"), button -> client.setScreen(origin))
                 .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         super.init();
@@ -92,7 +92,7 @@ public class UploadPresetScreen extends Screen {
         if (submitting) return;
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
-            setStatus(Text.translatable("firorize.config.status.titleRequired"), true);
+            setStatus(Component.translatable("firorize.config.status.titleRequired"), true);
             return;
         }
 
@@ -100,11 +100,11 @@ public class UploadPresetScreen extends Screen {
         if (privateMode) {
             recipients = parseRecipients(recipientsField.getText());
             if (recipients.isEmpty()) {
-                setStatus(Text.translatable("firorize.config.status.noRecipients"), true);
+                setStatus(Component.translatable("firorize.config.status.noRecipients"), true);
                 return;
             }
             if (recipients.stream().anyMatch(r -> !r.matches(USERNAME_RE))) {
-                setStatus(Text.translatable("firorize.config.status.invalidUsername"), true);
+                setStatus(Component.translatable("firorize.config.status.invalidUsername"), true);
                 return;
             }
         }
@@ -112,34 +112,34 @@ public class UploadPresetScreen extends Screen {
         KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> profile =
                 Main.CONFIG_MANAGER.getFireColorPresets().get(profileName);
         if (profile == null) {
-            setStatus(Text.translatable("firorize.config.status.uploadFailed"), true);
+            setStatus(Component.translatable("firorize.config.status.uploadFailed"), true);
             return;
         }
         String data;
         try {
             data = ChangeFireColorScreen.serializeToString(profile);
         } catch (IOException e) {
-            setStatus(Text.translatable("firorize.config.status.uploadFailed"), true);
+            setStatus(Component.translatable("firorize.config.status.uploadFailed"), true);
             return;
         }
 
         OnlinePresetsClient.McAuth auth = OnlinePresetsClient.currentIdentity();
         if (auth == null) {
-            setStatus(Text.translatable("firorize.config.status.signIn"), true);
+            setStatus(Component.translatable("firorize.config.status.signIn"), true);
             return;
         }
 
         submitting = true;
         primaryButton.active = false;
-        setStatus(Text.translatable(privateMode ? "firorize.config.status.sending" : "firorize.config.status.uploading"), false);
+        setStatus(Component.translatable(privateMode ? "firorize.config.status.sending" : "firorize.config.status.uploading"), false);
 
         String description = descriptionField.getText().trim();
         if (privateMode) {
             OnlinePresetsClient.share(auth, data, title, description, recipients)
-                    .whenComplete((res, err) -> MinecraftClient.getInstance().execute(() -> onComplete(res, err, true)));
+                    .whenComplete((res, err) -> Minecraft.getInstance().execute(() -> onComplete(res, err, true)));
         } else {
             OnlinePresetsClient.upload(auth, data, title, description)
-                    .whenComplete((res, err) -> MinecraftClient.getInstance().execute(() -> onComplete(res, err, false)));
+                    .whenComplete((res, err) -> Minecraft.getInstance().execute(() -> onComplete(res, err, false)));
         }
     }
 
@@ -148,7 +148,7 @@ public class UploadPresetScreen extends Screen {
         primaryButton.active = true;
         if (err != null) {
             OnlinePresetsClient.LOGGER.error(sent ? "Send failed" : "Upload failed", err);
-            setStatus(Text.translatable(sent ? "firorize.config.status.sendFailed" : "firorize.config.status.uploadFailed"), true);
+            setStatus(Component.translatable(sent ? "firorize.config.status.sendFailed" : "firorize.config.status.uploadFailed"), true);
         } else if (res.success()) {
             if (online != null) {
                 if (sent) online.refreshInbox(); else online.refresh();
@@ -171,21 +171,21 @@ public class UploadPresetScreen extends Screen {
     }
 
     /** Maps the Worker's rejection codes to localized messages. */
-    private static Text errorMessage(String code) {
+    private static Component errorMessage(String code) {
         return switch (code == null ? "" : code) {
-            case "profanity" -> Text.translatable("firorize.config.status.profanity");
-            case "invalid_title" -> Text.translatable("firorize.config.status.invalidTitle");
-            case "too_long" -> Text.translatable("firorize.config.status.tooLong");
-            case "unauthorized" -> Text.translatable("firorize.config.status.signIn");
-            case "rate_limited" -> Text.translatable("firorize.config.status.rateLimited");
-            case "duplicate_title" -> Text.translatable("firorize.config.status.duplicateTitle");
-            case "invalid_username" -> Text.translatable("firorize.config.status.invalidUsername");
-            case "no_recipients", "too_many_recipients" -> Text.translatable("firorize.config.status.noRecipients");
-            default -> Text.translatable("firorize.config.status.uploadFailed");
+            case "profanity" -> Component.translatable("firorize.config.status.profanity");
+            case "invalid_title" -> Component.translatable("firorize.config.status.invalidTitle");
+            case "too_long" -> Component.translatable("firorize.config.status.tooLong");
+            case "unauthorized" -> Component.translatable("firorize.config.status.signIn");
+            case "rate_limited" -> Component.translatable("firorize.config.status.rateLimited");
+            case "duplicate_title" -> Component.translatable("firorize.config.status.duplicateTitle");
+            case "invalid_username" -> Component.translatable("firorize.config.status.invalidUsername");
+            case "no_recipients", "too_many_recipients" -> Component.translatable("firorize.config.status.noRecipients");
+            default -> Component.translatable("firorize.config.status.uploadFailed");
         };
     }
 
-    private void setStatus(Text message, boolean error) {
+    private void setStatus(Component message, boolean error) {
         this.status = message;
         this.statusError = error;
     }
@@ -203,13 +203,13 @@ public class UploadPresetScreen extends Screen {
 
     @Override
     public void resize(int width, int height) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         Main.setScale(width, height, client);
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Overlay the chooser we came from (which in turn renders the config behind it), rather than
         // cutting through to the blurred game.
         ChangeFireColorScreen.renderModalBackdrop(context, back, delta);
@@ -217,19 +217,19 @@ public class UploadPresetScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
 
         // Selected profile, for confirmation.
-        context.drawTextWithShadow(textRenderer,
-                Text.translatable("firorize.config.label.profileName", profileName), boxX + 10, boxY + 28, 0xFFB0B0B0);
+        context.drawTextWithShadow(font,
+                Component.translatable("firorize.config.label.profileName", profileName), boxX + 10, boxY + 28, 0xFFB0B0B0);
 
         if (status != null) {
-            context.drawCenteredTextWithShadow(textRenderer, status, width / 2, boxY + boxH - 44, statusError ? 0xFFE08080 : 0xFF80E080);
+            context.drawCenteredTextWithShadow(font, status, width / 2, boxY + boxH - 44, statusError ? 0xFFE08080 : 0xFF80E080);
         }
     }
 }

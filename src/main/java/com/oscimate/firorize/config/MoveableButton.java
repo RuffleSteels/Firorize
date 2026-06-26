@@ -2,18 +2,18 @@ package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.ButtonTextures;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.Collections;
 
-public class MoveableButton extends ButtonWidget {
+public class MoveableButton extends Button {
     private final ButtonTextures TEXTURES = new ButtonTextures(Identifier.of("widget/button"), Identifier.of("widget/button_disabled"), Identifier.of("widget/button_highlighted"));
     private final int index;
     private final String[] headers = new String[]{"Blocks", "Tags", "Biomes"};
@@ -31,16 +31,16 @@ public class MoveableButton extends ButtonWidget {
         return y;
     }
 
-    private final TextRenderer textRenderer;
+    private final Font font;
     @SuppressWarnings("this-escape") // updateMessage/getY are called after super(), values are set deterministically
-    protected MoveableButton(ChangeFireColorScreen instance, TextRenderer textRenderer, int x, int y, int width, int height, net.minecraft.text.Text message, int index) {
+    protected MoveableButton(ChangeFireColorScreen instance, Font font, int x, int y, int width, int height, net.minecraft.network.chat.Component message, int index) {
         super(x, y, width, height, message, null, DEFAULT_NARRATION_SUPPLIER);
         this.index = index;
         this.instance = instance;
 
         this.y = getY() - this.height;
         this.x = new int[]{getX(), getX()+getWidth()-getHeight()};
-        this.textRenderer = textRenderer;
+        this.font = font;
     }
 
     public void move(boolean right) {
@@ -59,11 +59,11 @@ public class MoveableButton extends ButtonWidget {
     }
 
     @Override
-    protected void drawIcon(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void drawIcon(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         this.drawButton(context); // renderWidget no longer draws the button background/label
         // getMessage() can no longer be overridden, so keep the header in sync here (1-frame lag on reorder).
-        setMessage(net.minecraft.text.Text.literal(headers[Main.CONFIG_MANAGER.getPriorityOrder().get(index)]));
-        context.drawCenteredTextWithShadow(this.textRenderer, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
+        setMessage(net.minecraft.network.chat.Component.literal(headers[Main.CONFIG_MANAGER.getPriorityOrder().get(index)]));
+        context.drawCenteredTextWithShadow(this.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
 
         Sprite ARROW_RIGHT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_right");
         Sprite ARROW_LEFT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_left");

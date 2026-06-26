@@ -1,14 +1,14 @@
 package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +30,7 @@ import java.util.Base64;
 public class AddProfileScreen extends Screen {
     private final ChangeFireColorScreen parent;
     protected AddProfileScreen(ChangeFireColorScreen parent) {
-        super(Text.translatable("firorize.config.title.newProfile"));
+        super(Component.translatable("firorize.config.title.newProfile"));
         this.parent = parent;
     }
 
@@ -40,10 +40,10 @@ public class AddProfileScreen extends Screen {
         return super.mouseClicked(click, doubled);
     }
 
-    public ButtonWidget fromExistingButton;
-    public ButtonWidget fromNewButton;
-    public TextFieldWidget presetNameField;
-    private Text nameError = null;
+    public Button fromExistingButton;
+    public Button fromNewButton;
+    public EditBox presetNameField;
+    private Component nameError = null;
 
     private int boxX, boxY, boxW, boxH;
 
@@ -58,16 +58,16 @@ public class AddProfileScreen extends Screen {
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
 
-        this.presetNameField = new PlaceholderField(this.textRenderer, boxX + pad, boxY + 28, boxW - pad * 2, 20, ScreenTexts.DONE);
+        this.presetNameField = new PlaceholderField(this.font, boxX + pad, boxY + 28, boxW - pad * 2, 20, CommonComponents.DONE);
         presetNameField.setMaxLength(Integer.MAX_VALUE);
 
         int btnW = (boxW - pad * 2 - 6) / 2;
-        this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting())
+        this.fromExistingButton = new Button.Builder(Component.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting())
                 .dimensions(boxX + pad, boxY + 54, btnW, 20).build();
-        this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button -> addFromNew())
+        this.fromNewButton = new Button.Builder(Component.translatable("firorize.config.button.profileFromNewButton"), button -> addFromNew())
                 .dimensions(boxX + pad + btnW + 6, boxY + 54, btnW, 20).build();
 
-        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), button -> close())
+        this.addDrawableChild(new Button.Builder(Component.literal("x"), button -> close())
                 .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
         this.addDrawableChild(presetNameField);
         this.addDrawableChild(fromExistingButton);
@@ -75,11 +75,11 @@ public class AddProfileScreen extends Screen {
         super.init();
         Main.inConfig = true;
 
-        fromExistingButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCurrentButton")));
+        fromExistingButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.profileFromCurrentButton")));
         fromExistingButton.setTooltipDelay(Duration.ofMillis(750L));
-        fromNewButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromNewButton")));
+        fromNewButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.profileFromNewButton")));
         fromNewButton.setTooltipDelay(Duration.ofMillis(750L));
-        presetNameField.setPlaceholder(Text.translatable("firorize.config.placeholder.newProfileNameField"));
+        presetNameField.setPlaceholder(Component.translatable("firorize.config.placeholder.newProfileNameField"));
     }
 
     public void addFromExisting() {
@@ -101,7 +101,7 @@ public class AddProfileScreen extends Screen {
 
     @Override
     public void resize(int width, int height) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         Main.setScale(width, height, client);
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
@@ -109,9 +109,9 @@ public class AddProfileScreen extends Screen {
     public void addProfile(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
         if (newProfile != null) {
             if (presetNameField.getText().isEmpty()) {
-                nameError = Text.translatable("firorize.config.tooltip.empty");
+                nameError = Component.translatable("firorize.config.tooltip.empty");
             } else if (Main.CONFIG_MANAGER.getFireColorPresets().keySet().stream().anyMatch(presetNameField.getText()::equalsIgnoreCase)) {
-                nameError = Text.translatable("firorize.config.tooltip.exists");
+                nameError = Component.translatable("firorize.config.tooltip.exists");
             } else {
                 parent.presetListWidget.addProfile(presetNameField.getText(), newProfile);
                 Main.setScale(width, height, client);
@@ -147,7 +147,7 @@ public class AddProfileScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Draw the config screen behind (with its deferred 3D/colour-wheel elements suppressed so they
         // don't composite over this dialog), then a dim overlay and the dialog box (matching the
         // profile-delete confirm box), rather than blurring through to the game.
@@ -156,16 +156,16 @@ public class AddProfileScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(textRenderer, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta); // renderBackground (parent + dim + box) then the dialog widgets
 
         // Validation feedback as red text in the dialog (matching the other dialogs), not a tooltip.
         if (nameError != null) {
-            context.drawCenteredTextWithShadow(textRenderer, nameError, width / 2, boxY + boxH - 14, 0xFFE08080);
+            context.drawCenteredTextWithShadow(font, nameError, width / 2, boxY + boxH - 14, 0xFFE08080);
         }
     }
 }

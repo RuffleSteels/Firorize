@@ -3,12 +3,12 @@ package com.oscimate.firorize.config;
 import com.oscimate.firorize.Main;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,14 +18,14 @@ import java.util.Collections;
 
 @Environment(value= EnvType.CLIENT)
 class PresetListWidget
-        extends AlwaysSelectedEntryListWidget<PresetListWidget.PresetEntry> {
+        extends ObjectSelectionList<PresetListWidget.PresetEntry> {
 
     public String curPresetID;
 
-    public PresetListWidget(MinecraftClient client, int width, int height, int x, int y, ChangeFireColorScreen instance, TextRenderer textRenderer) {
+    public PresetListWidget(Minecraft client, int width, int height, int x, int y, ChangeFireColorScreen instance, Font font) {
         super(client, width, height, x, y);
         this.instance = instance;
-        this.textRenderer = textRenderer;
+        this.font = font;
 
         Main.CONFIG_MANAGER.getFireColorPresets().forEach((string, map) -> {
             this.addEntry(new PresetEntry(string));
@@ -40,7 +40,7 @@ class PresetListWidget
         setSelected(children().get(curIndex));
     }
 
-    private final TextRenderer textRenderer;
+    private final Font font;
     private final ChangeFireColorScreen instance;
 
     @Override
@@ -125,7 +125,7 @@ class PresetListWidget
     }
 
     @Override
-    protected void drawSelectionHighlight(DrawContext context, PresetEntry entry, int color) {
+    protected void drawSelectionHighlight(GuiGraphicsExtractor context, PresetEntry entry, int color) {
         int entryWidth = getRowWidth();
         int entryHeight = entry.getHeight();
         int y = entry.getY();
@@ -152,25 +152,25 @@ class PresetListWidget
 
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.renderWidget(context, mouseX, mouseY, delta);
         context.getMatrices().pushMatrix();
         context.getMatrices().scale(2f, 2f);
-        context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
+        context.drawTextWithShadow(font, Component.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
         context.getMatrices().popMatrix();
     }
 
 
     @Environment(value=EnvType.CLIENT)
     public class PresetEntry
-            extends AlwaysSelectedEntryListWidget.Entry<PresetListWidget.PresetEntry> {
+            extends ObjectSelectionList.Entry<PresetListWidget.PresetEntry> {
         public final String languageDefinition;
         public PresetEntry(String languageDefinition) {
             this.languageDefinition = languageDefinition;
         }
         @Override
-        public Text getNarration() {
-            return Text.translatable("narrator.select", this.languageDefinition);
+        public Component getNarration() {
+            return Component.translatable("narrator.select", this.languageDefinition);
         }
 
         @Override
@@ -189,8 +189,8 @@ class PresetListWidget
                     String toDelete = languageDefinition;
                     PresetListWidget.PresetEntry self = this;
                     instance.showConfirm(
-                            Text.translatable("firorize.config.confirm.deleteProfile.title"),
-                            Text.translatable("firorize.config.confirm.deleteProfile.message"),
+                            Component.translatable("firorize.config.confirm.deleteProfile.title"),
+                            Component.translatable("firorize.config.confirm.deleteProfile.message"),
                             () -> {
                                 Main.CONFIG_MANAGER.getFireColorPresets().remove(toDelete);
                                 Main.CONFIG_MANAGER.getImportedProfiles().remove(toDelete); // drop the online marker too
@@ -211,7 +211,7 @@ class PresetListWidget
         private float alphaa;
 
         @Override
-        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int x = getX();
             int y = getY();
             int entryWidth = getWidth();
@@ -242,14 +242,14 @@ class PresetListWidget
                 if (mouseX >= iconX && mouseX <= iconX + 9 && mouseY >= iconY && mouseY <= iconY + 9) {
                     String author = Main.CONFIG_MANAGER.getImportedAuthors().get(languageDefinition);
                     if (author == null || author.isBlank()) {
-                        instance.globeTooltip = Text.translatable("firorize.config.tooltip.importedOnline");
+                        instance.globeTooltip = Component.translatable("firorize.config.tooltip.importedOnline");
                     } else {
-                        instance.globeTooltip = Text.translatable(
+                        instance.globeTooltip = Component.translatable(
                                 fromFriend ? "firorize.config.tooltip.sentBy" : "firorize.config.tooltip.createdBy", author);
                     }
                 }
             }
-            context.drawCenteredTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y + (entryHeight - 8) / 2 +1, 0xFFFFFFFF);
+            context.drawCenteredTextWithShadow(PresetListWidget.this.font, Component.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y + (entryHeight - 8) / 2 +1, 0xFFFFFFFF);
         }
     }
 }

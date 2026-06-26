@@ -2,16 +2,16 @@ package com.oscimate.firorize.config;
 
 
 import com.oscimate.firorize.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.model.ModelBaker;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
 
@@ -19,7 +19,7 @@ public class ChangeFireHeightScreen extends Screen {
     private Screen parent;
 
     protected ChangeFireHeightScreen(Screen parent) {
-        super(Text.translatable("options.videoTitle"));
+        super(Component.translatable("options.videoTitle"));
         this.parent = parent;
     }
 
@@ -36,9 +36,9 @@ public class ChangeFireHeightScreen extends Screen {
     }
     @Override
     protected void init() {
-        FireHeightSliderWidget customTimeSliderWidget = new FireHeightSliderWidget(this.width / 2 - 75, 10, 150, 20, Text.translatable("firorize.config.title.height"), (double) Main.CONFIG_MANAGER.getCurrentFireHeightSlider() /100);
+        FireHeightSliderWidget customTimeSliderWidget = new FireHeightSliderWidget(this.width / 2 - 75, 10, 150, 20, Component.translatable("firorize.config.title.height"), (double) Main.CONFIG_MANAGER.getCurrentFireHeightSlider() /100);
         this.addDrawableChild(customTimeSliderWidget);
-        this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, 50, 200, 20).build());
+        this.addDrawableChild(new Button.Builder(CommonComponents.DONE, button -> onClose()).dimensions(width / 2 - 100, 50, 200, 20).build());
         super.init();
     }
     @Override
@@ -47,13 +47,13 @@ public class ChangeFireHeightScreen extends Screen {
     }
     @Override
     public void resize(int width, int height) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 //        Main.setScale(width, height, client);
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
         super.render(context, mouseX, mouseY, delta);
 

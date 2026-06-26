@@ -1,14 +1,14 @@
 package com.oscimate.firorize.config;
 
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
 
-public class CustomTextFieldWidget extends TextFieldWidget {
+public class CustomTextFieldWidget extends EditBox {
     private ChangeFireColorScreen instance;
     private final boolean thing;
-    public CustomTextFieldWidget(TextRenderer textRenderer, int x, int y, int width, int height, Text text, ChangeFireColorScreen instance, boolean thing) {
-        super(textRenderer, x, y, width, height, text);
+    public CustomTextFieldWidget(Font font, int x, int y, int width, int height, Component text, ChangeFireColorScreen instance, boolean thing) {
+        super(font, x, y, width, height, text);
         this.instance = instance;
         this.thing = thing;
     }
