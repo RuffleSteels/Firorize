@@ -9,22 +9,20 @@ import com.oscimate.firorize.config.render.ColorWheelElement;
 import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.*;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.ScreenRect;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.BlockRenderManager;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
@@ -116,7 +114,7 @@ public class ChangeFireColorScreen extends Screen {
     public void drawResetIcon(GuiGraphicsExtractor context, int px, int py) {
         TextureAtlasSprite reset = FireSprites.block(FireSprites.atlasManager(), "firorize:block/reset");
         int off = (20 - RESET_ICON_SIZE) / 2; // centred in the 20×20 button
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, reset,
+        context.blitSprite(RenderPipelines.GUI_TEXTURED, reset,
                 px + off, py + off, RESET_ICON_SIZE, RESET_ICON_SIZE);
     }
 
@@ -369,28 +367,28 @@ public class ChangeFireColorScreen extends Screen {
     private void renderConfirm(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         // Drawn last in render(), so in the 2D GUI (draw order = call order) it sits in front of the
         // 3D previews, which are composited as 2D quads earlier in the queue.
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         context.fill(0, 0, width, height, 0xB0000000); // dim everything behind the box
         int bx = confirmBoxX(), by = confirmBoxY();
         context.fill(bx - 1, by - 1, bx + confirmBoxW + 1, by + confirmBoxH + 1, 0xFF000000);
         context.fill(bx, by, bx + confirmBoxW, by + confirmBoxH, 0xFF1A1A1A);
-        context.drawStrokedRectangle(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(font, confirmTitle, bx + 12, by + 10, 0xFFFFFFFF);
+        context.outline(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
+        context.text(font, confirmTitle, bx + 12, by + 10, 0xFFFFFFFF);
         int ty = by + 30;
         for (FormattedCharSequence line : font.wrapLines(confirmMessage, confirmBoxW - 24)) {
-            context.drawCenteredTextWithShadow(font, line, width / 2, ty, 0xFFC0C0C0);
+            context.centeredText(font, line, width / 2, ty, 0xFFC0C0C0);
             ty += 11;
         }
         drawConfirmButton(context, confirmYesRect(), CommonComponents.YES, mouseX, mouseY);
         drawConfirmButton(context, confirmNoRect(), CommonComponents.NO, mouseX, mouseY);
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
     private void drawConfirmButton(GuiGraphicsExtractor context, int[] r, Component label, int mouseX, int mouseY) {
         boolean hover = inRect(r, mouseX, mouseY);
         context.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], hover ? 0xFF505050 : 0xFF383838);
-        context.drawStrokedRectangle(r[0], r[1], r[2], r[3], hover ? 0xFFFFFFFF : 0xFF8B8B8B);
-        context.drawCenteredTextWithShadow(font, label, r[0] + r[2] / 2, r[1] + (r[3] - 8) / 2, 0xFFFFFFFF);
+        context.outline(r[0], r[1], r[2], r[3], hover ? 0xFFFFFFFF : 0xFF8B8B8B);
+        context.centeredText(font, label, r[0] + r[2] / 2, r[1] + (r[3] - 8) / 2, 0xFFFFFFFF);
     }
 
     private void undo() {
@@ -562,7 +560,7 @@ public class ChangeFireColorScreen extends Screen {
         // Inbox button wraps narrowly to its label and stays right-aligned at the end of the row;
         // Share fills the remaining width to its left.
         Component inboxLabel = Component.translatable("firorize.config.button.inbox");
-        int inboxSize = font.getWidth(inboxLabel) + 12;
+        int inboxSize = font.width(inboxLabel) + 12;
         int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
         this.shareBottomButton = new Button.Builder(Component.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
                 .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
@@ -893,7 +891,7 @@ public class ChangeFireColorScreen extends Screen {
     private final java.util.Set<String> dragAdded = new java.util.HashSet<>();
 
     @Override
-    public boolean keyPressed(net.minecraft.client.input.KeyInput input) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent input) {
         int keyCode = input.key();
 
         if (confirmActive) {
@@ -1046,7 +1044,7 @@ public class ChangeFireColorScreen extends Screen {
     @SuppressWarnings("deprecation") // TextureAtlas.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
 
         super.render(context, mouseX, mouseY, delta);
 
@@ -1057,13 +1055,13 @@ public class ChangeFireColorScreen extends Screen {
         // the quad's vertex-colour alpha; full brightness here). Skipped in backdrop mode: this custom
         // pipeline element composites in a later pass and would draw over the overlaying dialog.
         if (!renderingAsBackdrop) {
-            context.state.addSimpleElement(new ColorWheelElement(
-                    FirorizePipelines.COLOR_WHEEL, new Matrix3x2f(context.getMatrices()),
+            context.guiRenderState.addGuiElement(new ColorWheelElement(
+                    FirorizePipelines.COLOR_WHEEL, new Matrix3x2f(context.pose()),
                     wheelCoords[0], wheelCoords[1], wheelCoords[0] + wheelRadius * 2, wheelCoords[1] + wheelRadius * 2,
                     1.0f, null));
 
-            context.drawStrokedRectangle((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
-            context.drawStrokedRectangle((int) clickedX - cursorDimensions/2, (int)  clickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, Color.gray.getRGB());
+            context.outline((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
+            context.outline((int) clickedX - cursorDimensions/2, (int)  clickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, Color.gray.getRGB());
             context.fill((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, (int) clickedX + cursorDimensions/4, (int) clickedY + cursorDimensions/4, Color.BLACK.getRGB());
         }
 
@@ -1071,8 +1069,8 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(sliderCoords[0], sliderCoords[1]+sliderDimensions[1]/2, sliderCoords[0]+sliderDimensions[0], sliderCoords[1]+sliderDimensions[1], Color.BLACK.getRGB());
         context.fillGradient(sliderCoords[0], sliderCoords[1]+11, sliderCoords[0]+sliderDimensions[0], sliderCoords[1]+sliderDimensions[1]-11, Color.HSBtoRGB((float) hue, (float) saturation, 1.0f), Color.BLACK.getRGB());
 
-        context.drawStrokedRectangle((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
-        context.drawStrokedRectangle((int) sliderClickedX - cursorDimensions/2, (int)  sliderClickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, 0x7f222222);
+        context.outline((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
+        context.outline((int) sliderClickedX - cursorDimensions/2, (int)  sliderClickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, 0x7f222222);
         context.fill((int) sliderClickedX - cursorDimensions/4, (int) sliderClickedY - cursorDimensions/4, (int) sliderClickedX + cursorDimensions/4, (int) sliderClickedY + cursorDimensions/4, Color.BLACK.getRGB());
 
 
@@ -1121,8 +1119,8 @@ public class ChangeFireColorScreen extends Screen {
                     (cellPx - gridBoxW / 2f) / gridScale, (cellPy - gridBoxH) / gridScale,
                     q, true, 1f, 1f, -0.36f, 0f, 1f, 1f, 1f, false));
         }
-        context.state.addSpecialElement(new BlockSceneRenderState(gridX1, gridY1, gridX2, gridY2, gridScale, gridOps,
-                new ScreenRect(gridX1, gridY1, gridX2 - gridX1, gridY2 - gridY1)));
+        context.guiRenderState.addPicturesInPictureState(new BlockSceneRenderState(gridX1, gridY1, gridX2, gridY2, gridScale, gridOps,
+                new ScreenRectangle(gridX1, gridY1, gridX2 - gridX1, gridY2 - gridY1)));
 
 
 
@@ -1130,34 +1128,34 @@ public class ChangeFireColorScreen extends Screen {
         java.util.List<BlockDrawOp> pvOps = new java.util.ArrayList<>();
 
         pvOps.add(new BlockDrawOp(blockUnder.getDefaultState(),
-                0f, (-4f/960) * context.getScaledWindowHeight(), 0f,
+                0f, (-4f/960) * context.guiHeight(), 0f,
                 q, true, -2f, -.5f, -.5f, -.5f, 1f, 1f, 1f, false, true, true));
 
         pvOps.add(new BlockDrawOp(Blocks.FIRE.getDefaultState(),
-                0f, (-4f/960) * context.getScaledWindowHeight(), 0f,
+                0f, (-4f/960) * context.guiHeight(), 0f,
                 q, true, -2f, -.5f, .5f, -0.5f,
                 pickedColor[0].getRed() / 255f, pickedColor[0].getGreen() / 255f, pickedColor[0].getBlue() / 255f, true, true, true));
 
 //        // Soul fire (custom tint, overlay colour): same matrix as fire, then pop.
         pvOps.add(new BlockDrawOp(Blocks.SOUL_FIRE.getDefaultState(),
-                0f, (-4f/960) * context.getScaledWindowHeight(), 0f,
+                0f, (-4f/960) * context.guiHeight(), 0f,
                 q, true, -2f, -.5f, .5f, -0.5f,
                 pickedColor[1].getRed() / 255f, pickedColor[1].getGreen() / 255f, pickedColor[1].getBlue() / 255f, true, true, true));
 
         int x1 = wheelCoords[0] + (wheelRadius*2 + sliderDimensions[0] + 20);
-        int x2 = context.getScaledWindowWidth() - (blockSearchCoords[1] ) -  blockSearchDimensions[0];
+        int x2 = context.guiWidth() - (blockSearchCoords[1] ) -  blockSearchDimensions[0];
 
-//        context.drawStrokedRectangle(x1, 10, x2 - x1, 1000, Color.RED.getRGB());
+//        context.outline(x1, 10, x2 - x1, 1000, Color.RED.getRGB());
 
-        context.state.addSpecialElement(new BlockSceneRenderState(x1, 0, x2, context.getScaledWindowHeight(), 100f, pvOps,
-                new ScreenRect(0, 0, context.getScaledWindowWidth(), context.getScaledWindowHeight())));
+        context.guiRenderState.addPicturesInPictureState(new BlockSceneRenderState(x1, 0, x2, context.guiHeight(), 100f, pvOps,
+                new ScreenRectangle(0, 0, context.guiWidth(), context.guiHeight())));
         }
 
         if (globeTooltip != null) {
-            context.drawTooltip(this.font, globeTooltip, mouseX, mouseY);
+            context.setTooltipForNextFrame(this.font, globeTooltip, mouseX, mouseY);
             globeTooltip = null;
         }
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
 
         drawInboxBadge(context);
         if (confirmActive && !renderingAsBackdrop) renderConfirm(context, mouseX, mouseY);
@@ -1172,7 +1170,7 @@ public class ChangeFireColorScreen extends Screen {
         drawDisc(context, cx, cy, 5.5, 0xFF101010); // dark outline for contrast
         drawDisc(context, cx, cy, 4.5, 0xFFCC2222);
         String label = count > 9 ? "9+" : Integer.toString(count);
-        context.drawText(this.font, label, cx - this.font.getWidth(label) / 2, cy - 3, 0xFFFFFFFF, false);
+        context.text(this.font, label, cx - this.font.width(label) / 2, cy - 3, 0xFFFFFFFF, false);
     }
 
     /** Filled circle of radius {@code r} centred at (cx,cy). */
@@ -1475,7 +1473,7 @@ public class ChangeFireColorScreen extends Screen {
                 int entryWidth = getWidth();
                 int entryHeight = getHeight();
                 int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
-                context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.font, Component.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+3, 0xFFFFFFFF);
+                context.centeredText(ChangeFireColorScreen.this.font, Component.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+3, 0xFFFFFFFF);
                 // Left action box (+ / reorder arrows): inset slightly and vertically centred so it reads better.
                 int boxInset = 2;
                 int boxSize = entryHeight - boxInset * 2;
@@ -1483,7 +1481,7 @@ public class ChangeFireColorScreen extends Screen {
                 int by = y + boxInset;
                 int bcx = bx + boxSize / 2;
                 int bcy = by + boxSize / 2;
-                boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
+                boolean shiftPressed = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
                 if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() - 1) || (!shiftPressed && index > 0)) {
                     if (mouseX >= bx && mouseX <= bx + boxSize && mouseY >= by && mouseY <= by + boxSize) {
                         alpha = 1f;
@@ -1499,11 +1497,11 @@ public class ChangeFireColorScreen extends Screen {
                     context.fill(bx, by, bx+boxSize, by+boxSize, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
                     context.fill(bcx, by+2, bcx+1, by+boxSize-2, colorInt);
                     context.fill(bx+2, bcy, bx+boxSize-2, bcy+1, colorInt);
-                    context.drawStrokedRectangle(bx, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                    context.outline(bx, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                 }
                 if (isCustomized && currentSearchButton == 1  && children().indexOf(this) != 0) {
                     context.fill(bx, by, bx+boxSize, by+boxSize, new Color(1f/255*44, 1f/255*44, 1f/255*44, alpha).getRGB());
-                    context.drawStrokedRectangle(bx, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                    context.outline(bx, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                     if (shiftPressed) {
                         if (index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size()) {
                             context.fill(bcx, by+2, bcx+1, by+boxSize-2, colorInt);
@@ -1538,7 +1536,7 @@ public class ChangeFireColorScreen extends Screen {
                             context.fill(rbLeft+2, by+2, rbRight-2, by+boxSize-2, test[1]);
                             }
                         }
-                    context.drawStrokedRectangle(rbLeft, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                    context.outline(rbLeft, by, boxSize, boxSize, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
                 }
 
             }
@@ -1570,7 +1568,7 @@ public class ChangeFireColorScreen extends Screen {
                 if (mouseX >= bx && mouseX <= bx+boxSize && mouseY >= by && mouseY <= by+boxSize) {
                     if (isCustomized && currentSearchButton == 1) {
                         int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
-                        boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
+                        boolean shiftPressed = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
                         if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() + 1)) {
                             ChangeFireColorScreen.this.searchScreenListWidget.moveEntryDown(this);
                         } if ((!shiftPressed && index > 1)) {
