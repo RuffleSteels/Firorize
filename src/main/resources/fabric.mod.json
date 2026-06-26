@@ -32,10 +32,10 @@
     "firorize.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.14",
+    "fabricloader": ">=0.19",
     "fabric": "*",
-    "minecraft": "~1.21.11",
-    "java": ">=21",
-    "fabric-api": ">=0.100.2+1.21"
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": ">=0.153.0"
   }
 }

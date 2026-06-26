@@ -1,5 +1,6 @@
 plugins {
-	id 'fabric-loom' version '1.17.12'
+	// 26.1+ uses the non-remapping Loom plugin; Minecraft and mods are no longer remapped.
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
     id "me.modmuss50.mod-publish-plugin" version "2.0.1"
 }
@@ -38,20 +39,21 @@ repositories {
 }
 
 dependencies {
+	// 26.1 Minecraft is unobfuscated: no `mappings` line, and mods are consumed with the plain
+	// `implementation` configuration instead of `modImplementation` (Loom no longer remaps them).
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation 'io.github.cdimascio:dotenv-java:3.2.0'
 
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
+	implementation("com.terraformersmc:modmenu:${project.modmenu_version}")
 
-	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
+	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.4")))
 
 	include(implementation('org.apache.commons:commons-collections4:4.5.0-M2'))
 
-	modImplementation(include("eu.pb4:placeholder-api:${project.text_placeholder_api_version}"))
+	include(implementation("eu.pb4:placeholder-api:${project.text_placeholder_api_version}"))
 }
 
 tasks.register("generateChangelog") {
@@ -120,7 +122,8 @@ tasks.matching {
 }
 
 publishMods {
-    file = remapJar.archiveFile
+    // Non-remapping Loom produces the final artifact in `jar`; there is no `remapJar` task anymore.
+    file = jar.archiveFile
     modLoaders.add("fabric")
 
     // game_versions is a comma-separated list (e.g. "1.21, 1.21.1"); split it so each Minecraft
@@ -183,15 +186,15 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+	it.options.release = 25
     it.options.compilerArgs += ['-Xlint:all', '-Xlint:-classfile', '-Xlint:-processing']
 }
 
 java {
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
