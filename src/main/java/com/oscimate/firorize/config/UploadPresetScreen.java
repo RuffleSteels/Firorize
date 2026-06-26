@@ -191,7 +191,7 @@ public class UploadPresetScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
         this.setFocused(null);
         return super.mouseClicked(click, doubled);
     }

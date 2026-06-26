@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.session.Session;
+import net.minecraft.client.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,9 +60,9 @@ public final class OnlinePresetsClient {
 
     /** Reads the local player's identity from their Minecraft session, or null if unavailable. */
     public static McAuth currentIdentity() {
-        Session session = Minecraft.getInstance().getSession();
-        UUID uuid = session.getUuidOrNull();
-        String name = session.getUsername();
+        Session session = Minecraft.getInstance().getUser();
+        UUID uuid = session.getProfileId();
+        String name = session.getName();
         if (uuid == null || name == null || name.isBlank()) return null;
         return new McAuth(uuid.toString(), name);
     }

@@ -864,7 +864,7 @@ public class ChangeFireColorScreen extends Screen {
         }
     }
     @Override
-    public boolean mouseReleased(net.minecraft.client.gui.Click click) {
+    public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent click) {
         addDragging = false;
         dragAdded.clear();
         clicked = false;
@@ -912,7 +912,7 @@ public class ChangeFireColorScreen extends Screen {
         return super.keyPressed(input);
     }
     @Override
-    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
@@ -957,7 +957,7 @@ public class ChangeFireColorScreen extends Screen {
         return result;
     }
     @Override
-    public boolean mouseDragged(net.minecraft.client.gui.Click click, double deltaX, double deltaY) {
+    public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent click, double deltaX, double deltaY) {
         double mouseX = click.x();
         double mouseY = click.y();
         if (addDragging) {
@@ -1543,7 +1543,7 @@ public class ChangeFireColorScreen extends Screen {
 
             }
             @Override
-            public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+            public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
                 double mouseX = click.x();
                 double mouseY = click.y();
                 int x = getX();

@@ -5,7 +5,7 @@ import com.oscimate.firorize.Main;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.ButtonTextures;
+import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
@@ -14,7 +14,7 @@ import net.minecraft.resources.Identifier;
 import java.util.Collections;
 
 public class MoveableButton extends Button {
-    private final ButtonTextures TEXTURES = new ButtonTextures(Identifier.of("widget/button"), Identifier.of("widget/button_disabled"), Identifier.of("widget/button_highlighted"));
+    private final WidgetSprites TEXTURES = new WidgetSprites(Identifier.of("widget/button"), Identifier.of("widget/button_disabled"), Identifier.of("widget/button_highlighted"));
     private final int index;
     private final String[] headers = new String[]{"Blocks", "Tags", "Biomes"};
     private final ChangeFireColorScreen instance;
@@ -34,7 +34,7 @@ public class MoveableButton extends Button {
     private final Font font;
     @SuppressWarnings("this-escape") // updateMessage/getY are called after super(), values are set deterministically
     protected MoveableButton(ChangeFireColorScreen instance, Font font, int x, int y, int width, int height, net.minecraft.network.chat.Component message, int index) {
-        super(x, y, width, height, message, null, DEFAULT_NARRATION_SUPPLIER);
+        super(x, y, width, height, message, null, DEFAULT_NARRATION);
         this.index = index;
         this.instance = instance;
 
@@ -73,7 +73,7 @@ public class MoveableButton extends Button {
     }
 
     @Override
-    public void onPress(net.minecraft.client.input.AbstractInput input) {
+    public void onPress(net.minecraft.client.input.InputWithModifiers input) {
         instance.blockUnderField.setText("");
         instance.input = instance.blockUnderField.getText();
         instance.searchScreenListWidget.selected.clear();

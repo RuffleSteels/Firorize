@@ -273,7 +273,7 @@ public class OnlinePresetsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
         if (click.button() == 0 && overPrivacy(click.x(), click.y())) {
             ConfirmLinkScreen.open(this, OnlinePresetsClient.PRIVACY_URL);
             return true;

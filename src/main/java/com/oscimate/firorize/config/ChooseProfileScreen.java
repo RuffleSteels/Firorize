@@ -3,7 +3,7 @@ package com.oscimate.firorize.config;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.Click;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.narration.NarrationElementOutput;
@@ -74,7 +74,7 @@ public class ChooseProfileScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         this.setFocused(null);
         return super.mouseClicked(click, doubled);
     }
@@ -183,7 +183,7 @@ public class ChooseProfileScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(Click click, boolean doubled) {
+        public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
             double mx = click.x(), my = click.y();
             if (click.button() != 0 || !isMouseOver(mx, my)) return false;
             int max = maxScroll();
@@ -202,7 +202,7 @@ public class ChooseProfileScreen extends Screen {
         }
 
         @Override
-        public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
             if (draggingScrollbar) {
                 updateScrollFromMouse(click.y());
                 return true;
@@ -211,7 +211,7 @@ public class ChooseProfileScreen extends Screen {
         }
 
         @Override
-        public boolean mouseReleased(Click click) {
+        public boolean mouseReleased(MouseButtonEvent click) {
             draggingScrollbar = false;
             return super.mouseReleased(click);
         }

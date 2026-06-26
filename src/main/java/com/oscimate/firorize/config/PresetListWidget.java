@@ -174,7 +174,7 @@ class PresetListWidget
         }
 
         @Override
-        public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+        public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
             double mouseX = click.x();
             double mouseY = click.y();
             int x = getX();

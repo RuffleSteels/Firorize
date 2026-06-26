@@ -24,7 +24,7 @@ public class ChangeFireHeightScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
         this.setFocused(null); // clear previous focus/outline; a genuinely-clicked widget re-acquires it via super
         return super.mouseClicked(click, doubled);
     }

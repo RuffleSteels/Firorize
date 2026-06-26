@@ -21,11 +21,11 @@ public class KofiBannerButton extends Button {
 
     protected KofiBannerButton(Screen parent, int x, int y, int width, int height) {
         super(x, y, width, height, net.minecraft.network.chat.Component.translatable("firorize.donate.banner"),
-                openKofi(parent), DEFAULT_NARRATION_SUPPLIER);
+                openKofi(parent), DEFAULT_NARRATION);
     }
 
-    // Concretely-typed PressAction so the super(...) call doesn't trip lambda overload inference.
-    private static PressAction openKofi(Screen parent) {
+    // Concretely-typed Button.OnPress so the super(...) call doesn't trip lambda overload inference.
+    private static Button.OnPress openKofi(Screen parent) {
         return button -> ConfirmLinkScreen.open(parent, DonationTracker.KOFI_URL);
     }
 

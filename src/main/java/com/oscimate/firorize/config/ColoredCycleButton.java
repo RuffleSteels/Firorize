@@ -139,7 +139,7 @@ public class ColoredCycleButton extends AbstractButton {
     }
 
     @Override
-    public void onClick(net.minecraft.client.gui.Click click, boolean doubled) {
+    public void onClick(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
         super.onClick(click, doubled);
     }
 
@@ -149,7 +149,7 @@ public class ColoredCycleButton extends AbstractButton {
     }
 
     @Override
-    public void onPress(net.minecraft.client.input.AbstractInput input) {
+    public void onPress(net.minecraft.client.input.InputWithModifiers input) {
         if (input.hasShift()) {
             this.cycle(-1);
         } else {

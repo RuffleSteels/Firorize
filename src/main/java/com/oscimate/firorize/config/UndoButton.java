@@ -7,8 +7,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 public class UndoButton  extends Button {
-    protected UndoButton(int x, int y, int width, int height, PressAction onPress) {
-        super(x, y, width, height, net.minecraft.network.chat.Component.empty(), onPress, DEFAULT_NARRATION_SUPPLIER);
+    protected UndoButton(int x, int y, int width, int height, Button.OnPress onPress) {
+        super(x, y, width, height, net.minecraft.network.chat.Component.empty(), onPress, DEFAULT_NARRATION);
     }
 
     @Override

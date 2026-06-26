@@ -32,9 +32,9 @@ public class DonatePopupScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(net.minecraft.client.gui.Click click, boolean doubled) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
         this.setFocused(null);
-        // Click outside the dialog box dismisses it (returns to the config screen).
+        // MouseButtonEvent outside the dialog box dismisses it (returns to the config screen).
         if (click.x() < boxX || click.x() > boxX + boxW || click.y() < boxY || click.y() > boxY + boxH) {
             close();
             return true;

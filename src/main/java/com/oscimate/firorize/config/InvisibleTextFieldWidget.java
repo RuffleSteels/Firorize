@@ -18,7 +18,7 @@ public class InvisibleTextFieldWidget extends PlaceholderField {
     }
 
     @Override
-    public boolean charTyped(net.minecraft.client.input.CharInput input) {
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent input) {
         char chr = (char) input.codepoint();
         if (!String.valueOf(chr).matches("[^A-Za-z0-9 ]") && !String.valueOf(chr).equals(" ")) {
             return super.charTyped(input);
