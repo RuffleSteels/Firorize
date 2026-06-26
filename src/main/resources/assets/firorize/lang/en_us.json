@@ -112,5 +112,11 @@
   "firorize.time.monthAgo": "1 month ago",
   "firorize.time.monthsAgo": "%s months ago",
   "firorize.time.yearAgo": "1 year ago",
-  "firorize.time.yearsAgo": "%s years ago"
+  "firorize.time.yearsAgo": "%s years ago",
+  "firorize.donate.banner": "Support Firorize on Ko-fi",
+  "firorize.donate.tooltip": "Opens ko-fi.com/rufflesteels",
+  "firorize.donate.popup.title": "Enjoying Firorize?",
+  "firorize.donate.popup.body": "Firorize is free, always. If it's brought some colour to your game, consider supporting it on Ko-fi!",
+  "firorize.donate.popup.support": "Support on Ko-fi",
+  "firorize.donate.popup.later": "Maybe later"
 }

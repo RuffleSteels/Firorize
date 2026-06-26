@@ -42,5 +42,11 @@
   "firorize.config.tooltip.exists": "Такое имя уже существует",
   "firorize.config.tooltip.empty": "Пожалуйста введите имя",
   "firorize.config.confirm.deleteProfile.title": "Удалить профиль?",
-  "firorize.config.confirm.deleteProfile.message": "Вы уверены, что хотите удалить этот профиль? Это действие нельзя отменить."
+  "firorize.config.confirm.deleteProfile.message": "Вы уверены, что хотите удалить этот профиль? Это действие нельзя отменить.",
+  "firorize.donate.banner": "Поддержать Firorize на Ko-fi",
+  "firorize.donate.tooltip": "Откроет ko-fi.com/rufflesteels",
+  "firorize.donate.popup.title": "Нравится Firorize?",
+  "firorize.donate.popup.body": "Firorize всегда бесплатен. Если он добавил красок в вашу игру, поддержите его на Ko-fi!",
+  "firorize.donate.popup.support": "Поддержать на Ko-fi",
+  "firorize.donate.popup.later": "Может позже"
 }

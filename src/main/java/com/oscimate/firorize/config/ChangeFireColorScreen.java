@@ -1004,6 +1004,36 @@ public class ChangeFireColorScreen extends Screen {
     private float dist = 0f;
     private boolean forwards = true;
 
+    /** True while this screen is being drawn purely as a dimmed backdrop behind a modal dialog. In
+     *  this mode the deferred colour-wheel/3D-preview elements and any open confirm box are skipped:
+     *  they composite in a later pass and would otherwise draw on top of the dialog. */
+    private boolean renderingAsBackdrop = false;
+
+    /** Renders this config screen as a backdrop for a child modal dialog (the caller then draws its own
+     *  dim overlay and box on top). Suppresses the deferred colour-wheel/3D elements so they don't
+     *  composite over the dialog. Passes -1,-1 for the mouse so no config widget shows a hover state. */
+    public void renderAsBackdrop(DrawContext context, float delta) {
+        boolean prev = renderingAsBackdrop;
+        renderingAsBackdrop = true;
+        try {
+            render(context, -1, -1, delta);
+        } finally {
+            renderingAsBackdrop = prev;
+        }
+    }
+
+    /** Shared by the config dialogs: renders {@code behind} as a modal backdrop so the dialog overlays
+     *  the existing config screen rather than cutting through to the blurred game. A
+     *  {@link ChangeFireColorScreen} uses {@link #renderAsBackdrop} (suppressing its deferred elements);
+     *  any other screen renders normally. */
+    public static void renderModalBackdrop(DrawContext context, @Nullable Screen behind, float delta) {
+        if (behind instanceof ChangeFireColorScreen cfc) {
+            cfc.renderAsBackdrop(context, delta);
+        } else if (behind != null) {
+            behind.render(context, -1, -1, delta);
+        }
+    }
+
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderPanoramaBackground(context, delta);
@@ -1015,6 +1045,7 @@ public class ChangeFireColorScreen extends Screen {
     @Override
     @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        DonationTracker.onConfigFrame();
         context.getMatrices().pushMatrix();
 
         super.render(context, mouseX, mouseY, delta);
@@ -1023,15 +1054,18 @@ public class ChangeFireColorScreen extends Screen {
         drawResetIcon(context, profileButtonXs[1], profileButtonY);
 
         // Colour wheel — drawn through the custom COLOR_WHEEL pipeline (lightness Value carried in
-        // the quad's vertex-colour alpha; full brightness here).
-        context.state.addSimpleElement(new ColorWheelElement(
-                FirorizePipelines.COLOR_WHEEL, new Matrix3x2f(context.getMatrices()),
-                wheelCoords[0], wheelCoords[1], wheelCoords[0] + wheelRadius * 2, wheelCoords[1] + wheelRadius * 2,
-                1.0f, null));
+        // the quad's vertex-colour alpha; full brightness here). Skipped in backdrop mode: this custom
+        // pipeline element composites in a later pass and would draw over the overlaying dialog.
+        if (!renderingAsBackdrop) {
+            context.state.addSimpleElement(new ColorWheelElement(
+                    FirorizePipelines.COLOR_WHEEL, new Matrix3x2f(context.getMatrices()),
+                    wheelCoords[0], wheelCoords[1], wheelCoords[0] + wheelRadius * 2, wheelCoords[1] + wheelRadius * 2,
+                    1.0f, null));
 
-        context.drawStrokedRectangle((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
-        context.drawStrokedRectangle((int) clickedX - cursorDimensions/2, (int)  clickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, Color.gray.getRGB());
-        context.fill((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, (int) clickedX + cursorDimensions/4, (int) clickedY + cursorDimensions/4, Color.BLACK.getRGB());
+            context.drawStrokedRectangle((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, cursorDimensions/4*3, cursorDimensions/4*3, Color.gray.getRGB());
+            context.drawStrokedRectangle((int) clickedX - cursorDimensions/2, (int)  clickedY - cursorDimensions/2, cursorDimensions, cursorDimensions, Color.gray.getRGB());
+            context.fill((int) clickedX - cursorDimensions/4, (int) clickedY - cursorDimensions/4, (int) clickedX + cursorDimensions/4, (int) clickedY + cursorDimensions/4, Color.BLACK.getRGB());
+        }
 
         context.fill(sliderCoords[0], sliderCoords[1], sliderCoords[0]+sliderDimensions[0], sliderCoords[1]+sliderDimensions[1]/2, Color.HSBtoRGB((float) hue, (float) saturation, 1.0f));
         context.fill(sliderCoords[0], sliderCoords[1]+sliderDimensions[1]/2, sliderCoords[0]+sliderDimensions[0], sliderCoords[1]+sliderDimensions[1], Color.BLACK.getRGB());
@@ -1049,6 +1083,10 @@ public class ChangeFireColorScreen extends Screen {
         q.rotateX((float) Math.toRadians(45));
         q.rotateY((float) Math.toRadians(-45));
 
+        // The 3D block grid + preview scenes are SpecialGuiElementRenderStates composited in a later
+        // pass; in backdrop mode they'd draw over the overlaying dialog, so skip them (and the grid's
+        // scroll animation, which shouldn't advance while a dialog is up).
+        if (!renderingAsBackdrop) {
         if (Math.ceil(allBlockUnders.size()/11f) > 7) {
             double amount = 0.15 * ((Math.ceil(allBlockUnders.size()/11f)-4)/2);
             dist = (float) (dist + (forwards ? amount : -amount));
@@ -1113,6 +1151,7 @@ public class ChangeFireColorScreen extends Screen {
 
         context.state.addSpecialElement(new BlockSceneRenderState(x1, 0, x2, context.getScaledWindowHeight(), 100f, pvOps,
                 new ScreenRect(0, 0, context.getScaledWindowWidth(), context.getScaledWindowHeight())));
+        }
 
         if (globeTooltip != null) {
             context.drawTooltip(this.textRenderer, globeTooltip, mouseX, mouseY);
@@ -1121,7 +1160,7 @@ public class ChangeFireColorScreen extends Screen {
         context.getMatrices().popMatrix();
 
         drawInboxBadge(context);
-        if (confirmActive) renderConfirm(context, mouseX, mouseY);
+        if (confirmActive && !renderingAsBackdrop) renderConfirm(context, mouseX, mouseY);
     }
 
     /** Red notification badge on the Inbox button showing how many items are waiting (capped "9+"). */

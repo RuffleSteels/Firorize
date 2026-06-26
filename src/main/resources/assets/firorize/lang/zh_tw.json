@@ -112,5 +112,11 @@
   "firorize.time.monthAgo": "1 個月前",
   "firorize.time.monthsAgo": "%s 個月前",
   "firorize.time.yearAgo": "1 年前",
-  "firorize.time.yearsAgo": "%s 年前"
+  "firorize.time.yearsAgo": "%s 年前",
+  "firorize.donate.banner": "在 Ko-fi 上支持 Firorize",
+  "firorize.donate.tooltip": "開啟 ko-fi.com/rufflesteels",
+  "firorize.donate.popup.title": "喜歡 Firorize 嗎？",
+  "firorize.donate.popup.body": "Firorize 永遠免費。如果它為你的遊戲增添了色彩，歡迎在 Ko-fi 上支持！",
+  "firorize.donate.popup.support": "在 Ko-fi 上支持",
+  "firorize.donate.popup.later": "下次再說"
 }

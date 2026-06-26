@@ -74,4 +74,16 @@ public class FireLogicConfig {
     public LinkedHashSet<String> getInboxImports() {
         return inboxImports;
     }
+
+    public long accumulatedConfigTimeMs = Main.CONFIG_MANAGER.getAccumulatedConfigTimeMs();
+
+    public long getAccumulatedConfigTimeMs() {
+        return accumulatedConfigTimeMs;
+    }
+
+    public int donationPopupsShown = Main.CONFIG_MANAGER.getDonationPopupsShown();
+
+    public int getDonationPopupsShown() {
+        return donationPopupsShown;
+    }
 }

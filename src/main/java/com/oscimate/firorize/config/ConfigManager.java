@@ -15,6 +15,29 @@ import java.util.LinkedHashSet;
 public class ConfigManager {
     public long currentFireHeightSlider = -1;
 
+    // Total time (ms) the player has spent on Firorize config screens, accumulated across sessions and
+    // persisted in firorize.json. Drives the periodic Ko-fi donation popup (see DonationTracker).
+    public long accumulatedConfigTimeMs = 0;
+    // How many donation popups have already been shown; the next one fires once accumulatedConfigTimeMs
+    // crosses (donationPopupsShown + 1) * DonationTracker.THRESHOLD_MS.
+    public int donationPopupsShown = 0;
+
+    public long getAccumulatedConfigTimeMs() {
+        return accumulatedConfigTimeMs;
+    }
+
+    public void setAccumulatedConfigTimeMs(long accumulatedConfigTimeMs) {
+        this.accumulatedConfigTimeMs = accumulatedConfigTimeMs;
+    }
+
+    public int getDonationPopupsShown() {
+        return donationPopupsShown;
+    }
+
+    public void setDonationPopupsShown(int donationPopupsShown) {
+        this.donationPopupsShown = donationPopupsShown;
+    }
+
     public ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>,  int[]>, ArrayList<Integer>>> getFireColorPresets() {
         return fireColorPresets;
     }
@@ -238,6 +261,9 @@ public class ConfigManager {
         } else {
             setInboxImports(jsonOutput.getInboxImports());
         }
+        // Primitives: absent in older configs → default 0, which is the correct starting state.
+        setAccumulatedConfigTimeMs(jsonOutput.getAccumulatedConfigTimeMs());
+        setDonationPopupsShown(jsonOutput.getDonationPopupsShown());
     }
 
     public void save() {

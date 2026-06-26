@@ -300,11 +300,11 @@ public class OnlinePresetsScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Use the standard blurred/darkened modal backdrop rather than re-rendering the live config
-        // screen: that screen queues deferred 3D/colour-wheel elements which composite in a later pass
-        // and would draw on top of this dialog (DrawContext exposes no mid-render flush).
-        super.renderBackground(context, mouseX, mouseY, delta);
-        context.fill(0, 0, this.width, this.height, 0x50000000);
+        // Overlay the live config screen (dimmed) rather than cutting through to the blurred game.
+        // renderAsBackdrop suppresses the config's deferred 3D/colour-wheel elements, which otherwise
+        // composite in a later pass and would draw on top of this dialog.
+        ChangeFireColorScreen.renderModalBackdrop(context, parent, delta);
+        context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
@@ -313,6 +313,7 @@ public class OnlinePresetsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        DonationTracker.onConfigFrame();
         super.render(context, mouseX, mouseY, delta);
 
         if (view == View.INBOX) {

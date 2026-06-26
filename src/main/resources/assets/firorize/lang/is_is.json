@@ -42,5 +42,11 @@
   "firorize.config.tooltip.exists": "Þetta nafn er þegar til",
   "firorize.config.tooltip.empty": "Vinsamlega slærð inn nafn",
   "firorize.config.confirm.deleteProfile.title": "Eyða prófíl?",
-  "firorize.config.confirm.deleteProfile.message": "Ertu viss um að þú viljir eyða þessum prófíl? Þetta er ekki hægt að taka til baka."
+  "firorize.config.confirm.deleteProfile.message": "Ertu viss um að þú viljir eyða þessum prófíl? Þetta er ekki hægt að taka til baka.",
+  "firorize.donate.banner": "Styðja Firorize á Ko-fi",
+  "firorize.donate.tooltip": "Opnar ko-fi.com/rufflesteels",
+  "firorize.donate.popup.title": "Líkar þér við Firorize?",
+  "firorize.donate.popup.body": "Firorize er alltaf ókeypis. Ef það gleður þig, íhugaðu að styðja það á Ko-fi!",
+  "firorize.donate.popup.support": "Styðja á Ko-fi",
+  "firorize.donate.popup.later": "Kannski seinna"
 }

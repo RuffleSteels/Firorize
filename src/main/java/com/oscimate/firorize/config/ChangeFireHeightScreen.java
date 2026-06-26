@@ -54,6 +54,7 @@ public class ChangeFireHeightScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        DonationTracker.onConfigFrame();
         super.render(context, mouseX, mouseY, delta);
 
         MatrixStack matrices = new MatrixStack();

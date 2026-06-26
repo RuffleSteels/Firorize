@@ -148,11 +148,10 @@ public class AddProfileScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Draw the config screen behind, then a dim overlay and the dialog box (matching the
+        // Draw the config screen behind (with its deferred 3D/colour-wheel elements suppressed so they
+        // don't composite over this dialog), then a dim overlay and the dialog box (matching the
         // profile-delete confirm box), rather than blurring through to the game.
-        if (parent != null) {
-            parent.render(context, 0, 0, delta);
-        }
+        ChangeFireColorScreen.renderModalBackdrop(context, parent, delta);
         context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);

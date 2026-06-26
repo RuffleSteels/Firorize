@@ -210,8 +210,10 @@ public class UploadPresetScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderBackground(context, mouseX, mouseY, delta);
-        context.fill(0, 0, this.width, this.height, 0x50000000);
+        // Overlay the chooser we came from (which in turn renders the config behind it), rather than
+        // cutting through to the blurred game.
+        ChangeFireColorScreen.renderModalBackdrop(context, back, delta);
+        context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
