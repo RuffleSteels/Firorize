@@ -133,9 +133,14 @@ public class Main implements ClientModInitializer {
                                     } else if (order == 1) {
                                         if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString()))) {
                                             ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1);
-                                            List<TagKey<Block>> tags = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().map(tagg -> tagg.id().toString()).toList().contains(tag)).map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(tag)).findFirst().get()).toList();
-                                            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(list.get(1).get(tags.get(0).id().toString()).clone());
-                                            return;
+                                            // Match against the block's real tags by id string directly. Cross-version
+                                            // profiles may hold tags absent in this version; those simply never match
+                                            // a real tag here, so they're ignored without resolving them.
+                                            String matchedTag = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().anyMatch(tagg -> tagg.id().toString().equals(tag))).findFirst().orElse(null);
+                                            if (matchedTag != null) {
+                                                ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(list.get(1).get(matchedTag).clone());
+                                                return;
+                                            }
                                         }
                                     } else if (order == 2) {
                                         if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getEntityWorld().getBiome(mutable).getKey().get().getValue().toString())) {

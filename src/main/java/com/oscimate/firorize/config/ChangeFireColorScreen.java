@@ -1194,8 +1194,9 @@ public class ChangeFireColorScreen extends Screen {
                     }
                 });
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).keyList().forEach(string -> {
-                    TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(string)).findFirst().get();
-                    if (Main.blockTagList.contains(tag)) {
+                    // Cross-version profiles may carry tags that don't exist in this version; skip
+                    // them instead of resolving (findFirst().get() would throw) so they're ignored.
+                    if (Main.blockTagList.stream().anyMatch(tagg -> tagg.id().toString().equals(string))) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         first.add(blockEntry);
                         blockEntry.isCustomized = true;
