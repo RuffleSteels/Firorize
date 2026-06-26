@@ -7,12 +7,12 @@ import com.oscimate.firorize.ColorizeMath;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.resource.metadata.AnimationFrameResourceMetadata;
 import net.minecraft.client.resource.metadata.AnimationResourceMetadata;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.texture.SpriteContents;
-import net.minecraft.client.texture.SpriteDimensions;
-import net.minecraft.client.texture.SpriteLoader;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.renderer.texture.TextureAtlasSpriteDimensions;
+import net.minecraft.client.renderer.texture.TextureAtlasSpriteLoader;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -60,9 +60,9 @@ public class SpriteLoaderMixin {
     ));
 
     @Inject(method = "stitch", at = @At("HEAD"))
-    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
+    @SuppressWarnings("deprecation") // TextureAtlas.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
-        if (id.equals(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE)) {
+        if (id.equals(TextureAtlas.BLOCK_ATLAS_TEXTURE)) {
             // Animation for the generated fire sprites, matching blank_fire_{0,1}.png.mcmeta
             // (32 frames of 16x16, reordered 16..31 then 0..15). getMetadata() was removed in 1.21.11.
             List<AnimationFrameResourceMetadata> fireFrames = new ArrayList<>();

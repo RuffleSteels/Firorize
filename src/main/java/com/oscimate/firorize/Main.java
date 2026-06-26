@@ -5,12 +5,12 @@ import com.oscimate.firorize.config.ConfigScreen;
 import com.oscimate.firorize.config.render.BlockSceneRenderer;
 import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import com.oscimate.firorize.test.TestModel;
-import net.fabricmc.fabric.api.client.rendering.v1.SpecialGuiElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
@@ -173,7 +173,7 @@ public class Main implements ClientModInitializer {
         }
     }
 
-    public static final KeyMapping configKeybind = KeyBindingHelper.registerKeyBinding(
+    public static final KeyMapping configKeybind = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("firorze.key.openConfig", InputConstants.Type.KEYSYM, InputConstants.KEY_I, KeyMapping.Category.MISC)
     );
 
@@ -207,7 +207,7 @@ public class Main implements ClientModInitializer {
             });
         });
 
-        SpecialGuiElementRegistry.register(ctx -> new BlockSceneRenderer(ctx.vertexConsumers()));
+        PictureInPictureRendererRegistry.register(ctx -> new BlockSceneRenderer(ctx.bufferSource()));
 
         if(!CONFIG_MANAGER.fileExists()) {
             CONFIG_MANAGER.save();
