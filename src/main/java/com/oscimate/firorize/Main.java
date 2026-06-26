@@ -106,12 +106,12 @@ public class Main implements ClientModInitializer {
                             } else if (entity.level().getBlockState(mutable).getValue(FireBlock.WEST)) {
                                 blockUnder = entity.level().getBlockState(mutable.west()).getBlock();
                             } else if (entity.level().getBlockState(mutable).getValue(FireBlock.UP)) {
-                                blockUnder = entity.level().getBlockState(mutable.up()).getBlock();
+                                blockUnder = entity.level().getBlockState(mutable.above()).getBlock();
                             } else {
-                                blockUnder = entity.level().getBlockState(mutable.down()).getBlock();
+                                blockUnder = entity.level().getBlockState(mutable.below()).getBlock();
                             }
                         } else {
-                            blockUnder = entity.level().getBlockState(mutable.down()).getBlock();
+                            blockUnder = entity.level().getBlockState(mutable.below()).getBlock();
                         }
 
                         if (!blockUnder.equals(Blocks.AIR)) {
