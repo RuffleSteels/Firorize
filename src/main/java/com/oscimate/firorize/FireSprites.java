@@ -2,32 +2,30 @@ package com.oscimate.firorize;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.AtlasManager;
-import net.minecraft.client.texture.MissingSprite;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
+import net.minecraft.client.resources.model.sprite.SpriteId;
+import net.minecraft.resources.Identifier;
 
 /**
- * Resolves recoloured fire sprites from the block atlas. In 1.21.11 {@code SpriteIdentifier.getSprite()}
- * was removed, so sprites must be looked up through the {@link AtlasManager}. This centralises the
- * fire-sprite selection logic shared by the entity-fire ({@code FireCommandRenderer}) and first-person
- * overlay paths.
+ * Resolves recoloured fire sprites from the block atlas. Sprites are looked up through the
+ * {@link AtlasManager} via {@link SpriteId} (atlas + texture). This centralises the fire-sprite
+ * selection logic shared by the entity-fire and first-person overlay paths.
  */
 @Environment(EnvType.CLIENT)
 public final class FireSprites {
 
-    @SuppressWarnings("deprecation") // BLOCK_ATLAS_TEXTURE is still the supported atlas id in 1.21
-    public static final Identifier ATLAS = SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE;
+    public static final Identifier ATLAS = TextureAtlas.LOCATION_BLOCKS;
 
     public static AtlasManager atlasManager() {
-        return MinecraftClient.getInstance().getAtlasManager();
+        return Minecraft.getInstance().getAtlasManager();
     }
 
-    public static Sprite block(AtlasManager atlas, String path) {
-        return atlas.getSprite(new SpriteIdentifier(ATLAS, Identifier.of(path)));
+    public static TextureAtlasSprite block(AtlasManager atlas, String path) {
+        return atlas.get(new SpriteId(ATLAS, Identifier.withDefaultNamespace(path)));
     }
 
     /**
@@ -38,14 +36,14 @@ public final class FireSprites {
      * @param soulPath sprite path used for the soul/lightning case ({@code color[0] == 2})
      * @param vanilla  the original sprite to fall back to
      */
-    public static Sprite resolve(AtlasManager atlas, int[] color, String soulPath, Sprite vanilla) {
+    public static TextureAtlasSprite resolve(AtlasManager atlas, int[] color, String soulPath, TextureAtlasSprite vanilla) {
         if (color == null) {
             return vanilla;
         }
         int fireColor = color[0];
         if (fireColor < 1) {
-            Sprite sprite = block(atlas, "block/fire_1_" + Math.abs(color[0]) + "_" + Math.abs(color[1]));
-            if (sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId())) {
+            TextureAtlasSprite sprite = block(atlas, "block/fire_1_" + Math.abs(color[0]) + "_" + Math.abs(color[1]));
+            if (sprite.contents().name().equals(MissingTextureAtlasSprite.getLocation())) {
                 int[] base = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
                 return block(atlas, "block/fire_1_" + Math.abs(base[0]) + "_" + Math.abs(base[1]));
             }

@@ -1,9 +1,9 @@
 package com.oscimate.firorize;
 
-import net.minecraft.text.Text;
-import net.minecraft.util.StringIdentifiable;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.StringRepresentable;
 
-public class Colors implements StringIdentifiable {
+public class Colors implements StringRepresentable {
     private final String name;
     private final int[] colors;
 
@@ -17,12 +17,12 @@ public class Colors implements StringIdentifiable {
         return colors;
     }
 
-    public Text getTranslatableName() {
-        return Text.translatable("firorize.config.title.color").append(": " + this.name);
+    public Component getTranslatableName() {
+        return Component.translatable("firorize.config.title.color").append(": " + this.name);
     }
 
-    public Text getInfo() {
-        return Text.translatable("options.difficulty." + this.name + ".info");
+    public Component getInfo() {
+        return Component.translatable("options.difficulty." + this.name + ".info");
     }
 
 
@@ -31,7 +31,7 @@ public class Colors implements StringIdentifiable {
     }
 
     @Override
-    public String asString() {
+    public String getSerializedName() {
         return this.name;
     }
 }
