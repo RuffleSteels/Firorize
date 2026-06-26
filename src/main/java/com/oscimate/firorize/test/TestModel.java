@@ -14,16 +14,16 @@ import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.render.model.BlockModelPart;
 import net.minecraft.client.render.model.BlockStateModel;
-import net.minecraft.client.texture.AtlasManager;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.core.Holder;
 import net.minecraft.tags.TagKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.BlockRenderView;
 import net.minecraft.world.level.biome.Biome;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -67,10 +67,10 @@ public class TestModel extends WrapperBlockStateModel {
                           Random random, Predicate<Direction> cullTest) {
         AtlasManager atlas = FireSprites.atlasManager();
 
-        Sprite configSprite = null;
+        TextureAtlasSprite configSprite = null;
         int[] ints = null;
         if (Main.inConfig) {
-            configSprite = atlas.getSprite(new SpriteIdentifier(FireSprites.ATLAS,
+            configSprite = atlas.getSprite(new Material(FireSprites.ATLAS,
                     Identifier.of("firorize", soulFire ? "block/blank_fire_overlay_1_config" : "block/blank_fire_1_config")));
         } else {
             ints = computeColor(blockView, pos, state);
@@ -83,8 +83,8 @@ public class TestModel extends WrapperBlockStateModel {
                     continue;
                 }
                 for (BakedQuad q : part.getQuads(d)) {
-                    Sprite src = q.sprite();
-                    Sprite target;
+                    TextureAtlasSprite src = q.sprite();
+                    TextureAtlasSprite target;
                     if (Main.inConfig) {
                         target = configSprite;
                     } else {
@@ -144,7 +144,7 @@ public class TestModel extends WrapperBlockStateModel {
             blockUnder = blockView.getBlockState(pos.down()).getBlock();
         }
 
-        RegistryEntry<Biome> biome = ((FabricBlockView) blockView).getBiomeFabric(pos);
+        Holder<Biome> biome = ((FabricBlockView) blockView).getBiomeFabric(pos);
 
         if ((blockUnder.equals(Blocks.AIR) && unique != null)
                 || blockUnder.getDefaultState().streamTags().anyMatch(tag -> list.get(1).containsKey(tag.id().toString()))

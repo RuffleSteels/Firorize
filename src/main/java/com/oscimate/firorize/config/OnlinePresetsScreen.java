@@ -3,12 +3,12 @@ package com.oscimate.firorize.config;
 import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -351,7 +351,7 @@ public class OnlinePresetsScreen extends Screen {
      *  way {@link UndoButton} draws its icon. */
     private static final int REFRESH_ICON_SIZE = 11;
     private void drawRefreshIcon(GuiGraphicsExtractor context, int px, int py) {
-        Sprite refresh = FireSprites.block(FireSprites.atlasManager(), "firorize:block/refresh");
+        TextureAtlasSprite refresh = FireSprites.block(FireSprites.atlasManager(), "firorize:block/refresh");
         int off = (16 - REFRESH_ICON_SIZE) / 2;
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, refresh,
                 px + off, py + off, REFRESH_ICON_SIZE, REFRESH_ICON_SIZE);

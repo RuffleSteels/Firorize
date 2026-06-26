@@ -3,11 +3,11 @@ package com.oscimate.firorize.config;
 import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ButtonTextures;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -65,8 +65,8 @@ public class MoveableButton extends Button {
         setMessage(net.minecraft.network.chat.Component.literal(headers[Main.CONFIG_MANAGER.getPriorityOrder().get(index)]));
         context.drawCenteredTextWithShadow(this.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
 
-        Sprite ARROW_RIGHT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_right");
-        Sprite ARROW_LEFT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_left");
+        TextureAtlasSprite ARROW_RIGHT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_right");
+        TextureAtlasSprite ARROW_LEFT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_left");
 
         if (index!=2) context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, ARROW_RIGHT, x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight());
         if (index!=0) context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, ARROW_LEFT, x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight());

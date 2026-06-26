@@ -11,7 +11,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screens.Screen;
@@ -22,10 +22,10 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.Registries;
@@ -114,7 +114,7 @@ public class ChangeFireColorScreen extends Screen {
     // Even size so (20 - size) splits evenly: the sprite is then pixel-exact centred in the button.
     private static final int RESET_ICON_SIZE = 14;
     public void drawResetIcon(GuiGraphicsExtractor context, int px, int py) {
-        Sprite reset = FireSprites.block(FireSprites.atlasManager(), "firorize:block/reset");
+        TextureAtlasSprite reset = FireSprites.block(FireSprites.atlasManager(), "firorize:block/reset");
         int off = (20 - RESET_ICON_SIZE) / 2; // centred in the 20×20 button
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, reset,
                 px + off, py + off, RESET_ICON_SIZE, RESET_ICON_SIZE);
@@ -1043,7 +1043,7 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     @Override
-    @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
+    @SuppressWarnings("deprecation") // TextureAtlas.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
         context.getMatrices().pushMatrix();

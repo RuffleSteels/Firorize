@@ -3,13 +3,13 @@ package com.oscimate.firorize.config;
 import com.oscimate.firorize.FireSprites;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.network.chat.Component;
 
@@ -93,7 +93,7 @@ public class DonatePopupScreen extends Screen {
         context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
 
         // Ko-fi cup icon next to the heading.
-        Sprite kofi = FireSprites.block(FireSprites.atlasManager(), "firorize:block/kofi");
+        TextureAtlasSprite kofi = FireSprites.block(FireSprites.atlasManager(), "firorize:block/kofi");
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, kofi, boxX + 12, boxY + 9, 12, 12);
         context.drawTextWithShadow(font, getTitle(), boxX + 28, boxY + 11, 0xFFFFFFFF);
     }

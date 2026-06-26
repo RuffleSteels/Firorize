@@ -17,7 +17,7 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.client.render.block.BlockRenderManager;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.EmptyBlockRenderView;
 import org.joml.Vector3f;
@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 /**
  * Renders a {@link BlockSceneRenderState} (a list of transformed, optionally custom-tinted block
  * models) inside the config screen. Registered via Fabric's {@code SpecialGuiElementRegistry} in
- * {@code Main}. The base class supplies a real 3D {@link MatrixStack} (origin at the element box's
+ * {@code Main}. The base class supplies a real 3D {@link PoseStack} (origin at the element box's
  * centre-bottom, pre-scaled by the window scale × {@code state.scale()}) and flushes the buffers.
  */
 public class BlockSceneRenderer extends SpecialGuiElementRenderer<BlockSceneRenderState> {
@@ -47,7 +47,7 @@ public class BlockSceneRenderer extends SpecialGuiElementRenderer<BlockSceneRend
     }
 
     @Override
-    protected void render(BlockSceneRenderState scene, MatrixStack matrices) {
+    protected void render(BlockSceneRenderState scene, PoseStack matrices) {
         Minecraft mc = Minecraft.getInstance();
         setFrontLighting();
         BlockRenderManager brm = mc.getBlockRenderManager();

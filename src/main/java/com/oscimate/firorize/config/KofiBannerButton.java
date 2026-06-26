@@ -2,12 +2,12 @@ package com.oscimate.firorize.config;
 
 import com.oscimate.firorize.FireSprites;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
  * Slim, persistent "Support Firorize on Ko-fi" banner on the entry {@link ConfigScreen}. Designed to
@@ -41,7 +41,7 @@ public class KofiBannerButton extends Button {
         int iconSize = 12;
         int iconX = x1 + 8;
         int iconY = y1 + (getHeight() - iconSize) / 2;
-        Sprite kofi = FireSprites.block(FireSprites.atlasManager(), "firorize:block/kofi");
+        TextureAtlasSprite kofi = FireSprites.block(FireSprites.atlasManager(), "firorize:block/kofi");
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, kofi, iconX, iconY, iconSize, iconSize);
 
         int centerX = (iconX + iconSize + x2) / 2;

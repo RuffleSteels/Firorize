@@ -8,8 +8,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.model.ModelBaker;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.RotationAxis;
@@ -57,9 +57,9 @@ public class ChangeFireHeightScreen extends Screen {
         DonationTracker.onConfigFrame();
         super.render(context, mouseX, mouseY, delta);
 
-        MatrixStack matrices = new MatrixStack();
+        PoseStack matrices = new PoseStack();
 
-        Sprite sprite = client.getAtlasManager().getSprite(ModelBaker.FIRE_1);
+        TextureAtlasSprite sprite = client.getAtlasManager().getSprite(ModelBaker.FIRE_1);
 
 
         VertexConsumer vertexConsumer = client.getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayers.fireScreenEffect(sprite.getAtlasId()));
