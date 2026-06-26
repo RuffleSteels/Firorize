@@ -30,7 +30,12 @@ public final class FirorizePipelines {
             .withSampler("Sampler0")
             .withBlend(BlendFunction.TRANSLUCENT)
             .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
-            .withVertexFormat(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL, VertexFormat.DrawMode.QUADS)
+            // Position + UV0 + Color only: this shader is full-bright and ignores lighting, so it never
+            // reads Light(UV2)/Normal. Block-model rendering still calls light()/normal(), but those are
+            // no-ops when the element is absent (BufferBuilder.beginElement returns -1). The wider
+            // …_LIGHT_NORMAL format declared those two attributes; the GLSL stripped them as unused, so
+            // the GL driver warned "Could not find vertex shader attribute 'UV2'/'Normal'" at link time.
+            .withVertexFormat(VertexFormats.POSITION_TEXTURE_COLOR, VertexFormat.DrawMode.QUADS)
             .build();
 
     /** Draws the HSV colour-wheel in the config screen. Lightness (Value) is carried in vertex-colour alpha. */
