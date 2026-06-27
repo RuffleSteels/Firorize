@@ -1029,10 +1029,9 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        this.extractPanorama(context, delta);
-
-        this.extractBlurredBackground(context);
-        this.extractBlurredBackground(context);
+        // Vanilla draws panorama (no level) or blurred+darkened backdrop, blurring exactly once
+        // (26.1.2 guards against blurring twice per frame).
+        super.extractBackground(context, mouseX, mouseY, delta);
     }
 
     @Override
