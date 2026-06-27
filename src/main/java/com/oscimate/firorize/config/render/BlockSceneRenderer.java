@@ -135,9 +135,14 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
 
             VertexConsumer tint = this.bufferSource.getBuffer(FirorizePipelines.getCustomTint());
             PoseStack.Pose pose = poseStack.last();
+            // Re-stamp our own ARGB tint per vertex instead of reading quad.color(): every fire quad in
+            // this op carries the same flat configPreviewColor, and with Sodium installed Renderer.get()
+            // is Sodium's renderer, whose mesh returns colour in native ABGR — feeding that to the
+            // ARGB-expecting setColor() swapped red/blue (the inverted config preview). Using `color`
+            // directly is identical under vanilla Indigo and immune to the mesh's internal colour format.
             mesh.forEach(quad -> {
                 for (int i = 0; i < 4; i++) {
-                    tint.addVertex(pose, quad.x(i), quad.y(i), quad.z(i)).setUv(quad.u(i), quad.v(i)).setColor(quad.color(i));
+                    tint.addVertex(pose, quad.x(i), quad.y(i), quad.z(i)).setUv(quad.u(i), quad.v(i)).setColor(color);
                 }
             });
             mesh.clear();
