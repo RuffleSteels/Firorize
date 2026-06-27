@@ -14,6 +14,7 @@ import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockStateModelSet;
+import net.minecraft.client.renderer.block.MovingBlockRenderState;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -41,6 +42,9 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
     private final QuadInstance quadInstance = new QuadInstance();
     private final RandomSource random = RandomSource.create();
     private final List<BlockStateModelPart> parts = new ArrayList<>();
+    /** Self-contained BlockAndTintGetter so the fire preview works on the title screen (no world). */
+    private final MovingBlockRenderState fireView = new MovingBlockRenderState();
+    private static boolean loggedTintError = false;
 
     public BlockSceneRenderer(MultiBufferSource.BufferSource bufferSource) {
         super(bufferSource);
@@ -79,7 +83,7 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
                     | ((int) (op.r() * 255) << 16) | ((int) (op.g() * 255) << 8) | (int) (op.b() * 255);
             BlockStateModel model = models.get(op.state());
 
-            if (op.customTint() && mc.level != null && renderFireTinted(mc, poseStack, op, model, color)) {
+            if (op.customTint() && renderFireTinted(mc, poseStack, op, model, color)) {
                 // handled by the custom_tint shader path
             } else {
                 renderPlain(buffer, poseStack, model, op, color);
@@ -123,7 +127,9 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
             MutableMesh mesh = Renderer.get().mutableMesh();
             AltModelBlockRenderer renderer = Renderer.get().altModelBlockRenderer(false, false, mc.getBlockColors());
             long seed = op.state().getSeed(BlockPos.ZERO);
-            renderer.tesselateBlock(mesh.emitter(), 1f, 1f, 1f, mc.level, BlockPos.ZERO, op.state(), model, seed);
+            this.fireView.blockState = op.state();
+            this.fireView.blockPos = BlockPos.ZERO;
+            renderer.tesselateBlock(mesh.emitter(), 1f, 1f, 1f, this.fireView, BlockPos.ZERO, op.state(), model, seed);
 
             VertexConsumer tint = this.bufferSource.getBuffer(FirorizePipelines.getCustomTint());
             PoseStack.Pose pose = poseStack.last();
@@ -135,6 +141,10 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
             mesh.clear();
             return true;
         } catch (Throwable t) {
+            if (!loggedTintError) {
+                loggedTintError = true;
+                org.slf4j.LoggerFactory.getLogger("firorize").error("custom_tint fire preview path failed; using flat tint", t);
+            }
             return false;
         }
     }
