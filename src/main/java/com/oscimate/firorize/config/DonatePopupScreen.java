@@ -36,7 +36,7 @@ public class DonatePopupScreen extends Screen {
         this.setFocused(null);
         // MouseButtonEvent outside the dialog box dismisses it (returns to the config screen).
         if (click.x() < boxX || click.x() > boxX + boxW || click.y() < boxY || click.y() > boxY + boxH) {
-            close();
+            onClose();
             return true;
         }
         return super.mouseClicked(click, doubled);
@@ -58,10 +58,10 @@ public class DonatePopupScreen extends Screen {
         support.setTooltipDelay(Duration.ofMillis(750L));
 
         Button later = new Button.Builder(
-                Component.translatable("firorize.donate.popup.later"), button -> close())
+                Component.translatable("firorize.donate.popup.later"), button -> onClose())
                 .bounds(boxX + pad, boxY + boxH - 26, boxW - pad * 2, 18).build();
 
-        this.addRenderableWidget(new Button.Builder(Component.literal("x"), button -> close())
+        this.addRenderableWidget(new Button.Builder(Component.literal("x"), button -> onClose())
                 .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
         this.addRenderableWidget(support);
         this.addRenderableWidget(later);

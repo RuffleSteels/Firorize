@@ -67,7 +67,7 @@ public class AddProfileScreen extends Screen {
         this.fromNewButton = new Button.Builder(Component.translatable("firorize.config.button.profileFromNewButton"), button -> addFromNew())
                 .bounds(boxX + pad + btnW + 6, boxY + 54, btnW, 20).build();
 
-        this.addRenderableWidget(new Button.Builder(Component.literal("x"), button -> close())
+        this.addRenderableWidget(new Button.Builder(Component.literal("x"), button -> onClose())
                 .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
         this.addRenderableWidget(presetNameField);
         this.addRenderableWidget(fromExistingButton);

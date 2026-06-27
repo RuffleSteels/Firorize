@@ -124,8 +124,7 @@ class PresetListWidget
         super.setSelected(entry);
     }
 
-    @Override
-    protected void drawSelectionHighlight(GuiGraphicsExtractor context, PresetEntry entry, int color) {
+        protected void drawSelectionHighlight(GuiGraphicsExtractor context, PresetEntry entry, int color) {
         int entryWidth = getRowWidth();
         int entryHeight = entry.getHeight();
         int y = entry.getY();
@@ -136,7 +135,7 @@ class PresetListWidget
     }
 
     @Override
-    protected int getScrollbarX() {
+    protected int scrollBarX() {
         return super.scrollBarX() - 16;
     }
     @Override
@@ -211,7 +210,7 @@ class PresetListWidget
         private float alphaa;
 
         @Override
-        public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int x = getX();
             int y = getY();
             int entryWidth = getWidth();

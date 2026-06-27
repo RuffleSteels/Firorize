@@ -24,13 +24,13 @@ public class CustomTextFieldWidget extends EditBox {
     }
 
     @Override
-    public void write(String text) {
+    public void insertText(String text) {
         super.insertText(text);
         thing();
     }
 
     @Override
-    public void eraseCharacters(int characterOffset) {
+    public void deleteChars(int characterOffset) {
         super.deleteChars(characterOffset);
         thing();
     }

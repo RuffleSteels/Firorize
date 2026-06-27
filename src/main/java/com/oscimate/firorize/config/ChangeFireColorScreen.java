@@ -731,7 +731,7 @@ public class ChangeFireColorScreen extends Screen {
         } else {
             if (currentSearchButton == 0) {
                 allBlockUnders.forEach(block -> {
-                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).put(BuiltInRegistries.BLOCK.getId(block).toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).put(BuiltInRegistries.BLOCK.getKey(block).toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
                 });
                 num = allBlockUnders.size();
             } else if (currentSearchButton == 1) {
@@ -763,7 +763,7 @@ public class ChangeFireColorScreen extends Screen {
     }
     public void updateBlockUnder(String blockUnderTag) {
         blockUnder = (currentSearchButton == 0 || currentSearchButton == 1) && !onBaseColor ?  allBlockUnders.get(0) : Blocks.NETHERRACK;
-        String string = BuiltInRegistries.BLOCK.getId(blockUnder).toString();
+        String string = BuiltInRegistries.BLOCK.getKey(blockUnder).toString();
         buffer = false;
         if (onBaseColor || Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(blockUnderTag)) {
 
@@ -808,7 +808,7 @@ public class ChangeFireColorScreen extends Screen {
                     int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
                     saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
                 } else {
-                    String string = currentSearchButton == 0 ? BuiltInRegistries.BLOCK.getId(blockUnder).toString() : currentSearchButton == 1 ? blockTags.get(0).location().toString() : biomeKeys.get(0).identifier().toString();
+                    String string = currentSearchButton == 0 ? BuiltInRegistries.BLOCK.getKey(blockUnder).toString() : currentSearchButton == 1 ? blockTags.get(0).location().toString() : biomeKeys.get(0).identifier().toString();
                     if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(string)) {
                         int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(string);
                         saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
@@ -1009,7 +1009,7 @@ public class ChangeFireColorScreen extends Screen {
         boolean prev = renderingAsBackdrop;
         renderingAsBackdrop = true;
         try {
-            render(context, -1, -1, delta);
+            extractRenderState(context, -1, -1, delta);
         } finally {
             renderingAsBackdrop = prev;
         }
@@ -1023,7 +1023,7 @@ public class ChangeFireColorScreen extends Screen {
         if (behind instanceof ChangeFireColorScreen cfc) {
             cfc.renderAsBackdrop(context, delta);
         } else if (behind != null) {
-            behind.render(context, -1, -1, delta);
+            behind.extractRenderState(context, -1, -1, delta);
         }
     }
 
@@ -1193,16 +1193,16 @@ public class ChangeFireColorScreen extends Screen {
 
             if (currentSearchButton == 0) {
                 blockUnderList.forEach((block) -> {
-                    String string = BuiltInRegistries.BLOCK.getId(block).toString();
+                    String string = BuiltInRegistries.BLOCK.getKey(block).toString();
                     if (string.contains(input)) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
-                        if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).containsKey(BuiltInRegistries.BLOCK.getId(block).toString())) {
+                        if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).containsKey(BuiltInRegistries.BLOCK.getKey(block).toString())) {
                             second.add(blockEntry);
                         }
                     }
                 });
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).keyList().forEach(string -> {
-                    if (blockUnderList.stream().map(block -> BuiltInRegistries.BLOCK.getId(block).toString()).toList().contains(string)) {
+                    if (blockUnderList.stream().map(block -> BuiltInRegistries.BLOCK.getKey(block).toString()).toList().contains(string)) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         first.add(blockEntry);
                         blockEntry.isCustomized = true;
@@ -1318,14 +1318,7 @@ public class ChangeFireColorScreen extends Screen {
         // Selection is tracked in the `selected` index list (this widget never calls super.setSelected,
         // so vanilla's getSelectedOrNull/drawSelectionHighlight path never fires). Draw the highlight for
         // every selected entry ourselves, before the entry content so text/swatch render on top.
-        @Override
-        protected void renderEntry(GuiGraphicsExtractor context, int mouseX, int mouseY, float tickDelta, BlockEntry entry) {
-            int index = this.children().indexOf(entry);
-            if (selected.contains(index)) {
-                drawSelectionBorder(context, entry, selected.contains(index - 1), selected.contains(index + 1));
-            }
-            super.renderEntry(context, mouseX, mouseY, tickDelta, entry);
-        }
+        // TODO(26.1.2): multi-select highlight border (renderEntry override) removed; reinstate via extractContent.
 
         /**
          * Draws the selection outline for one entry. When the entry above/below is also selected the
@@ -1338,7 +1331,7 @@ public class ChangeFireColorScreen extends Screen {
             int entryHeight = entry.getHeight();
             int y = entry.getY();
             int left = this.getX() + (this.width - entryWidth) / 2;
-            int right = getScrollbarX() - 1; // keep the right edge clear of the scrollbar
+            int right = scrollBarX() - 1; // keep the right edge clear of the scrollbar
             // Extend the coloured edge and black interior through the 4px gap to a selected neighbour, so a
             // run of selections reads as one block; an isolated entry keeps its 1px border on every side.
             int outerBottom = nextSelected ? y + entryHeight + 2 : y + entryHeight + 1;
@@ -1349,7 +1342,7 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarX() {
+        protected int scrollBarX() {
             return super.scrollBarX() - 16;
         }
         @Override
@@ -1383,7 +1376,7 @@ public class ChangeFireColorScreen extends Screen {
                 onBaseColor = false;
                 if (currentSearchButton == 0) {
                     allBlockUnders = new ArrayList<>();
-                    allBlockUnders.add(BuiltInRegistries.BLOCK.get(Identifier.tryParse(entry.languageDefinition)));
+                    allBlockUnders.add(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(entry.languageDefinition)));
                     blockUnderField.setValue(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 } else if (currentSearchButton == 1) {
@@ -1462,7 +1455,7 @@ public class ChangeFireColorScreen extends Screen {
             private boolean isSelected = false;
 
             @Override
-            public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 int x = getX();
                 int y = getY();
                 int entryWidth = getWidth();
@@ -1592,7 +1585,7 @@ public class ChangeFireColorScreen extends Screen {
                 ChangeFireColorScreen.this.counter = 0;
                 if (currentSearchButton == 0) {
                     if (clear) allBlockUnders.clear();
-                    allBlockUnders.add(BuiltInRegistries.BLOCK.get(Identifier.tryParse(this.languageDefinition)));
+                    allBlockUnders.add(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(this.languageDefinition)));
                 } else if (currentSearchButton == 1) {
                     if (clear) blockTags.clear();
                     TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.location().toString().equals(this.languageDefinition)).findFirst().get();

@@ -116,7 +116,7 @@ public class OnlinePresetsScreen extends Screen {
         privacyX = boxX + 10;
         privacyY = boxY + boxH - 16;
 
-        addRenderableWidget(new Button.Builder(Component.literal("x"), b -> close())
+        addRenderableWidget(new Button.Builder(Component.literal("x"), b -> onClose())
                 .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         // Refresh: re-pulls the current view from the Worker. Same 16×16 footprint as the close

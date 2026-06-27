@@ -22,7 +22,7 @@ public class UploadPresetScreen extends Screen {
     /** Minecraft username shape; mirrors the Worker's validation. */
     private static final String USERNAME_RE = "[A-Za-z0-9_]{3,16}";
 
-    private final Screen back;                 // where close() returns (the chooser)
+    private final Screen back;                 // where onClose() returns (the chooser)
     private final Screen origin;               // where we land on success
     private final OnlinePresetsScreen online;  // non-null when reached from the online screen; refreshed on success
     private final String profileName;
@@ -80,7 +80,7 @@ public class UploadPresetScreen extends Screen {
                 .bounds(boxX + (boxW - 120) / 2, boxY + boxH - 28, 120, 20).build();
         addRenderableWidget(primaryButton);
 
-        addRenderableWidget(new Button.Builder(Component.literal("<"), button -> close())
+        addRenderableWidget(new Button.Builder(Component.literal("<"), button -> onClose())
                 .bounds(boxX + 6, boxY + 6, 16, 16).build());
         addRenderableWidget(new Button.Builder(Component.literal("x"), button -> minecraft.setScreen(origin))
                 .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());

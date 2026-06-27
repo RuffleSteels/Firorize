@@ -28,7 +28,7 @@ public class PlaceholderField extends EditBox {
     }
 
     @Override
-    public void setPlaceholder(Component placeholder) {
+    public void setHint(Component placeholder) {
         this.placeholder = placeholder;
     }
 

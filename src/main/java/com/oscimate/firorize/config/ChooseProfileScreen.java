@@ -61,7 +61,7 @@ public class ChooseProfileScreen extends Screen {
         addRenderableWidget(uploadButton);
         addRenderableWidget(sendButton);
 
-        addRenderableWidget(new Button.Builder(Component.literal("x"), b -> close())
+        addRenderableWidget(new Button.Builder(Component.literal("x"), b -> onClose())
                 .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         super.init();
