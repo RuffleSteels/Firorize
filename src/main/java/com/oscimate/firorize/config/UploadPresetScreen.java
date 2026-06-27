@@ -217,7 +217,8 @@ public class UploadPresetScreen extends Screen {
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.outline(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.text(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        // Start past the back button (boxX+6, 16px wide) so the title doesn't clip underneath it.
+        context.text(font, getTitle(), boxX + 26, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
