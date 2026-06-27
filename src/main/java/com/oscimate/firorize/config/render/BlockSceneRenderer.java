@@ -77,6 +77,9 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
             }
 
             BlockStateModel model = models.get(op.state());
+            // Deterministic per-block seed: otherwise random-variant blocks (e.g. netherrack's rotated
+            // variants) re-roll every frame and flicker/spin.
+            this.random.setSeed(op.state().getSeed(net.minecraft.core.BlockPos.ZERO));
             model.collectParts(this.random, this.parts);
             for (BlockStateModelPart part : this.parts) {
                 for (Direction d : DIRECTIONS) {
