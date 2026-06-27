@@ -129,7 +129,9 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
             long seed = op.state().getSeed(BlockPos.ZERO);
             this.fireView.blockState = op.state();
             this.fireView.blockPos = BlockPos.ZERO;
-            renderer.tesselateBlock(mesh.emitter(), 1f, 1f, 1f, this.fireView, BlockPos.ZERO, op.state(), model, seed);
+            // The three floats are the x/y/z position offset (NOT colour) — must be 0 so the fire sits
+            // where the pose puts it; the tint comes from the vertex colour set by TestModel.emitQuads.
+            renderer.tesselateBlock(mesh.emitter(), 0f, 0f, 0f, this.fireView, BlockPos.ZERO, op.state(), model, seed);
 
             VertexConsumer tint = this.bufferSource.getBuffer(FirorizePipelines.getCustomTint());
             PoseStack.Pose pose = poseStack.last();

@@ -8,6 +8,7 @@ classes/
 
 # cloudflare worker (kept local only; not published)
 cloudflare-worker/
+.wrangler/
 
 # eclipse
 

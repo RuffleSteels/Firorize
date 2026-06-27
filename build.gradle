@@ -1,5 +1,4 @@
 plugins {
-	// 26.1+ uses the non-remapping Loom plugin; Minecraft and mods are no longer remapped.
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
     id "me.modmuss50.mod-publish-plugin" version "2.0.1"
