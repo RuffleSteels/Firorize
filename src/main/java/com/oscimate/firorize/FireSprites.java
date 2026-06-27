@@ -26,7 +26,8 @@ public final class FireSprites {
     }
 
     public static TextureAtlasSprite block(AtlasManager atlas, String path) {
-        return atlas.get(new SpriteId(ATLAS, Identifier.withDefaultNamespace(path)));
+        // parse() handles both namespaced ("firorize:block/kofi") and bare ("block/fire_1_..") paths.
+        return atlas.get(new SpriteId(ATLAS, Identifier.parse(path)));
     }
 
     /**
