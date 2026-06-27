@@ -1,36 +1,41 @@
 package com.oscimate.firorize.config.render;
 
+import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.QuadInstance;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.oscimate.firorize.test.TestModel;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.block.BlockStateModelSet;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Renders a {@link BlockSceneRenderState} (a list of transformed, optionally custom-tinted block
- * models) inside the config screen. Registered via Fabric's {@code PictureInPictureRendererRegistry}
- * in {@code Main}: special GUI elements became Picture-in-Picture in 26.1.
+ * Renders a {@link BlockSceneRenderState} (a list of transformed, optionally tinted block models)
+ * inside the config screen as a Picture-in-Picture element (registered in {@code Main}). Block models
+ * are rendered to the offscreen buffer via {@code VertexConsumer.putBakedQuad}, following vanilla's
+ * {@code BlockFeatureRenderer} pattern; the PiP base composites the result and flushes the buffer.
  *
- * <p><b>26.1.2 port TODO — preview rendering not yet reimplemented.</b> The 1.21.11 version drew the
- * block grid + fire preview with {@code BlockModelRenderer.render} / Fabric
- * {@code FabricBlockModelRenderer.render(BlockVertexConsumerProvider, ...)}, both of which were removed.
- * In 26.1.2:
- * <ul>
- *   <li>Lighting: {@code net.minecraft.client.Minecraft.getInstance().gameRenderer.getLighting()
- *       .setupFor(com.mojang.blaze3d.platform.Lighting.Entry.ITEMS_3D)} (replaces the manual
- *       GpuBuffer/Std140 UBO).</li>
- *   <li>Block model parts come from {@code BlockStateModel.collectParts(RandomSource, List&lt;
- *       BlockStateModelPart&gt;)} → {@code BlockStateModelPart.getQuads(Direction)} →
- *       {@code VertexConsumer.putBakedQuad(PoseStack.Pose, BakedQuad, QuadInstance)} into
- *       {@code bufferSource.getBuffer(net.minecraft.client.renderer.Sheets.cutoutBlockSheet())}.</li>
- *   <li>The custom-tint fire preview must run {@code TestModel.emitQuads} (so the fire texture is
- *       re-textured and recoloured), which now goes through Fabric
- *       {@code AltModelBlockRenderer.tesselateBlock(QuadEmitter, ...)} with a QuadEmitter bridged to
- *       a {@code FirorizePipelines.getCustomTint()} buffer; set {@code TestModel.configPreviewColor}
- *       first.</li>
- * </ul>
- * This needs in-game iteration to get right, so it is left as a no-op (blank preview) until then; the
- * rest of the config screen is fully functional.
+ * <p>Note: {@code customTint} (fire) ops are flat-tinted toward the target colour here. The full HSV
+ * shader recolour ({@code TestModel.emitQuads} + the custom_tint pipeline) only runs through Fabric's
+ * block emit path, which isn't driven from this PiP renderer — so the in-config fire preview is an
+ * approximation of the in-world result.
  */
 public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRenderState> {
+    private static final Direction[] DIRECTIONS = Direction.values();
+    private final QuadInstance quadInstance = new QuadInstance();
+    private final RandomSource random = RandomSource.create();
+    private final List<BlockStateModelPart> parts = new ArrayList<>();
 
     public BlockSceneRenderer(MultiBufferSource.BufferSource bufferSource) {
         super(bufferSource);
@@ -48,7 +53,53 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
 
     @Override
     protected void renderToTexture(BlockSceneRenderState scene, PoseStack poseStack) {
-        // TODO(26.1.2 port): reimplement the block-grid + fire preview against the new block-model
-        // render API (see class javadoc). Left as a no-op so the config screen compiles and launches.
+        Minecraft mc = Minecraft.getInstance();
+        mc.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_3D);
+        BlockStateModelSet models = mc.getModelManager().getBlockStateModelSet();
+        VertexConsumer buffer = this.bufferSource.getBuffer(Sheets.cutoutBlockSheet());
+
+        this.quadInstance.setLightCoords(0xF000F0);
+        this.quadInstance.setOverlayCoords(OverlayTexture.NO_OVERLAY);
+
+        poseStack.pushPose();
+        for (BlockSceneRenderState.BlockDrawOp op : scene.ops()) {
+            if (op.push()) poseStack.pushPose();
+            poseStack.translate(op.tx(), op.ty(), op.tz());
+            poseStack.mulPose(op.rotation());
+            if (op.mirror()) poseStack.scale(-1f, 1f, 1f);
+            poseStack.scale(op.blockScale(), op.blockScale(), op.blockScale());
+            poseStack.translate(op.ptx(), op.pty(), op.ptz());
+
+            int color = 0xFF000000
+                    | ((int) (op.r() * 255) << 16) | ((int) (op.g() * 255) << 8) | (int) (op.b() * 255);
+            if (op.customTint()) {
+                TestModel.configPreviewColor = color;
+            }
+
+            BlockStateModel model = models.get(op.state());
+            model.collectParts(this.random, this.parts);
+            for (BlockStateModelPart part : this.parts) {
+                for (Direction d : DIRECTIONS) {
+                    for (BakedQuad quad : part.getQuads(d)) {
+                        putQuad(buffer, poseStack, quad, op.customTint(), color);
+                    }
+                }
+                for (BakedQuad quad : part.getQuads(null)) {
+                    putQuad(buffer, poseStack, quad, op.customTint(), color);
+                }
+            }
+            this.parts.clear();
+
+            if (op.pop()) poseStack.popPose();
+        }
+        poseStack.popPose();
+    }
+
+    private void putQuad(VertexConsumer buffer, PoseStack poseStack, BakedQuad quad, boolean customTint, int color) {
+        // Custom-tint (fire) quads are flat-tinted; normal blocks only tint their tint-indexed quads
+        // (e.g. foliage) exactly like vanilla, leaving everything else white.
+        boolean tinted = customTint || quad.materialInfo().tintIndex() != -1;
+        this.quadInstance.setColor(tinted ? color : -1);
+        buffer.putBakedQuad(poseStack.last(), quad, this.quadInstance);
     }
 }
