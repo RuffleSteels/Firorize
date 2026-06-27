@@ -6,7 +6,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.narration.NarrationElementOutput;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
@@ -49,20 +49,20 @@ public class ChooseProfileScreen extends Screen {
         list = new ProfileList(boxX + 10, listY, boxW - 20, listH);
         int idx = names.indexOf(Main.CONFIG_MANAGER.getCurrentPreset());
         list.select(idx >= 0 ? idx : 0);
-        addDrawableChild(list);
+        addRenderableWidget(list);
 
         int btnW = (boxW - 20 - 6) / 2;
         Button uploadButton = new Button.Builder(Component.translatable("firorize.config.button.uploadOnline"), b -> proceed(false))
-                .dimensions(boxX + 10, boxY + boxH - 26, btnW, 20).build();
+                .bounds(boxX + 10, boxY + boxH - 26, btnW, 20).build();
         Button sendButton = new Button.Builder(Component.translatable("firorize.config.button.sendToFriend"), b -> proceed(true))
-                .dimensions(boxX + 10 + btnW + 6, boxY + boxH - 26, btnW, 20).build();
+                .bounds(boxX + 10 + btnW + 6, boxY + boxH - 26, btnW, 20).build();
         uploadButton.active = !names.isEmpty();
         sendButton.active = !names.isEmpty();
-        addDrawableChild(uploadButton);
-        addDrawableChild(sendButton);
+        addRenderableWidget(uploadButton);
+        addRenderableWidget(sendButton);
 
-        addDrawableChild(new Button.Builder(Component.literal("x"), b -> close())
-                .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
+        addRenderableWidget(new Button.Builder(Component.literal("x"), b -> close())
+                .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         super.init();
     }
@@ -70,7 +70,7 @@ public class ChooseProfileScreen extends Screen {
     private void proceed(boolean privateMode) {
         String name = list.selectedName();
         if (name == null) return;
-        client.setScreen(new UploadPresetScreen(this, origin, online, name, privateMode));
+        minecraft.setScreen(new UploadPresetScreen(this, origin, online, name, privateMode));
     }
 
     @Override
@@ -81,33 +81,33 @@ public class ChooseProfileScreen extends Screen {
 
     @Override
     public void close() {
-        client.setScreen(origin);
+        minecraft.setScreen(origin);
     }
 
     @Override
     public void resize(int width, int height) {
-        Minecraft client = Minecraft.getInstance();
-        Main.setScale(width, height, client);
-        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        Minecraft minecraft = Minecraft.getInstance();
+        Main.setScale(width, height, minecraft);
+        super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
 
     @Override
-    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Overlay the screen we came from (the config editor, or the online dialog) dimmed, rather than
         // cutting through to the blurred game.
         ChangeFireColorScreen.renderModalBackdrop(context, origin, delta);
         context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
-        context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.outline(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
+        context.text(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
     public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         if (names.isEmpty()) {
-            context.drawCenteredTextWithShadow(font, Component.translatable("firorize.config.status.noProfiles"),
+            context.centeredText(font, Component.translatable("firorize.config.status.noProfiles"),
                     width / 2, boxY + boxH / 2 - 4, 0xFFC0C0C0);
         }
     }
@@ -147,7 +147,7 @@ public class ChooseProfileScreen extends Screen {
         }
 
         @Override
-        protected void renderWidget(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
             clampScroll();
             int left = getX(), top = getY(), right = getX() + getWidth(), bottom = getY() + getHeight();
             context.fill(left, top, right, bottom, 0xFF141414);
@@ -160,9 +160,9 @@ public class ChooseProfileScreen extends Screen {
                     boolean hover = mouseX >= left && mouseX <= left + rowW && mouseY >= y && mouseY <= y + ROW_H
                             && mouseY >= top && mouseY <= bottom;
                     if (sel || hover) context.fill(left, y, left + rowW, y + ROW_H, sel ? 0xFF3A5A8A : 0xFF262626);
-                    context.drawStrokedRectangle(left, y, rowW, ROW_H, sel ? 0xFFB0C4E0 : 0xFF333333);
-                    String name = font.trimToWidth(names.get(i), rowW - 12);
-                    context.drawTextWithShadow(font, Component.literal(name), left + 6, y + (ROW_H - 8) / 2, 0xFFFFFFFF);
+                    context.outline(left, y, rowW, ROW_H, sel ? 0xFFB0C4E0 : 0xFF333333);
+                    String name = font.plainSubstrByWidth(names.get(i), rowW - 12);
+                    context.text(font, Component.literal(name), left + 6, y + (ROW_H - 8) / 2, 0xFFFFFFFF);
                 }
                 y += ROW_H;
             }
@@ -237,7 +237,7 @@ public class ChooseProfileScreen extends Screen {
         }
 
         @Override
-        protected void appendClickableNarrations(NarrationElementOutput builder) {
+        protected void updateWidgetNarration(NarrationElementOutput builder) {
         }
     }
 }

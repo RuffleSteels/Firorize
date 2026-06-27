@@ -82,7 +82,7 @@ public class TestModel extends WrapperBlockStateModel {
                     continue;
                 }
                 for (BakedQuad q : part.getQuads(d)) {
-                    TextureAtlasSprite src = q.sprite();
+                    TextureAtlasSprite src = q.materialInfo().sprite();
                     TextureAtlasSprite target;
                     if (Main.inConfig) {
                         target = configSprite;
@@ -146,7 +146,7 @@ public class TestModel extends WrapperBlockStateModel {
 
         if ((blockUnder.equals(Blocks.AIR) && unique != null)
                 || blockUnder.builtInRegistryHolder().tags().anyMatch(tag -> list.get(1).containsKey(tag.location().toString()))
-                || (biome != null && list.get(2).containsKey(biome.unwrapKey().get().location().toString()))
+                || (biome != null && list.get(2).containsKey(biome.unwrapKey().get().identifier().toString()))
                 || list.get(0).containsKey(BuiltInRegistries.BLOCK.getKey(blockUnder).toString())) {
             for (int i = 0; i < 3; i++) {
                 int order = CONFIG_MANAGER.getPriorityOrder().get(i);
@@ -173,8 +173,8 @@ public class TestModel extends WrapperBlockStateModel {
                         return list.get(1).get(tags.get(0).location().toString());
                     }
                 } else if (order == 2) {
-                    if (biome != null && list.get(2).containsKey(biome.unwrapKey().get().location().toString())) {
-                        return list.get(2).get(biome.unwrapKey().get().location().toString());
+                    if (biome != null && list.get(2).containsKey(biome.unwrapKey().get().identifier().toString())) {
+                        return list.get(2).get(biome.unwrapKey().get().identifier().toString());
                     }
                 }
             }

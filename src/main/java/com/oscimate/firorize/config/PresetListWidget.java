@@ -22,8 +22,8 @@ class PresetListWidget
 
     public String curPresetID;
 
-    public PresetListWidget(Minecraft client, int width, int height, int x, int y, ChangeFireColorScreen instance, Font font) {
-        super(client, width, height, x, y);
+    public PresetListWidget(Minecraft minecraft, int width, int height, int x, int y, ChangeFireColorScreen instance, Font font) {
+        super(minecraft, width, height, x, y);
         this.instance = instance;
         this.font = font;
 
@@ -81,7 +81,7 @@ class PresetListWidget
 
     public void addPreset() {
         instance.isPresetAdd = true;
-        client.setScreen(new AddProfileScreen(instance));
+        minecraft.setScreen(new AddProfileScreen(instance));
     }
 
     @Override
@@ -100,8 +100,8 @@ class PresetListWidget
         Collections.copy(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getLeft().getLeft());
         Collections.copy(Main.CONFIG_MANAGER.getPriorityOrder(), Main.CONFIG_MANAGER.getFireColorPresets().get(entry.languageDefinition).getRight());
 
-        instance.blockUnderField.setText("");
-        instance.input = instance.blockUnderField.getText();
+        instance.blockUnderField.setValue("");
+        instance.input = instance.blockUnderField.getValue();
         instance.searchScreenListWidget.selected.clear();
         if (isConstruct) {
             instance.searchScreenListWidget.test(false);
@@ -110,7 +110,7 @@ class PresetListWidget
             // are available without one. Avoid starting on the biomes tab when there is no world, but
             // still regenerate the current tab so the list reflects the newly selected profile.
             int firstOption = Main.CONFIG_MANAGER.getPriorityOrder().getFirst();
-            if (client.world != null) {
+            if (minecraft.level != null) {
                 instance.changeSearchOption(firstOption);
             } else {
                 instance.searchScreenListWidget.test(false);
@@ -137,7 +137,7 @@ class PresetListWidget
 
     @Override
     protected int getScrollbarX() {
-        return super.getScrollbarX() - 16;
+        return super.scrollBarX() - 16;
     }
     @Override
     public int getX() {
@@ -152,12 +152,12 @@ class PresetListWidget
 
 
     @Override
-    public void renderWidget(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.renderWidget(context, mouseX, mouseY, delta);
-        context.getMatrices().pushMatrix();
-        context.getMatrices().scale(2f, 2f);
-        context.drawTextWithShadow(font, Component.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
-        context.getMatrices().popMatrix();
+    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+        context.pose().pushMatrix();
+        context.pose().scale(2f, 2f);
+        context.text(font, Component.translatable("firorize.config.title.profiles"), getX() - 21, (getY()-183), Color.WHITE.getRGB());
+        context.pose().popMatrix();
     }
 
 
@@ -225,7 +225,7 @@ class PresetListWidget
                 int closeWidth = entryHeight - 4;
                 context.fill(x+entryWidth-closeWidth-4, y + (entryHeight / 2) - (closeWidth / 2), x+entryWidth-4, y + (entryHeight / 2) + (closeWidth / 2), new Color(1f/255*44, 1f/255*44, 1f/255*44, alphaa).getRGB());
                 instance.drawX(context, y + entryHeight / 2, x + entryWidth - 4 - closeWidth / 2);
-                context.drawStrokedRectangle(x+entryWidth-closeWidth-4, y + (entryHeight / 2) - (closeWidth / 2), closeWidth, closeWidth, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                context.outline(x+entryWidth-closeWidth-4, y + (entryHeight / 2) - (closeWidth / 2), closeWidth, closeWidth, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
             }
             // Marker for imported profiles (drawn on the left; the name is centred). A person silhouette
             // for profiles sent by a friend via the inbox, otherwise the globe for the public gallery.
@@ -249,7 +249,7 @@ class PresetListWidget
                     }
                 }
             }
-            context.drawCenteredTextWithShadow(PresetListWidget.this.font, Component.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y + (entryHeight - 8) / 2 +1, 0xFFFFFFFF);
+            context.centeredText(PresetListWidget.this.font, Component.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y + (entryHeight - 8) / 2 +1, 0xFFFFFFFF);
         }
     }
 }

@@ -26,13 +26,13 @@ public class ChangeFireHeightScreen extends Screen {
     public void onClose() {
         Main.CONFIG_MANAGER.save();
 
-        client.setScreen(parent);
+        minecraft.setScreen(parent);
     }
     @Override
     protected void init() {
         FireHeightSliderWidget customTimeSliderWidget = new FireHeightSliderWidget(this.width / 2 - 75, 10, 150, 20, Component.translatable("firorize.config.title.height"), (double) Main.CONFIG_MANAGER.getCurrentFireHeightSlider() /100);
-        this.addDrawableChild(customTimeSliderWidget);
-        this.addDrawableChild(new Button.Builder(CommonComponents.DONE, button -> onClose()).dimensions(width / 2 - 100, 50, 200, 20).build());
+        this.addRenderableWidget(customTimeSliderWidget);
+        this.addRenderableWidget(new Button.Builder(CommonComponents.GUI_DONE, button -> onClose()).bounds(width / 2 - 100, 50, 200, 20).build());
         super.init();
     }
     @Override
@@ -41,9 +41,9 @@ public class ChangeFireHeightScreen extends Screen {
     }
     @Override
     public void resize(int width, int height) {
-        Minecraft client = Minecraft.getInstance();
-//        Main.setScale(width, height, client);
-        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        Minecraft minecraft = Minecraft.getInstance();
+//        Main.setScale(width, height, minecraft);
+        super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
 
     @Override

@@ -15,9 +15,9 @@ public class CustomTextFieldWidget extends EditBox {
 
     private void thing() {
         if (thing) {
-            instance.updateCursor(this.getText());
+            instance.updateCursor(this.getValue());
         } else {
-            instance.input = this.getText();
+            instance.input = this.getValue();
             instance.searchScreenListWidget.test();
             instance.searchScreenListWidget.selected.clear();
         }
@@ -25,13 +25,13 @@ public class CustomTextFieldWidget extends EditBox {
 
     @Override
     public void write(String text) {
-        super.write(text);
+        super.insertText(text);
         thing();
     }
 
     @Override
     public void eraseCharacters(int characterOffset) {
-        super.eraseCharacters(characterOffset);
+        super.deleteChars(characterOffset);
         thing();
     }
 

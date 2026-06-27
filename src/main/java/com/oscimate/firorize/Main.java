@@ -117,7 +117,7 @@ public class Main implements ClientModInitializer {
                         if (!blockUnder.equals(Blocks.AIR)) {
                             ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
                             if ((blockUnder.builtInRegistryHolder().tags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.location().toString())) ||
-                                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.level().getBiome(mutable).unwrapKey().get().location().toString()) ||
+                                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.level().getBiome(mutable).unwrapKey().get().identifier().toString()) ||
                                     list.get(0).containsKey(BuiltInRegistries.BLOCK.getKey(blockUnder).toString()))) {
 
                                 ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(new int[]{2});
@@ -143,8 +143,8 @@ public class Main implements ClientModInitializer {
                                             }
                                         }
                                     } else if (order == 2) {
-                                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.level().getBiome(mutable).unwrapKey().get().location().toString())) {
-                                            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(list.get(2).get(String.valueOf(entity.level().getBiome(mutable).unwrapKey().get().location().toString())).clone());
+                                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.level().getBiome(mutable).unwrapKey().get().identifier().toString())) {
+                                            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(list.get(2).get(String.valueOf(entity.level().getBiome(mutable).unwrapKey().get().identifier().toString())).clone());
                                             return;
                                         }
                                     }

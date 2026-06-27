@@ -199,7 +199,7 @@ public class ChangeFireColorScreen extends Screen {
         Main.inConfig = false;
         if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder())
                 || !fireColorsEqual(comparedCurrentFire, Main.CONFIG_MANAGER.getCurrentBlockFireColors()))) {
-            Minecraft.getInstance().reloadResources();  }
+            Minecraft.getInstance().reloadResourcePacks();  }
 
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
@@ -208,10 +208,10 @@ public class ChangeFireColorScreen extends Screen {
 
         Main.CONFIG_MANAGER.save();
 
-        int i = this.client.getWindow().calculateScaleFactor(this.client.options.getGuiScale().getValue(), this.client.forcesUnicodeFont());
-        this.client.getWindow().setScaleFactor(i);
+        int i = this.minecraft.getWindow().calculateScaleFactor(this.minecraft.options.getGuiScale().getValue(), this.minecraft.forcesUnicodeFont());
+        this.minecraft.getWindow().setGuiScale(i);
 
-        client.setScreen(parent);
+        minecraft.setScreen(parent);
     }
     private boolean onBaseColor = true;
     public EditBox textFieldWidget;
@@ -223,9 +223,9 @@ public class ChangeFireColorScreen extends Screen {
     public ChangeFireColorScreen.SearchScreenListWidget searchScreenListWidget;
     public PresetListWidget presetListWidget;
     private List<Block> blockUnderList = BuiltInRegistries.BLOCK.stream().filter(block -> {
-        BlockState state = block.getDefaultState();
+        BlockState state = block.defaultBlockState();
         for (Direction direction : Direction.values()) {
-            if (state.isSideSolidFullSquare(EmptyBlockGetter.INSTANCE, BlockPos.ORIGIN, direction)) {
+            if (state.isFaceSturdy(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, direction)) {
                 return true;
             }
         }
@@ -375,12 +375,12 @@ public class ChangeFireColorScreen extends Screen {
         context.outline(bx, by, confirmBoxW, confirmBoxH, 0xFF8B8B8B);
         context.text(font, confirmTitle, bx + 12, by + 10, 0xFFFFFFFF);
         int ty = by + 30;
-        for (FormattedCharSequence line : font.wrapLines(confirmMessage, confirmBoxW - 24)) {
+        for (FormattedCharSequence line : font.split(confirmMessage, confirmBoxW - 24)) {
             context.centeredText(font, line, width / 2, ty, 0xFFC0C0C0);
             ty += 11;
         }
-        drawConfirmButton(context, confirmYesRect(), CommonComponents.YES, mouseX, mouseY);
-        drawConfirmButton(context, confirmNoRect(), CommonComponents.NO, mouseX, mouseY);
+        drawConfirmButton(context, confirmYesRect(), CommonComponents.GUI_YES, mouseX, mouseY);
+        drawConfirmButton(context, confirmNoRect(), CommonComponents.GUI_NO, mouseX, mouseY);
         context.pose().popMatrix();
     }
 
@@ -418,7 +418,7 @@ public class ChangeFireColorScreen extends Screen {
             pickedColor[0] = c[0];
             pickedColor[1] = c[1];
             int RGB = pickedColor[e.overlay ? 1 : 0].getRGB();
-            textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
+            textFieldWidget.setValue("#" + Integer.toHexString(RGB).substring(2));
             updateCursor("#" + Integer.toHexString(RGB).substring(2));
         } else {
             restoreConfig(redo ? e.cfgAfter : e.cfgBefore, redo ? e.prioAfter : e.prioBefore,
@@ -464,10 +464,10 @@ public class ChangeFireColorScreen extends Screen {
     private void navigateTo(int tab, String target, boolean overlay, boolean colorOnly) {
         if (colorOnly) {
             // Colour edits don't change the list; only switch tab if it actually differs.
-            if (client.world != null && tab != currentSearchButton) {
+            if (minecraft.level != null && tab != currentSearchButton) {
                 changeSearchOption(tab);
             }
-        } else if (client.world != null) {
+        } else if (minecraft.level != null) {
             // Config restore: rebuild the list and refresh the tab buttons from the restored priority order.
             changeSearchOption(tab);
         } else {
@@ -484,7 +484,7 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[isOverlay ? 1 : 0].active = false;
         overlayToggles[!isOverlay ? 1 : 0].active = true;
         int RGB = pickedColor[isOverlay ? 1 : 0].getRGB();
-        textFieldWidget.setText("#" + Integer.toHexString(RGB).substring(2));
+        textFieldWidget.setValue("#" + Integer.toHexString(RGB).substring(2));
         updateCursor("#" + Integer.toHexString(RGB).substring(2));
     }
     public Button[] searchOptions = new Button[3];
@@ -522,13 +522,13 @@ public class ChangeFireColorScreen extends Screen {
     protected void init() {
         Main.inConfig = true;
 
-        invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.font, wheelCoords[0] + 50 + 20, hexBoxCoords[1],wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, CommonComponents.DONE);
+        invisibleTextFieldWidget = new InvisibleTextFieldWidget(this, this.font, wheelCoords[0] + 50 + 20, hexBoxCoords[1],wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, CommonComponents.GUI_DONE);
 
         invisibleTextFieldWidget.visible = false;
 
-        invisibleTextFieldWidget.setPlaceholder(Component.translatable("firorize.config.placeholder.newColorPresetField"));
+        invisibleTextFieldWidget.setHint(Component.translatable("firorize.config.placeholder.newColorPresetField"));
 
-        addColorButton = new Button.Builder(Component.literal("+"), button -> cyclicalPresets.addColor()).dimensions((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, hexBoxCoords[1], 20, 20).build();
+        addColorButton = new Button.Builder(Component.literal("+"), button -> cyclicalPresets.addColor()).bounds((wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20, hexBoxCoords[1], 20, 20).build();
 
         this.cyclicalPresets = ColoredCycleButton.builder()
                 .build(this, wheelCoords[0] + 50 + 20, hexBoxCoords[1], wheelRadius*2  + sliderDimensions[0] - 50 - 20, 20, font);
@@ -536,24 +536,24 @@ public class ChangeFireColorScreen extends Screen {
         blockSearchCoords[0] = width - 300 - 20;
         undoButton = new UndoButton(hexBoxCoords[0] - 22, hexBoxCoords[1], 20, 20, button -> undo());
         redoButton = new RedoButton(hexBoxCoords[0], hexBoxCoords[1], 20, 20, button -> redo());
-        saveButton = new Button.Builder(Component.translatable("firorize.config.button.applyButton"), button -> save()).dimensions(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
-        this.addDrawableChild(saveButton);
+        saveButton = new Button.Builder(Component.translatable("firorize.config.button.applyButton"), button -> save()).bounds(width - 300 - 20, 20 + blockSearchDimensions[1], 150, 20).build();
+        this.addRenderableWidget(saveButton);
 
         saveButton.active = false;
-        this.addDrawableChild(new Button.Builder(CommonComponents.DONE, button -> onClose()).dimensions(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
-        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.client, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, 15);
-        this.addDrawableChild(searchScreenListWidget);
-        textFieldWidget = new CustomTextFieldWidget(this.font, hexBoxCoords[0] + 20+1, hexBoxCoords[1]+1, 48, 18, CommonComponents.DONE, this, true);
-        blockUnderField = new CustomTextFieldWidget(this.font, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, CommonComponents.DONE, this, false);this.addDrawableChild(textFieldWidget);
-        this.addDrawableChild(blockUnderField);
+        this.addRenderableWidget(new Button.Builder(CommonComponents.GUI_DONE, button -> onClose()).bounds(width - 150 - 20, 20 + blockSearchDimensions[1], 150, 20).build());
+        this.searchScreenListWidget = new ChangeFireColorScreen.SearchScreenListWidget(this.minecraft, blockSearchDimensions[0], blockSearchDimensions[1] - 40, blockSearchCoords[1] + 40, 15);
+        this.addRenderableWidget(searchScreenListWidget);
+        textFieldWidget = new CustomTextFieldWidget(this.font, hexBoxCoords[0] + 20+1, hexBoxCoords[1]+1, 48, 18, CommonComponents.GUI_DONE, this, true);
+        blockUnderField = new CustomTextFieldWidget(this.font, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, CommonComponents.GUI_DONE, this, false);this.addRenderableWidget(textFieldWidget);
+        this.addRenderableWidget(blockUnderField);
 
-        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, font);
+        this.presetListWidget = new PresetListWidget(minecraft,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, font);
 
         // Two button rows stack directly under the profile list (the list height above was shrunk by
         // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
         // "Inbox" text button to its right (together spanning the list width).
-        this.browseOnlineButton = new Button.Builder(Component.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
-                .dimensions(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
+        this.browseOnlineButton = new Button.Builder(Component.translatable("firorize.config.button.communityProfiles"), button -> minecraft.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
+                .bounds(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
 
         int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
         int row2Gap = 2;
@@ -562,22 +562,22 @@ public class ChangeFireColorScreen extends Screen {
         Component inboxLabel = Component.translatable("firorize.config.button.inbox");
         int inboxSize = font.width(inboxLabel) + 12;
         int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
-        this.shareBottomButton = new Button.Builder(Component.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
-                .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
-        this.inboxButton = new Button.Builder(inboxLabel, button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
-                .dimensions(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
+        this.shareBottomButton = new Button.Builder(Component.translatable("firorize.config.button.share"), button -> minecraft.setScreen(new ChooseProfileScreen(this, null)))
+                .bounds(presetListWidget.getX(), row2Y, shareW, 20).build();
+        this.inboxButton = new Button.Builder(inboxLabel, button -> minecraft.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
+                .bounds(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
         // Pull the inbox count so the notification badge is up to date when this screen opens.
         OnlinePresetsClient.refreshInboxCount();
 
         // Right-aligned: Add flush against the panel's right edge, Reset directly to its left.
-        this.resetProfileButton = new Button.Builder(Component.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
-        this.addButton = new Button.Builder(Component.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
-        this.addDrawableChild(addButton);
-//        textFieldWidget.setChangedListener(this::updateCursor);
+        this.resetProfileButton = new Button.Builder(Component.literal(""), button -> this.presetListWidget.resetProfile()).bounds(profileButtonXs[1], profileButtonY, 20, 20).build();
+        this.addButton = new Button.Builder(Component.literal("+"), button -> presetListWidget.addPreset()).bounds(profileButtonXs[2], profileButtonY, 20, 20).build();
+        this.addRenderableWidget(addButton);
+//        textFieldWidget.setResponder(this::updateCursor);
         updateCursor(this.hexCode);
 
-        overlayToggles[0] = new Button.Builder(Component.translatable("firorize.config.button.baseButton"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
-        overlayToggles[1]  = new Button.Builder(Component.translatable("firorize.config.button.overlayButton"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
+        overlayToggles[0] = new Button.Builder(Component.translatable("firorize.config.button.baseButton"), button -> toggle(false)).bounds(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
+        overlayToggles[1]  = new Button.Builder(Component.translatable("firorize.config.button.overlayButton"), button -> toggle(false)).bounds(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
 
         searchOptions[0] = new MoveableButton(this, this.font, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Component.translatable("firorize.config.title.blocks"),  0);
         searchOptions[1]  = new MoveableButton(this, this.font, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Component.translatable("firorize.config.title.tags"), 1);
@@ -588,10 +588,10 @@ public class ChangeFireColorScreen extends Screen {
                 if (2*i+j != 0 && 2*i+j != 5) {
                     int finalJ = j;
                     MoveableButton button = ((MoveableButton) searchOptions[i]);
-                    movableArrowButtons[2 * i + j] = new Button.Builder(Component.literal(""), buttonn -> button.move(finalJ != 0)).dimensions(button.getXX()[j], button.getYY(), button.getHeight(), 13).build();
-                    this.addDrawableChild(movableArrowButtons[2 * i + j]);
+                    movableArrowButtons[2 * i + j] = new Button.Builder(Component.literal(""), buttonn -> button.move(finalJ != 0)).bounds(button.getXX()[j], button.getYY(), button.getHeight(), 13).build();
+                    this.addRenderableWidget(movableArrowButtons[2 * i + j]);
 
-                    movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.priorityArrow")));
+                    movableArrowButtons[2 * i + j].setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.priorityArrow")));
                     movableArrowButtons[2 * i + j].setTooltipDelay(Duration.ofMillis(750L));
                 }
             }
@@ -599,51 +599,51 @@ public class ChangeFireColorScreen extends Screen {
 
 
 
-        this.addDrawableChild(presetListWidget);
-        this.addDrawableChild(browseOnlineButton);
-        this.addDrawableChild(inboxButton);
-        this.addDrawableChild(shareBottomButton);
-        this.addDrawableChild(searchOptions[0]);
-        this.addDrawableChild(searchOptions[1]);
-        this.addDrawableChild(searchOptions[2]);
-        this.addDrawableChild(overlayToggles[0]);
-        this.addDrawableChild(overlayToggles[1]);
-        this.addDrawableChild(undoButton);
-        this.addDrawableChild(redoButton);
-        this.addDrawableChild(cyclicalPresets);
-        this.addDrawableChild(addColorButton);
-        this.addDrawableChild(invisibleTextFieldWidget);
-        this.addDrawableChild(resetProfileButton);
+        this.addRenderableWidget(presetListWidget);
+        this.addRenderableWidget(browseOnlineButton);
+        this.addRenderableWidget(inboxButton);
+        this.addRenderableWidget(shareBottomButton);
+        this.addRenderableWidget(searchOptions[0]);
+        this.addRenderableWidget(searchOptions[1]);
+        this.addRenderableWidget(searchOptions[2]);
+        this.addRenderableWidget(overlayToggles[0]);
+        this.addRenderableWidget(overlayToggles[1]);
+        this.addRenderableWidget(undoButton);
+        this.addRenderableWidget(redoButton);
+        this.addRenderableWidget(cyclicalPresets);
+        this.addRenderableWidget(addColorButton);
+        this.addRenderableWidget(invisibleTextFieldWidget);
+        this.addRenderableWidget(resetProfileButton);
 
-        if (client.world == null) {
-            searchOptions[1].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.movableButton")));
+        if (minecraft.level == null) {
+            searchOptions[1].setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.movableButton")));
             searchOptions[1].active = false;
-            searchOptions[2].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.movableButton")));
+            searchOptions[2].setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.movableButton")));
             searchOptions[2].active = false;
             searchOptions[0].active = false;
         } else {
             this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
         }
 
-        shareBottomButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.shareProfileButton")));
+        shareBottomButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.shareProfileButton")));
         shareBottomButton.setTooltipDelay(Duration.ofMillis(750L));
-        addButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.addProfileButton")));
+        addButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.addProfileButton")));
         addButton.setTooltipDelay(Duration.ofMillis(750L));
-        resetProfileButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.resetProfileButton")));
+        resetProfileButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.resetProfileButton")));
         resetProfileButton.setTooltipDelay(Duration.ofMillis(750L));
-        browseOnlineButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.onlinePresets")));
+        browseOnlineButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.onlinePresets")));
         browseOnlineButton.setTooltipDelay(Duration.ofMillis(750L));
-        inboxButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.inboxButton")));
+        inboxButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.inboxButton")));
         inboxButton.setTooltipDelay(Duration.ofMillis(750L));
-        overlayToggles[0].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.baseToggle")));
+        overlayToggles[0].setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.baseToggle")));
         overlayToggles[0].setTooltipDelay(Duration.ofMillis(750L));
-        overlayToggles[1].setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.overlayToggle")));
+        overlayToggles[1].setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.overlayToggle")));
         overlayToggles[1].setTooltipDelay(Duration.ofMillis(750L));
-        saveButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.applyButton")));
+        saveButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.applyButton")));
         saveButton.setTooltipDelay(Duration.ofMillis(750L));
-        undoButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.undoButton")));
+        undoButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.undoButton")));
         undoButton.setTooltipDelay(Duration.ofMillis(750L));
-        redoButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.redoButton")));
+        redoButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.redoButton")));
         redoButton.setTooltipDelay(Duration.ofMillis(750L));
 
         toggle(true);
@@ -694,10 +694,10 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     public void resize(int width, int height) {
-        Minecraft client = Minecraft.getInstance();
-        Main.setScale(width, height, client);
+        Minecraft minecraft = Minecraft.getInstance();
+        Main.setScale(width, height, minecraft);
 
-        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
     private int currentSearchButton = 0;
 
@@ -717,7 +717,7 @@ public class ChangeFireColorScreen extends Screen {
     private void toggle(boolean start) {
         isOverlay = start ? false : !isOverlay;
         int RGB = pickedColor[isOverlay ? 1:0].getRGB();
-        textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
+        textFieldWidget.setValue("#"+Integer.toHexString(RGB).substring(2));
         updateCursor("#"+Integer.toHexString(RGB).substring(2));
         overlayToggles[isOverlay?1:0].active = false;
         overlayToggles[!isOverlay?1:0].active = true;
@@ -741,13 +741,13 @@ public class ChangeFireColorScreen extends Screen {
                 num = allBlockUnders.size();
             } else if (currentSearchButton == 1) {
                 blockTags.forEach(tag -> {
-                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).put(tag.id().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).put(tag.location().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
                 });
 
                 num = blockTags.size();
             } else if (currentSearchButton == 2) {
                 biomeKeys.forEach(key -> {
-                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).put(key.getValue().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
+                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).put(key.identifier().toString(), new int[]{pickedColor[0].getRGB(), pickedColor[1].getRGB()});
                 });
 
                 num = biomeKeys.size();
@@ -777,13 +777,13 @@ public class ChangeFireColorScreen extends Screen {
             int RGB = colorInts[isOverlay ? 1:0];
             colorRedo = false;
             setPickedColors(new Color[]{new Color(colorInts[0]), new Color(colorInts[1])});
-            textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
+            textFieldWidget.setValue("#"+Integer.toHexString(RGB).substring(2));
             updateCursor("#"+Integer.toHexString(RGB).substring(2));
         } else {
             int RGB = baseColor[isOverlay ? 1:0].getRGB();
             colorRedo = false;
             setPickedColors(new Color[]{baseColor[0], baseColor[1]});
-            textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
+            textFieldWidget.setValue("#"+Integer.toHexString(RGB).substring(2));
             updateCursor("#"+Integer.toHexString(RGB).substring(2));
         }
     }
@@ -813,7 +813,7 @@ public class ChangeFireColorScreen extends Screen {
                     int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
                     saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
                 } else {
-                    String string = currentSearchButton == 0 ? BuiltInRegistries.BLOCK.getId(blockUnder).toString() : currentSearchButton == 1 ? blockTags.get(0).id().toString() : biomeKeys.get(0).getValue().toString();
+                    String string = currentSearchButton == 0 ? BuiltInRegistries.BLOCK.getId(blockUnder).toString() : currentSearchButton == 1 ? blockTags.get(0).location().toString() : biomeKeys.get(0).identifier().toString();
                     if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).containsKey(string)) {
                         int[] colorInts = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).get(string);
                         saveButton.active = !(colorInts[0] == pickedColor[0].getRGB() && colorInts[1] == pickedColor[1].getRGB());
@@ -846,7 +846,7 @@ public class ChangeFireColorScreen extends Screen {
 
             int RGB = Color.HSBtoRGB((float) hue, (float) saturation, (float) ((float) lightness == 0 ? lightness+0.01 : lightness));
             if (!isCycling) cyclicalPresets.setIndex(0);
-            textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
+            textFieldWidget.setValue("#"+Integer.toHexString(RGB).substring(2));
             if (click) {
                 buffer = false;
                 colorRedo = true;
@@ -981,7 +981,7 @@ public class ChangeFireColorScreen extends Screen {
 
             int RGB = Color.HSBtoRGB((float) hue, (float) saturation, (float) ((float) lightness == 0 ? lightness+0.01 : lightness));
 
-            textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
+            textFieldWidget.setValue("#"+Integer.toHexString(RGB).substring(2));
             if (isClick) {
                 colorRedo = true;
                 setPickedColor(new Color(RGB, true), isOverlay ? 1:0);
@@ -1033,11 +1033,11 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        this.renderPanoramaBackground(context, delta);
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        this.extractPanorama(context, delta);
 
-        this.applyBlur(context);
-        this.renderDarkening(context);
+        this.extractBlurredBackground(context);
+        this.extractBlurredBackground(context);
     }
 
     @Override
@@ -1115,7 +1115,7 @@ public class ChangeFireColorScreen extends Screen {
         for (int i = 0; i < allBlockUnders.size(); i++) {
             float cellPx = gridOriginX + (blockSearchDimensions[0] - 21) / 10f * (i % 11);
             float cellPy = gridOriginY + (height - blockSearchDimensions[1] - 40 - 20) / 7f * Math.floorDiv(i, 11) - dist;
-            gridOps.add(BlockDrawOp.independent(allBlockUnders.get(i).getDefaultState(),
+            gridOps.add(BlockDrawOp.independent(allBlockUnders.get(i).defaultBlockState(),
                     (cellPx - gridBoxW / 2f) / gridScale, (cellPy - gridBoxH) / gridScale,
                     q, true, 1f, 1f, -0.36f, 0f, 1f, 1f, 1f, false));
         }
@@ -1127,17 +1127,17 @@ public class ChangeFireColorScreen extends Screen {
 
         java.util.List<BlockDrawOp> pvOps = new java.util.ArrayList<>();
 
-        pvOps.add(new BlockDrawOp(blockUnder.getDefaultState(),
+        pvOps.add(new BlockDrawOp(blockUnder.defaultBlockState(),
                 0f, (-4f/960) * context.guiHeight(), 0f,
                 q, true, -2f, -.5f, -.5f, -.5f, 1f, 1f, 1f, false, true, true));
 
-        pvOps.add(new BlockDrawOp(Blocks.FIRE.getDefaultState(),
+        pvOps.add(new BlockDrawOp(Blocks.FIRE.defaultBlockState(),
                 0f, (-4f/960) * context.guiHeight(), 0f,
                 q, true, -2f, -.5f, .5f, -0.5f,
                 pickedColor[0].getRed() / 255f, pickedColor[0].getGreen() / 255f, pickedColor[0].getBlue() / 255f, true, true, true));
 
 //        // Soul fire (custom tint, overlay colour): same matrix as fire, then pop.
-        pvOps.add(new BlockDrawOp(Blocks.SOUL_FIRE.getDefaultState(),
+        pvOps.add(new BlockDrawOp(Blocks.SOUL_FIRE.defaultBlockState(),
                 0f, (-4f/960) * context.guiHeight(), 0f,
                 q, true, -2f, -.5f, .5f, -0.5f,
                 pickedColor[1].getRed() / 255f, pickedColor[1].getGreen() / 255f, pickedColor[1].getBlue() / 255f, true, true, true));
@@ -1222,7 +1222,7 @@ public class ChangeFireColorScreen extends Screen {
                 Stream.concat(first.stream(), second.stream()).toList().forEach(this::addEntry);
             } else if (currentSearchButton == 1) {
                 Main.blockTagList.forEach((key) -> {
-                    String string = key.id().toString();
+                    String string = key.location().toString();
                     if (string.contains(input)) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(string)) {
@@ -1233,7 +1233,7 @@ public class ChangeFireColorScreen extends Screen {
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).keyList().forEach(string -> {
                     // Cross-version profiles may carry tags that don't exist in this version; skip
                     // them instead of resolving (findFirst().get() would throw) so they're ignored.
-                    if (Main.blockTagList.stream().anyMatch(tagg -> tagg.id().toString().equals(string))) {
+                    if (Main.blockTagList.stream().anyMatch(tagg -> tagg.location().toString().equals(string))) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         first.add(blockEntry);
                         blockEntry.isCustomized = true;
@@ -1248,7 +1248,7 @@ public class ChangeFireColorScreen extends Screen {
                 Stream.concat(first.stream(), second.stream()).toList().forEach(this::addEntry);
             } else {
                 Main.biomeKeyList.forEach((key) -> {
-                    String string = key.getValue().toString();
+                    String string = key.identifier().toString();
                     if (string.contains(input)) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         if(!Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(string)) {
@@ -1272,12 +1272,12 @@ public class ChangeFireColorScreen extends Screen {
                 Stream.concat(first.stream(), second.stream()).toList().forEach(this::addEntry);
             }
 
-            if (this.getSelectedOrNull() != null) {
-                this.centerScrollOn(this.getSelectedOrNull());
+            if (this.getSelected() != null) {
+                this.centerScrollOn(this.getSelected());
             }
         }
-        public SearchScreenListWidget(Minecraft client, int width, int height, int x, int y) {
-            super(client, width, height, x, y);
+        public SearchScreenListWidget(Minecraft minecraft, int width, int height, int x, int y) {
+            super(minecraft, width, height, x, y);
             generateEntries();
         }
         public int num = 0;
@@ -1355,7 +1355,7 @@ public class ChangeFireColorScreen extends Screen {
 
         @Override
         protected int getScrollbarX() {
-            return super.getScrollbarX() - 16;
+            return super.scrollBarX() - 16;
         }
         @Override
         public int getX() {
@@ -1382,27 +1382,27 @@ public class ChangeFireColorScreen extends Screen {
                 onBaseColor = true;
                 allBlockUnders.clear();
                 allBlockUnders.add(Blocks.NETHERRACK);
-                blockUnderField.setText(entry.languageDefinition);
+                blockUnderField.setValue(entry.languageDefinition);
                 updateBlockUnder(entry.languageDefinition);
             } else {
                 onBaseColor = false;
                 if (currentSearchButton == 0) {
                     allBlockUnders = new ArrayList<>();
                     allBlockUnders.add(BuiltInRegistries.BLOCK.get(Identifier.tryParse(entry.languageDefinition)));
-                    blockUnderField.setText(entry.languageDefinition);
+                    blockUnderField.setValue(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 } else if (currentSearchButton == 1) {
-                    TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(entry.languageDefinition)).findFirst().get();
+                    TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.location().toString().equals(entry.languageDefinition)).findFirst().get();
                     blockTags = new ArrayList<>();
                     blockTags.add(tag);
-                    allBlockUnders = java.util.stream.StreamSupport.stream(BuiltInRegistries.BLOCK.iterateEntries(tag).spliterator(), false).map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).collect(Collectors.toList());;
-                    blockUnderField.setText(entry.languageDefinition);
+                    allBlockUnders = java.util.stream.StreamSupport.stream(BuiltInRegistries.BLOCK.getTagOrEmpty(tag).spliterator(), false).map(entry2 -> entry2.value()).filter(block -> blockUnderList.contains(block)).collect(Collectors.toList());;
+                    blockUnderField.setValue(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 } else if (currentSearchButton == 2) {
                     ResourceKey<Biome> key = ResourceKey.create(Registries.BIOME, Identifier.tryParse(entry.languageDefinition));
                     biomeKeys = new ArrayList<>();
                     biomeKeys.add(key);
-                    blockUnderField.setText(entry.languageDefinition);
+                    blockUnderField.setValue(entry.languageDefinition);
                     updateBlockUnder(entry.languageDefinition);
                 }
             }
@@ -1481,7 +1481,7 @@ public class ChangeFireColorScreen extends Screen {
                 int by = y + boxInset;
                 int bcx = bx + boxSize / 2;
                 int bcy = by + boxSize / 2;
-                boolean shiftPressed = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
+                boolean shiftPressed = InputConstants.isKeyDown(minecraft.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
                 if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() - 1) || (!shiftPressed && index > 0)) {
                     if (mouseX >= bx && mouseX <= bx + boxSize && mouseY >= by && mouseY <= by + boxSize) {
                         alpha = 1f;
@@ -1568,7 +1568,7 @@ public class ChangeFireColorScreen extends Screen {
                 if (mouseX >= bx && mouseX <= bx+boxSize && mouseY >= by && mouseY <= by+boxSize) {
                     if (isCustomized && currentSearchButton == 1) {
                         int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
-                        boolean shiftPressed = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
+                        boolean shiftPressed = InputConstants.isKeyDown(minecraft.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT);
                         if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() + 1)) {
                             ChangeFireColorScreen.this.searchScreenListWidget.moveEntryDown(this);
                         } if ((!shiftPressed && index > 1)) {
@@ -1600,10 +1600,10 @@ public class ChangeFireColorScreen extends Screen {
                     allBlockUnders.add(BuiltInRegistries.BLOCK.get(Identifier.tryParse(this.languageDefinition)));
                 } else if (currentSearchButton == 1) {
                     if (clear) blockTags.clear();
-                    TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(this.languageDefinition)).findFirst().get();
+                    TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.location().toString().equals(this.languageDefinition)).findFirst().get();
 
                     blockTags.add(tag);
-                    List<Block> newBlocks = java.util.stream.StreamSupport.stream(BuiltInRegistries.BLOCK.iterateEntries(tag).spliterator(), false)
+                    List<Block> newBlocks = java.util.stream.StreamSupport.stream(BuiltInRegistries.BLOCK.getTagOrEmpty(tag).spliterator(), false)
                             .map(entry2 -> entry2.value())
                             .filter(block -> blockUnderList.contains(block) && !allBlockUnders.contains(block))
                             .toList();

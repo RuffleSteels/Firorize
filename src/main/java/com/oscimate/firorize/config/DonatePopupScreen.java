@@ -52,50 +52,50 @@ public class DonatePopupScreen extends Screen {
 
         Button support = new Button.Builder(
                 Component.translatable("firorize.donate.popup.support"),
-                button -> ConfirmLinkScreen.open(parent, DonationTracker.KOFI_URL))
-                .dimensions(boxX + pad, boxY + boxH - 50, boxW - pad * 2, 20).build();
-        support.setTooltip(Tooltip.of(Component.translatable("firorize.donate.tooltip")));
+                button -> ConfirmLinkScreen.confirmLinkNow(parent, DonationTracker.KOFI_URL))
+                .bounds(boxX + pad, boxY + boxH - 50, boxW - pad * 2, 20).build();
+        support.setTooltip(Tooltip.create(Component.translatable("firorize.donate.tooltip")));
         support.setTooltipDelay(Duration.ofMillis(750L));
 
         Button later = new Button.Builder(
                 Component.translatable("firorize.donate.popup.later"), button -> close())
-                .dimensions(boxX + pad, boxY + boxH - 26, boxW - pad * 2, 18).build();
+                .bounds(boxX + pad, boxY + boxH - 26, boxW - pad * 2, 18).build();
 
-        this.addDrawableChild(new Button.Builder(Component.literal("x"), button -> close())
-                .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
-        this.addDrawableChild(support);
-        this.addDrawableChild(later);
+        this.addRenderableWidget(new Button.Builder(Component.literal("x"), button -> close())
+                .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
+        this.addRenderableWidget(support);
+        this.addRenderableWidget(later);
         super.init();
         Main.inConfig = true;
     }
 
     @Override
     public void close() {
-        client.setScreen(parent);
+        minecraft.setScreen(parent);
     }
 
     @Override
     public void resize(int width, int height) {
-        Minecraft client = Minecraft.getInstance();
-        Main.setScale(width, height, client);
-        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        Minecraft minecraft = Minecraft.getInstance();
+        Main.setScale(width, height, minecraft);
+        super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
 
     @Override
     @SuppressWarnings("deprecation") // FireSprites uses the still-supported BLOCK_ATLAS_TEXTURE id
-    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Draw the config screen behind (deferred 3D/colour-wheel elements suppressed so they don't
         // composite over this popup), then dim and the box.
         ChangeFireColorScreen.renderModalBackdrop(context, parent, delta);
         context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
-        context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
+        context.outline(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
 
         // Ko-fi cup icon next to the heading.
         TextureAtlasSprite kofi = FireSprites.block(FireSprites.atlasManager(), "firorize:block/kofi");
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, kofi, boxX + 12, boxY + 9, 12, 12);
-        context.drawTextWithShadow(font, getTitle(), boxX + 28, boxY + 11, 0xFFFFFFFF);
+        context.blitSprite(RenderPipelines.GUI_TEXTURED, kofi, boxX + 12, boxY + 9, 12, 12);
+        context.text(font, getTitle(), boxX + 28, boxY + 11, 0xFFFFFFFF);
     }
 
     @Override
@@ -103,8 +103,8 @@ public class DonatePopupScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         int ty = boxY + 34;
-        for (FormattedCharSequence line : font.wrapLines(Component.translatable("firorize.donate.popup.body"), boxW - 24)) {
-            context.drawCenteredTextWithShadow(font, line, width / 2, ty, 0xFFC0C0C0);
+        for (FormattedCharSequence line : font.split(Component.translatable("firorize.donate.popup.body"), boxW - 24)) {
+            context.centeredText(font, line, width / 2, ty, 0xFFC0C0C0);
             ty += 11;
         }
     }

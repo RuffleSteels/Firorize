@@ -35,14 +35,14 @@ public class PlaceholderField extends EditBox {
     private final int placeholderColor = new Color(128, 128, 128).getRGB();
 
     @Override
-    public void renderWidget(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.renderWidget(context, mouseX, mouseY, delta);
-        int k = this.drawsBackground() ? this.getX() + 4 : this.getX();
-        int l = this.drawsBackground() ? this.getY() + (this.height - 8) / 2 : this.getY();
+    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+        int k = this.isBordered() ? this.getX() + 4 : this.getX();
+        int l = this.isBordered() ? this.getY() + (this.height - 8) / 2 : this.getY();
         int m = k;
 
         if (placeholder != null && getText().isEmpty() && !this.isFocused()) {
-            context.drawTextWithShadow(this.font, this.placeholder, m, l, placeholderColor);
+            context.text(this.font, this.placeholder, m, l, placeholderColor);
         }
     }
 }

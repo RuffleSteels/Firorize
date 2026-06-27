@@ -26,26 +26,26 @@ public class KofiBannerButton extends Button {
 
     // Concretely-typed Button.OnPress so the super(...) call doesn't trip lambda overload inference.
     private static Button.OnPress openKofi(Screen parent) {
-        return button -> ConfirmLinkScreen.open(parent, DonationTracker.KOFI_URL);
+        return button -> ConfirmLinkScreen.confirmLinkNow(parent, DonationTracker.KOFI_URL);
     }
 
     @Override
     @SuppressWarnings("deprecation") // FireSprites uses the still-supported BLOCK_ATLAS_TEXTURE id
-    protected void drawIcon(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         int x1 = getX(), y1 = getY(), x2 = getX() + getWidth(), y2 = getY() + getHeight();
         boolean hovered = isHovered();
 
         context.fill(x1, y1, x2, y2, hovered ? KOFI_RED : IDLE_BG);
-        context.drawStrokedRectangle(x1, y1, getWidth(), getHeight(), KOFI_RED);
+        context.outline(x1, y1, getWidth(), getHeight(), KOFI_RED);
 
         int iconSize = 12;
         int iconX = x1 + 8;
         int iconY = y1 + (getHeight() - iconSize) / 2;
         TextureAtlasSprite kofi = FireSprites.block(FireSprites.atlasManager(), "firorize:block/kofi");
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, kofi, iconX, iconY, iconSize, iconSize);
+        context.blitSprite(RenderPipelines.GUI_TEXTURED, kofi, iconX, iconY, iconSize, iconSize);
 
         int centerX = (iconX + iconSize + x2) / 2;
-        context.drawCenteredTextWithShadow(Minecraft.getInstance().font, getMessage(),
+        context.centeredText(Minecraft.getInstance().font, getMessage(),
                 centerX, y1 + (getHeight() - 8) / 2, hovered ? 0xFFFFFFFF : 0xFFFFC8C6);
     }
 }

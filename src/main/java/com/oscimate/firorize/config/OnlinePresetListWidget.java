@@ -4,7 +4,7 @@ import com.oscimate.firorize.Main;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.narration.NarrationElementOutput;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.network.chat.Component;
@@ -131,7 +131,7 @@ public class OnlinePresetListWidget extends AbstractWidget {
     // ---- rendering ----
 
     @Override
-    protected void renderWidget(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         clampScroll();
         int left = getX();
         int top = getY();
@@ -157,7 +157,7 @@ public class OnlinePresetListWidget extends AbstractWidget {
     }
 
     private void renderHeader(GuiGraphicsExtractor context, Row row, int x, int y) {
-        context.drawTextWithShadow(font, row.headerLabel, x + 1, y + SECTION_H - 10, 0xFF9090A0);
+        context.text(font, row.headerLabel, x + 1, y + SECTION_H - 10, 0xFF9090A0);
     }
 
     private void renderRow(GuiGraphicsExtractor context, Row row, int x, int y, int h, int mouseX, int mouseY) {
@@ -166,31 +166,31 @@ public class OnlinePresetListWidget extends AbstractWidget {
                 && mouseY >= getY() && mouseY <= getY() + getHeight();
 
         context.fill(x, y, x + w, y + h, 0xFF1A1A1A);
-        context.drawStrokedRectangle(x, y, w, h, headerHover ? 0xFFB0B0B0 : 0xFF454545);
+        context.outline(x, y, w, h, headerHover ? 0xFFB0B0B0 : 0xFF454545);
 
         // Chevron
         drawChevron(context, x + PAD, y + (HEADER_H - 7) / 2, row.expanded, 0xFFC0C0C0);
 
         // Relative time, right-aligned
         Component time = row.preset.relativeTime();
-        int timeWidth = font.getWidth(time);
+        int timeWidth = font.width(time);
         int titleX = x + PAD + 11;
         int titleMax = w - PAD - timeWidth - 6 - (titleX - x);
-        String title = font.trimToWidth(row.preset.displayTitle(), Math.max(8, titleMax));
-        context.drawTextWithShadow(font, Component.literal(title), titleX, y + (HEADER_H - 8) / 2, 0xFFFFFFFF);
-        context.drawTextWithShadow(font, time, x + w - PAD - timeWidth, y + (HEADER_H - 8) / 2, 0xFF909090);
+        String title = font.plainSubstrByWidth(row.preset.displayTitle(), Math.max(8, titleMax));
+        context.text(font, Component.literal(title), titleX, y + (HEADER_H - 8) / 2, 0xFFFFFFFF);
+        context.text(font, time, x + w - PAD - timeWidth, y + (HEADER_H - 8) / 2, 0xFF909090);
 
         if (row.expanded) {
             int ty = y + HEADER_H;
             for (FormattedCharSequence line : row.descriptionLines()) {
-                context.drawTextWithShadow(font, line, x + PAD, ty, 0xFFC0C0C0);
+                context.text(font, line, x + PAD, ty, 0xFFC0C0C0);
                 ty += LINE_H;
             }
             if (!row.descriptionLines().isEmpty()) ty += 2;
             Component attribution = row.kind == RowKind.SENT_CANCEL
                     ? Component.translatable("firorize.config.label.toRecipient", row.preset.displayRecipient())
                     : Component.translatable("firorize.config.label.byAuthor", row.preset.displayAuthor());
-            context.drawTextWithShadow(font, attribution, x + PAD, ty, 0xFF7090C0);
+            context.text(font, attribution, x + PAD, ty, 0xFF7090C0);
 
             // Primary (rightmost) and optional secondary action button.
             int[] primary = primaryRect(x, y, h, w);
@@ -208,9 +208,9 @@ public class OnlinePresetListWidget extends AbstractWidget {
         boolean hover = mouseX >= btn[0] && mouseX <= btn[0] + btn[2] && mouseY >= btn[1] && mouseY <= btn[1] + btn[3]
                 && mouseY >= getY() && mouseY <= getY() + getHeight();
         context.fill(btn[0], btn[1], btn[0] + btn[2], btn[1] + btn[3], hover ? 0xFF505050 : 0xFF383838);
-        context.drawStrokedRectangle(btn[0], btn[1], btn[2], btn[3],
+        context.outline(btn[0], btn[1], btn[2], btn[3],
                 confirming ? 0xFFE08080 : (hover ? 0xFFFFFFFF : 0xFF8B8B8B));
-        context.drawCenteredTextWithShadow(font, label, btn[0] + btn[2] / 2, btn[1] + (btn[3] - 8) / 2,
+        context.centeredText(font, label, btn[0] + btn[2] / 2, btn[1] + (btn[3] - 8) / 2,
                 confirming ? 0xFFE08080 : 0xFFFFFFFF);
     }
 
@@ -412,7 +412,7 @@ public class OnlinePresetListWidget extends AbstractWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationElementOutput builder) {
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
         // Narration intentionally minimal; the dialog title narrates the context.
     }
 
@@ -436,7 +436,7 @@ public class OnlinePresetListWidget extends AbstractWidget {
             if (desc.isBlank()) return List.of();
             int w = wrapWidth();
             if (cachedLines == null || cachedWidth != w) {
-                cachedLines = font.wrapLines(Component.literal(desc), w);
+                cachedLines = font.split(Component.literal(desc), w);
                 cachedWidth = w;
             }
             return cachedLines;

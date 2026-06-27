@@ -12,12 +12,12 @@ public class UndoButton  extends Button {
     }
 
     @Override
-    protected void drawIcon(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        this.drawButton(context); // renderWidget no longer draws the button background
+    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractContents(context, mouseX, mouseY, delta); // extractWidgetRenderState no longer draws the button background
         TextureAtlasSprite UNDO = FireSprites.block(FireSprites.atlasManager(), "firorize:block/undo");
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, UNDO,
-                getX() + (getWidth() - UNDO.getContents().getWidth()) / 2,
-                getY() + (getHeight() - UNDO.getContents().getHeight()) / 2,
-                UNDO.getContents().getWidth(), UNDO.getContents().getHeight());
+        context.blitSprite(RenderPipelines.GUI_TEXTURED, UNDO,
+                getX() + (getWidth() - UNDO.contents().width()) / 2,
+                getY() + (getHeight() - UNDO.contents().height()) / 2,
+                UNDO.contents().width(), UNDO.contents().height());
     }
 }

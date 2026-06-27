@@ -12,12 +12,12 @@ public class RedoButton extends Button {
     }
 
     @Override
-    protected void drawIcon(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        this.drawButton(context); // renderWidget no longer draws the button background
+    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractContents(context, mouseX, mouseY, delta); // extractWidgetRenderState no longer draws the button background
         TextureAtlasSprite REDO = FireSprites.block(FireSprites.atlasManager(), "firorize:block/redo");
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, REDO,
-                getX() + (getWidth() - REDO.getContents().getWidth()) / 2,
-                getY() + (getHeight() - REDO.getContents().getHeight()) / 2,
-                REDO.getContents().getWidth(), REDO.getContents().getHeight());
+        context.blitSprite(RenderPipelines.GUI_TEXTURED, REDO,
+                getX() + (getWidth() - REDO.contents().width()) / 2,
+                getY() + (getHeight() - REDO.contents().height()) / 2,
+                REDO.contents().width(), REDO.contents().height());
     }
 }

@@ -14,7 +14,7 @@ import net.minecraft.resources.Identifier;
 import java.util.Collections;
 
 public class MoveableButton extends Button {
-    private final WidgetSprites TEXTURES = new WidgetSprites(Identifier.of("widget/button"), Identifier.of("widget/button_disabled"), Identifier.of("widget/button_highlighted"));
+    private final WidgetSprites TEXTURES = new WidgetSprites(Identifier.parse("widget/button"), Identifier.parse("widget/button_disabled"), Identifier.parse("widget/button_highlighted"));
     private final int index;
     private final String[] headers = new String[]{"Blocks", "Tags", "Biomes"};
     private final ChangeFireColorScreen instance;
@@ -59,23 +59,23 @@ public class MoveableButton extends Button {
     }
 
     @Override
-    protected void drawIcon(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        this.drawButton(context); // renderWidget no longer draws the button background/label
+    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractContents(context, mouseX, mouseY, delta); // extractWidgetRenderState no longer draws the button background/label
         // getMessage() can no longer be overridden, so keep the header in sync here (1-frame lag on reorder).
         setMessage(net.minecraft.network.chat.Component.literal(headers[Main.CONFIG_MANAGER.getPriorityOrder().get(index)]));
-        context.drawCenteredTextWithShadow(this.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
+        context.centeredText(this.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);
 
         TextureAtlasSprite ARROW_RIGHT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_right");
         TextureAtlasSprite ARROW_LEFT = FireSprites.block(FireSprites.atlasManager(), "firorize:block/arrow_left");
 
-        if (index!=2) context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, ARROW_RIGHT, x[1] + ((getHeight()-ARROW_RIGHT.getContents().getWidth())/2), y+((height-ARROW_RIGHT.getContents().getHeight())/2), ARROW_RIGHT.getContents().getWidth(), ARROW_RIGHT.getContents().getHeight());
-        if (index!=0) context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, ARROW_LEFT, x[0] + ((getHeight()-ARROW_LEFT.getContents().getWidth())/2), y+((height-ARROW_LEFT.getContents().getHeight())/2), ARROW_LEFT.getContents().getWidth(), ARROW_LEFT.getContents().getHeight());
+        if (index!=2) context.blitSprite(RenderPipelines.GUI_TEXTURED, ARROW_RIGHT, x[1] + ((getHeight()-ARROW_RIGHT.contents().width())/2), y+((height-ARROW_RIGHT.contents().height())/2), ARROW_RIGHT.contents().width(), ARROW_RIGHT.contents().height());
+        if (index!=0) context.blitSprite(RenderPipelines.GUI_TEXTURED, ARROW_LEFT, x[0] + ((getHeight()-ARROW_LEFT.contents().width())/2), y+((height-ARROW_LEFT.contents().height())/2), ARROW_LEFT.contents().width(), ARROW_LEFT.contents().height());
     }
 
     @Override
     public void onPress(net.minecraft.client.input.InputWithModifiers input) {
-        instance.blockUnderField.setText("");
-        instance.input = instance.blockUnderField.getText();
+        instance.blockUnderField.setValue("");
+        instance.input = instance.blockUnderField.getValue();
         instance.searchScreenListWidget.selected.clear();
         instance.searchScreenListWidget.test();
         instance.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(index));

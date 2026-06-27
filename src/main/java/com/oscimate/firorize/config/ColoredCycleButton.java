@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.narration.NarrationElementOutput;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
@@ -50,7 +50,7 @@ public class ColoredCycleButton extends AbstractButton {
     }
 
     @Override
-    protected void drawIcon(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         Minecraft minecraftClient = Minecraft.getInstance();
         // Fade the swatch via the colour's alpha channel (setShaderColor was removed in 1.21.5).
         int swatch = (ChangeFireColorScreen.pickedColor[instance.isOverlay ? 1 : 0].getRGB() & 0xFFFFFF)
@@ -64,15 +64,15 @@ public class ColoredCycleButton extends AbstractButton {
             double dy = instance.wheelRadius+instance.wheelCoords[0] - instance.clickedY;
             double saturation = Math.sqrt(dx * dx + dy * dy) / instance.wheelRadius;
             double lightness = (instance.sliderClickedY - instance.sliderCoords[1] - instance.sliderPadding) / (instance.sliderDimensions[1] - instance.sliderPadding*2);
-            context.drawStrokedRectangle(this.getX(),this.getY(), this.getWidth(), this.getHeight(), saturation < 0.25 && lightness < 0.25 ? Color.BLACK.getRGB() : Color.white.getRGB());
+            context.outline(this.getX(),this.getY(), this.getWidth(), this.getHeight(), saturation < 0.25 && lightness < 0.25 ? Color.BLACK.getRGB() : Color.white.getRGB());
             i = 10526880;
         }
         if (!isAdding) {
-            context.drawCenteredTextWithShadow(minecraftClient.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, i | Mth.ceil(this.alpha * 255.0F) << 24);
+            context.centeredText(minecraftClient.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, i | Mth.ceil(this.alpha * 255.0F) << 24);
         }
 
         if (instance.cycleTooltipTimer > 0) {
-            context.drawTooltip(font, Component.translatable(tooltip), instance.invisibleTextFieldWidget.getX() + 10, instance.invisibleTextFieldWidget.getY() + instance.invisibleTextFieldWidget.getHeight() + 5);
+            context.setTooltipForNextFrame(font, Component.translatable(tooltip), instance.invisibleTextFieldWidget.getX() + 10, instance.invisibleTextFieldWidget.getY() + instance.invisibleTextFieldWidget.getHeight() + 5);
         }
     }
 
@@ -107,11 +107,11 @@ public class ColoredCycleButton extends AbstractButton {
             instance.historyAfterPreset();
         } else {
             if (isAdding) {
-                if (this.values.stream().noneMatch(colors -> colors.getName().equalsIgnoreCase(instance.invisibleTextFieldWidget.getText())) && !instance.invisibleTextFieldWidget.getText().isEmpty()) {
+                if (this.values.stream().noneMatch(colors -> colors.getName().equalsIgnoreCase(instance.invisibleTextFieldWidget.getValue())) && !instance.invisibleTextFieldWidget.getValue().isEmpty()) {
                     instance.invisibleTextFieldWidget.visible = false;
                     this.setPosition(x, y);
                     isAdding = false;
-                    String string = instance.invisibleTextFieldWidget.getText();
+                    String string = instance.invisibleTextFieldWidget.getValue();
                     int[] ints = new int[]{ChangeFireColorScreen.pickedColor[0].getRGB(), ChangeFireColorScreen.pickedColor[1].getRGB()};
 
                     // Saving a new custom colour preset is undoable.
@@ -122,8 +122,8 @@ public class ColoredCycleButton extends AbstractButton {
                     Main.CONFIG_MANAGER.save();
                     instance.historyAfterPreset();
                     isWhite = true;
-                    instance.invisibleTextFieldWidget.setText("");
-                } else if (instance.invisibleTextFieldWidget.getText().isEmpty()) {
+                    instance.invisibleTextFieldWidget.setValue("");
+                } else if (instance.invisibleTextFieldWidget.getValue().isEmpty()) {
                     tooltip = tooltips[0];
                     instance.cycleTooltipTimer = 30;
                 } else {
@@ -144,13 +144,13 @@ public class ColoredCycleButton extends AbstractButton {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationElementOutput builder) {
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
 
     }
 
     @Override
     public void onPress(net.minecraft.client.input.InputWithModifiers input) {
-        if (input.hasShift()) {
+        if (input.hasShiftDown()) {
             this.cycle(-1);
         } else {
             this.cycle(1);
@@ -173,7 +173,7 @@ public class ColoredCycleButton extends AbstractButton {
                 ChangeFireColorScreen.pickedColor = new Color[]{new Color(this.values.get(index).getColors()[0]), new Color(this.values.get(index).getColors()[1])};
             }
             int RGB = ChangeFireColorScreen.pickedColor[instance.isOverlay ? 1:0].getRGB();
-            instance.textFieldWidget.setText("#"+Integer.toHexString(RGB).substring(2));
+            instance.textFieldWidget.setValue("#"+Integer.toHexString(RGB).substring(2));
             instance.updateCursor("#"+Integer.toHexString(RGB).substring(2));
             instance.isCycling = false;
         }
@@ -191,11 +191,11 @@ public class ColoredCycleButton extends AbstractButton {
 
     public void setIndex(int index) {
         if (index == 0) {
-            instance.addColorButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.addColorPresetButton")));
+            instance.addColorButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.addColorPresetButton")));
             instance.addColorButton.setTooltipDelay(Duration.ofMillis(750L));
             instance.addColorButton.setMessage(Component.literal("+"));
         } else {
-            instance.addColorButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.removeColorPresetButton")));
+            instance.addColorButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.removeColorPresetButton")));
             instance.addColorButton.setTooltipDelay(Duration.ofMillis(750L));
             instance.addColorButton.setMessage(Component.literal("x"));
         }

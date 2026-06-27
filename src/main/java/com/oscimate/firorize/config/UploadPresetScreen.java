@@ -57,40 +57,40 @@ public class UploadPresetScreen extends Screen {
         boxY = (height - boxH) / 2;
 
         titleField = new PlaceholderField(this.font, boxX + 20, boxY + 46, boxW - 40, 20, Component.empty());
-        titleField.setPlaceholder(Component.translatable("firorize.config.placeholder.presetTitle"));
+        titleField.setHint(Component.translatable("firorize.config.placeholder.presetTitle"));
         titleField.setMaxLength(32);
         // Letters/numbers/spaces only (international letters allowed); no symbols/emoji. Empty allowed while typing.
-        titleField.setTextPredicate(s -> s.matches("[\\p{L}\\p{N} ]*"));
-        addDrawableChild(titleField);
+        titleField.setFilter(s -> s.matches("[\\p{L}\\p{N} ]*"));
+        addRenderableWidget(titleField);
 
         descriptionField = new PlaceholderField(this.font, boxX + 20, boxY + 74, boxW - 40, 20, Component.empty());
-        descriptionField.setPlaceholder(Component.translatable("firorize.config.placeholder.presetDescription"));
+        descriptionField.setHint(Component.translatable("firorize.config.placeholder.presetDescription"));
         descriptionField.setMaxLength(150);
-        addDrawableChild(descriptionField);
+        addRenderableWidget(descriptionField);
 
         if (privateMode) {
             recipientsField = new PlaceholderField(this.font, boxX + 20, boxY + 102, boxW - 40, 20, Component.empty());
-            recipientsField.setPlaceholder(Component.translatable("firorize.config.placeholder.recipients"));
+            recipientsField.setHint(Component.translatable("firorize.config.placeholder.recipients"));
             recipientsField.setMaxLength(400);
-            addDrawableChild(recipientsField);
+            addRenderableWidget(recipientsField);
         }
 
         primaryButton = new Button.Builder(
                 Component.translatable(privateMode ? "firorize.config.button.sendPreset" : "firorize.config.button.uploadPreset"), button -> submit())
-                .dimensions(boxX + (boxW - 120) / 2, boxY + boxH - 28, 120, 20).build();
-        addDrawableChild(primaryButton);
+                .bounds(boxX + (boxW - 120) / 2, boxY + boxH - 28, 120, 20).build();
+        addRenderableWidget(primaryButton);
 
-        addDrawableChild(new Button.Builder(Component.literal("<"), button -> close())
-                .dimensions(boxX + 6, boxY + 6, 16, 16).build());
-        addDrawableChild(new Button.Builder(Component.literal("x"), button -> client.setScreen(origin))
-                .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
+        addRenderableWidget(new Button.Builder(Component.literal("<"), button -> close())
+                .bounds(boxX + 6, boxY + 6, 16, 16).build());
+        addRenderableWidget(new Button.Builder(Component.literal("x"), button -> minecraft.setScreen(origin))
+                .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         super.init();
     }
 
     private void submit() {
         if (submitting) return;
-        String title = titleField.getText().trim();
+        String title = titleField.getValue().trim();
         if (title.isEmpty()) {
             setStatus(Component.translatable("firorize.config.status.titleRequired"), true);
             return;
@@ -98,7 +98,7 @@ public class UploadPresetScreen extends Screen {
 
         List<String> recipients = null;
         if (privateMode) {
-            recipients = parseRecipients(recipientsField.getText());
+            recipients = parseRecipients(recipientsField.getValue());
             if (recipients.isEmpty()) {
                 setStatus(Component.translatable("firorize.config.status.noRecipients"), true);
                 return;
@@ -133,7 +133,7 @@ public class UploadPresetScreen extends Screen {
         primaryButton.active = false;
         setStatus(Component.translatable(privateMode ? "firorize.config.status.sending" : "firorize.config.status.uploading"), false);
 
-        String description = descriptionField.getText().trim();
+        String description = descriptionField.getValue().trim();
         if (privateMode) {
             OnlinePresetsClient.share(auth, data, title, description, recipients)
                     .whenComplete((res, err) -> Minecraft.getInstance().execute(() -> onComplete(res, err, true)));
@@ -154,7 +154,7 @@ public class UploadPresetScreen extends Screen {
                 if (sent) online.refreshInbox(); else online.refresh();
             }
             if (sent) OnlinePresetsClient.refreshInboxCount();
-            client.setScreen(origin);
+            minecraft.setScreen(origin);
         } else {
             setStatus(errorMessage(res.error()), true);
         }
@@ -198,26 +198,26 @@ public class UploadPresetScreen extends Screen {
 
     @Override
     public void close() {
-        client.setScreen(back);
+        minecraft.setScreen(back);
     }
 
     @Override
     public void resize(int width, int height) {
-        Minecraft client = Minecraft.getInstance();
-        Main.setScale(width, height, client);
-        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        Minecraft minecraft = Minecraft.getInstance();
+        Main.setScale(width, height, minecraft);
+        super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
 
     @Override
-    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Overlay the chooser we came from (which in turn renders the config behind it), rather than
         // cutting through to the blurred game.
         ChangeFireColorScreen.renderModalBackdrop(context, back, delta);
         context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
-        context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.outline(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
+        context.text(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
@@ -225,11 +225,11 @@ public class UploadPresetScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         // Selected profile, for confirmation.
-        context.drawTextWithShadow(font,
+        context.text(font,
                 Component.translatable("firorize.config.label.profileName", profileName), boxX + 10, boxY + 28, 0xFFB0B0B0);
 
         if (status != null) {
-            context.drawCenteredTextWithShadow(font, status, width / 2, boxY + boxH - 44, statusError ? 0xFFE08080 : 0xFF80E080);
+            context.centeredText(font, status, width / 2, boxY + boxH - 44, statusError ? 0xFFE08080 : 0xFF80E080);
         }
     }
 }

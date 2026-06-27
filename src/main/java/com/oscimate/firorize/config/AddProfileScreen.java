@@ -58,28 +58,28 @@ public class AddProfileScreen extends Screen {
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
 
-        this.presetNameField = new PlaceholderField(this.font, boxX + pad, boxY + 28, boxW - pad * 2, 20, CommonComponents.DONE);
+        this.presetNameField = new PlaceholderField(this.font, boxX + pad, boxY + 28, boxW - pad * 2, 20, CommonComponents.GUI_DONE);
         presetNameField.setMaxLength(Integer.MAX_VALUE);
 
         int btnW = (boxW - pad * 2 - 6) / 2;
         this.fromExistingButton = new Button.Builder(Component.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting())
-                .dimensions(boxX + pad, boxY + 54, btnW, 20).build();
+                .bounds(boxX + pad, boxY + 54, btnW, 20).build();
         this.fromNewButton = new Button.Builder(Component.translatable("firorize.config.button.profileFromNewButton"), button -> addFromNew())
-                .dimensions(boxX + pad + btnW + 6, boxY + 54, btnW, 20).build();
+                .bounds(boxX + pad + btnW + 6, boxY + 54, btnW, 20).build();
 
-        this.addDrawableChild(new Button.Builder(Component.literal("x"), button -> close())
-                .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
-        this.addDrawableChild(presetNameField);
-        this.addDrawableChild(fromExistingButton);
-        this.addDrawableChild(fromNewButton);
+        this.addRenderableWidget(new Button.Builder(Component.literal("x"), button -> close())
+                .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
+        this.addRenderableWidget(presetNameField);
+        this.addRenderableWidget(fromExistingButton);
+        this.addRenderableWidget(fromNewButton);
         super.init();
         Main.inConfig = true;
 
-        fromExistingButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.profileFromCurrentButton")));
+        fromExistingButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.profileFromCurrentButton")));
         fromExistingButton.setTooltipDelay(Duration.ofMillis(750L));
-        fromNewButton.setTooltip(Tooltip.of(Component.translatable("firorize.config.tooltip.profileFromNewButton")));
+        fromNewButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.profileFromNewButton")));
         fromNewButton.setTooltipDelay(Duration.ofMillis(750L));
-        presetNameField.setPlaceholder(Component.translatable("firorize.config.placeholder.newProfileNameField"));
+        presetNameField.setHint(Component.translatable("firorize.config.placeholder.newProfileNameField"));
     }
 
     public void addFromExisting() {
@@ -96,26 +96,26 @@ public class AddProfileScreen extends Screen {
 
     @Override
     public void close() {
-        client.setScreen(parent);
+        minecraft.setScreen(parent);
     }
 
     @Override
     public void resize(int width, int height) {
-        Minecraft client = Minecraft.getInstance();
-        Main.setScale(width, height, client);
-        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        Minecraft minecraft = Minecraft.getInstance();
+        Main.setScale(width, height, minecraft);
+        super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
 
     public void addProfile(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
         if (newProfile != null) {
-            if (presetNameField.getText().isEmpty()) {
+            if (presetNameField.getValue().isEmpty()) {
                 nameError = Component.translatable("firorize.config.tooltip.empty");
-            } else if (Main.CONFIG_MANAGER.getFireColorPresets().keySet().stream().anyMatch(presetNameField.getText()::equalsIgnoreCase)) {
+            } else if (Main.CONFIG_MANAGER.getFireColorPresets().keySet().stream().anyMatch(presetNameField.getValue()::equalsIgnoreCase)) {
                 nameError = Component.translatable("firorize.config.tooltip.exists");
             } else {
-                parent.presetListWidget.addProfile(presetNameField.getText(), newProfile);
-                Main.setScale(width, height, client);
-                client.setScreen(parent);
+                parent.presetListWidget.addProfile(presetNameField.getValue(), newProfile);
+                Main.setScale(width, height, minecraft);
+                minecraft.setScreen(parent);
             }
         }
     }
@@ -147,7 +147,7 @@ public class AddProfileScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Draw the config screen behind (with its deferred 3D/colour-wheel elements suppressed so they
         // don't composite over this dialog), then a dim overlay and the dialog box (matching the
         // profile-delete confirm box), rather than blurring through to the game.
@@ -155,8 +155,8 @@ public class AddProfileScreen extends Screen {
         context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
-        context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.outline(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
+        context.text(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class AddProfileScreen extends Screen {
 
         // Validation feedback as red text in the dialog (matching the other dialogs), not a tooltip.
         if (nameError != null) {
-            context.drawCenteredTextWithShadow(font, nameError, width / 2, boxY + boxH - 14, 0xFFE08080);
+            context.centeredText(font, nameError, width / 2, boxY + boxH - 14, 0xFFE08080);
         }
     }
 }

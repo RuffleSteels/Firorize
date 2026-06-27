@@ -27,11 +27,11 @@ public final class DonationTracker {
     private DonationTracker() {}
 
     public static void onConfigFrame() {
-        Minecraft client = Minecraft.getInstance();
+        Minecraft minecraft = Minecraft.getInstance();
 
         // The popup renders its parent config screen as a backdrop, which re-enters this method. Don't
         // accumulate (or re-trigger) while the popup is up; reset so its open duration isn't counted.
-        if (client.currentScreen instanceof DonatePopupScreen) {
+        if (minecraft.screen instanceof DonatePopupScreen) {
             lastFrameMs = -1L;
             return;
         }
@@ -49,13 +49,13 @@ public final class DonationTracker {
 
         long shown = Main.CONFIG_MANAGER.getDonationPopupsShown();
         if (Main.CONFIG_MANAGER.accumulatedConfigTimeMs >= (shown + 1L) * THRESHOLD_MS) {
-            Screen current = client.currentScreen;
+            Screen current = minecraft.screen;
             Main.CONFIG_MANAGER.setDonationPopupsShown((int) (shown + 1L));
             Main.CONFIG_MANAGER.save();
             popupQueued = true;
             // Defer the screen swap to the end of the frame — mutating screens mid-render is unsafe.
-            client.execute(() -> {
-                client.setScreen(new DonatePopupScreen(current));
+            minecraft.execute(() -> {
+                minecraft.setScreen(new DonatePopupScreen(current));
                 popupQueued = false;
             });
         }

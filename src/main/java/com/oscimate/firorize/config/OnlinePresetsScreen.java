@@ -79,10 +79,10 @@ public class OnlinePresetsScreen extends Screen {
         int listH;
         if (view == View.BROWSE) {
             searchField = new PlaceholderField(this.font, boxX + 10, boxY + 24, boxW - 20, 16, Component.empty());
-            searchField.setPlaceholder(Component.translatable("firorize.config.placeholder.search"));
+            searchField.setHint(Component.translatable("firorize.config.placeholder.search"));
             searchField.setMaxLength(48);
-            searchField.setChangedListener(s -> applyBrowse());
-            addDrawableChild(searchField);
+            searchField.setResponder(s -> applyBrowse());
+            addRenderableWidget(searchField);
 
             listY = boxY + 46;
             listH = boxH - 46 - 34;
@@ -94,39 +94,39 @@ public class OnlinePresetsScreen extends Screen {
         }
 
         listWidget = new OnlinePresetListWidget(boxX + 10, listY, boxW - 20, listH, this, this.font);
-        addDrawableChild(listWidget);
+        addRenderableWidget(listWidget);
 
         if (view == View.BROWSE) {
             uploadButton = new Button.Builder(Component.translatable("firorize.config.button.uploadPreset"),
-                    b -> client.setScreen(new ChooseProfileScreen(this, this)))
-                    .dimensions(boxX + boxW - 10 - 100, boxY + boxH - 26, 100, 18).build();
-            addDrawableChild(uploadButton);
+                    b -> minecraft.setScreen(new ChooseProfileScreen(this, this)))
+                    .bounds(boxX + boxW - 10 - 100, boxY + boxH - 26, 100, 18).build();
+            addRenderableWidget(uploadButton);
         } else {
             // Inbox view: quick access to send a profile to a friend.
             uploadButton = new Button.Builder(Component.translatable("firorize.config.button.inboxSend"),
-                    b -> client.setScreen(new ChooseProfileScreen(this, this)))
-                    .dimensions(boxX + boxW - 10 - 110, boxY + boxH - 26, 110, 18).build();
-            addDrawableChild(uploadButton);
+                    b -> minecraft.setScreen(new ChooseProfileScreen(this, this)))
+                    .bounds(boxX + boxW - 10 - 110, boxY + boxH - 26, 110, 18).build();
+            addRenderableWidget(uploadButton);
         }
 
         // Privacy policy: small gray underlined clickable text (not a button), bottom-left of the panel.
-        privacyText = Component.translatable("firorize.config.button.privacy").styled(s -> s.withUnderline(true));
-        privacyW = (int) Math.ceil(font.getWidth(privacyText) * PRIVACY_SCALE);
-        privacyH = (int) Math.ceil(font.fontHeight * PRIVACY_SCALE);
+        privacyText = Component.translatable("firorize.config.button.privacy").withStyle(s -> s.withUnderlined(true));
+        privacyW = (int) Math.ceil(font.width(privacyText) * PRIVACY_SCALE);
+        privacyH = (int) Math.ceil(font.lineHeight * PRIVACY_SCALE);
         privacyX = boxX + 10;
         privacyY = boxY + boxH - 16;
 
-        addDrawableChild(new Button.Builder(Component.literal("x"), b -> close())
-                .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
+        addRenderableWidget(new Button.Builder(Component.literal("x"), b -> close())
+                .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
 
         // Refresh: re-pulls the current view from the Worker. Same 16×16 footprint as the close
         // button beside it; the refresh.png sprite is drawn over it in render() (see drawRefreshIcon).
         refreshIconX = boxX + boxW - 42;
         refreshIconY = boxY + 6;
         Button refreshButton = new Button.Builder(Component.empty(), b -> { state = null; load(); })
-                .dimensions(refreshIconX, refreshIconY, 16, 16).build();
-        refreshButton.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(Component.translatable("firorize.config.tooltip.refresh")));
-        addDrawableChild(refreshButton);
+                .bounds(refreshIconX, refreshIconY, 16, 16).build();
+        refreshButton.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.create(Component.translatable("firorize.config.tooltip.refresh")));
+        addRenderableWidget(refreshButton);
 
         super.init();
         load();
@@ -168,7 +168,7 @@ public class OnlinePresetsScreen extends Screen {
     /** Re-filters the cached browse data by the search box and pushes it to the list. */
     private void applyBrowse() {
         if (listWidget == null) return;
-        String q = searchField == null ? "" : searchField.getText().trim().toLowerCase();
+        String q = searchField == null ? "" : searchField.getValue().trim().toLowerCase();
         listWidget.setBrowse(filter(myUploads, q), filter(community, q));
     }
 
@@ -275,7 +275,7 @@ public class OnlinePresetsScreen extends Screen {
     @Override
     public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent click, boolean doubled) {
         if (click.button() == 0 && overPrivacy(click.x(), click.y())) {
-            ConfirmLinkScreen.open(this, OnlinePresetsClient.PRIVACY_URL);
+            ConfirmLinkScreen.confirmLinkNow(this, OnlinePresetsClient.PRIVACY_URL);
             return true;
         }
         this.setFocused(null);
@@ -288,18 +288,18 @@ public class OnlinePresetsScreen extends Screen {
 
     @Override
     public void close() {
-        client.setScreen(parent);
+        minecraft.setScreen(parent);
     }
 
     @Override
     public void resize(int width, int height) {
-        Minecraft client = Minecraft.getInstance();
-        Main.setScale(width, height, client);
-        super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
+        Minecraft minecraft = Minecraft.getInstance();
+        Main.setScale(width, height, minecraft);
+        super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
 
     @Override
-    public void renderBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Overlay the live config screen (dimmed) rather than cutting through to the blurred game.
         // renderAsBackdrop suppresses the config's deferred 3D/colour-wheel elements, which otherwise
         // composite in a later pass and would draw on top of this dialog.
@@ -307,8 +307,8 @@ public class OnlinePresetsScreen extends Screen {
         context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
-        context.drawStrokedRectangle(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
-        context.drawTextWithShadow(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+        context.outline(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
+        context.text(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
@@ -318,8 +318,8 @@ public class OnlinePresetsScreen extends Screen {
 
         if (view == View.INBOX) {
             int dy = boxY + 28; // padded below the title so it clears the refresh/close buttons
-            for (net.minecraft.util.FormattedCharSequence line : font.wrapLines(Component.translatable("firorize.config.label.inboxDescription"), boxW - 20)) {
-                context.drawTextWithShadow(font, line, boxX + 10, dy, 0xFF9A9A9A);
+            for (net.minecraft.util.FormattedCharSequence line : font.split(Component.translatable("firorize.config.label.inboxDescription"), boxW - 20)) {
+                context.text(font, line, boxX + 10, dy, 0xFF9A9A9A);
                 dy += 10;
             }
         }
@@ -328,11 +328,11 @@ public class OnlinePresetsScreen extends Screen {
         Component status = statusText();
         if (status != null) {
             boolean err = state == State.ERROR;
-            context.drawCenteredTextWithShadow(font, status, width / 2, centerY, err ? 0xFFE08080 : 0xFFC0C0C0);
+            context.centeredText(font, status, width / 2, centerY, err ? 0xFFE08080 : 0xFFC0C0C0);
         }
 
         if (flashTimer > 0 && flashText != null) {
-            context.drawCenteredTextWithShadow(font, flashText, width / 2, boxY + boxH - 40, flashError ? 0xFFE08080 : 0xFF80E080);
+            context.centeredText(font, flashText, width / 2, boxY + boxH - 40, flashError ? 0xFFE08080 : 0xFF80E080);
         }
 
         // refresh.png sprite, centred over its (label-less) button.
@@ -340,10 +340,10 @@ public class OnlinePresetsScreen extends Screen {
 
         // Privacy policy link: small, gray, underlined; brighter on hover.
         int privacyColor = overPrivacy(mouseX, mouseY) ? 0xFFCFCFCF : 0xFF8C8C8C;
-        context.getMatrices().pushMatrix();
-        context.getMatrices().scale(PRIVACY_SCALE, PRIVACY_SCALE);
-        context.drawText(font, privacyText, Math.round(privacyX / PRIVACY_SCALE), Math.round(privacyY / PRIVACY_SCALE), privacyColor, false);
-        context.getMatrices().popMatrix();
+        context.pose().pushMatrix();
+        context.pose().scale(PRIVACY_SCALE, PRIVACY_SCALE);
+        context.text(font, privacyText, Math.round(privacyX / PRIVACY_SCALE), Math.round(privacyY / PRIVACY_SCALE), privacyColor, false);
+        context.pose().popMatrix();
     }
 
     /** Draws the {@code firorize:block/refresh} sprite centred in the 16×16 refresh button at (px,py).
@@ -353,7 +353,7 @@ public class OnlinePresetsScreen extends Screen {
     private void drawRefreshIcon(GuiGraphicsExtractor context, int px, int py) {
         TextureAtlasSprite refresh = FireSprites.block(FireSprites.atlasManager(), "firorize:block/refresh");
         int off = (16 - REFRESH_ICON_SIZE) / 2;
-        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, refresh,
+        context.blitSprite(RenderPipelines.GUI_TEXTURED, refresh,
                 px + off, py + off, REFRESH_ICON_SIZE, REFRESH_ICON_SIZE);
     }
 
