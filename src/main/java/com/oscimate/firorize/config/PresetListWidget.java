@@ -124,14 +124,16 @@ class PresetListWidget
         super.setSelected(entry);
     }
 
-        protected void drawSelectionHighlight(GuiGraphicsExtractor context, PresetEntry entry, int color) {
+    @Override
+    protected void extractSelection(GuiGraphicsExtractor context, PresetEntry entry, int color) {
         int entryWidth = getRowWidth();
         int entryHeight = entry.getHeight();
         int y = entry.getY();
         int i = this.getX() + (this.width - entryWidth) / 2;
         int j = this.getX() + (this.width + entryWidth) / 2;
-        context.fill(i, y - 2, j, y + entryHeight + 2, color);
-        context.fill(i + 1, y - 1, j - 1, y + entryHeight + 1, 0xFF000000);
+        // Outline extends 1px above and below the entry (2px taller than the flush vanilla default).
+        context.fill(i, y - 1, j, y + entryHeight + 1, color);
+        context.fill(i + 1, y, j - 1, y + entryHeight, 0xFF000000);
     }
 
     @Override
