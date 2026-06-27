@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ScreenEffectRenderer.class)
 public class InGameOverlayRendererMixin {
 
-    @ModifyVariable(method = "renderFireOverlay", at = @At("HEAD"), argsOnly = true)
+    @ModifyVariable(method = "renderFire", at = @At("HEAD"), argsOnly = true)
     private static TextureAtlasSprite firorize$recolourFireSprite(TextureAtlasSprite sprite) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) {
@@ -38,8 +38,8 @@ public class InGameOverlayRendererMixin {
         return FireSprites.resolve(FireSprites.atlasManager(), color, "block/fire_1", sprite);
     }
 
-    @Inject(method = "renderFireOverlay",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/PoseStack;translate(FFF)V"))
+    @Inject(method = "renderFire",
+            at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(FFF)V"))
     private static void firorize$applyFireHeight(PoseStack matrices, MultiBufferSource vertexConsumers, TextureAtlasSprite sprite, CallbackInfo ci) {
         matrices.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
     }
