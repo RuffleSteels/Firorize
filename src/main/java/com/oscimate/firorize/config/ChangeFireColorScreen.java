@@ -1455,6 +1455,12 @@ public class ChangeFireColorScreen extends Screen {
 
             @Override
             public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                // Multi-select highlight (darken + outline) — drawn before content. In 26.1.2 the entry
+                // renders itself via extractContent (the old renderEntry list hook is gone).
+                int firorize$idx = children().indexOf(this);
+                if (selected.contains(firorize$idx)) {
+                    drawSelectionBorder(context, this, selected.contains(firorize$idx - 1), selected.contains(firorize$idx + 1));
+                }
                 int x = getX();
                 int y = getY();
                 int entryWidth = getWidth();

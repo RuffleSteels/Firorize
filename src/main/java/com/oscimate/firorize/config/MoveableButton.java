@@ -60,6 +60,7 @@ public class MoveableButton extends Button {
 
     @Override
     protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        this.extractDefaultSprite(context); // vanilla button background
         // getMessage() can no longer be overridden, so keep the header in sync here (1-frame lag on reorder).
         setMessage(net.minecraft.network.chat.Component.literal(headers[Main.CONFIG_MANAGER.getPriorityOrder().get(index)]));
         context.centeredText(this.font, getMessage(), getX() + getWidth() / 2, getY() + (getHeight() - 8) / 2, 0xFFFFFFFF);

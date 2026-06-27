@@ -13,6 +13,7 @@ public class RedoButton extends Button {
 
     @Override
     protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        this.extractDefaultSprite(context); // vanilla button background
         TextureAtlasSprite REDO = FireSprites.block(FireSprites.atlasManager(), "firorize:block/redo");
         context.blitSprite(RenderPipelines.GUI_TEXTURED, REDO,
                 getX() + (getWidth() - REDO.contents().width()) / 2,

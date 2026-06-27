@@ -13,6 +13,7 @@ public class UndoButton  extends Button {
 
     @Override
     protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        this.extractDefaultSprite(context); // vanilla button background
         TextureAtlasSprite UNDO = FireSprites.block(FireSprites.atlasManager(), "firorize:block/undo");
         context.blitSprite(RenderPipelines.GUI_TEXTURED, UNDO,
                 getX() + (getWidth() - UNDO.contents().width()) / 2,
