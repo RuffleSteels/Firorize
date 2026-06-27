@@ -79,6 +79,7 @@ public class Main implements ClientModInitializer {
             client.getWindow().setGuiScale((int) factor);
         }
     }
+    @SuppressWarnings("deprecation") // builtInRegistryHolder().tags() is the supported per-block tag stream
     public static void settingFireColor(Entity entity) {
         AABB box = entity.getBoundingBox();
         int i = Mth.floor(box.minX);

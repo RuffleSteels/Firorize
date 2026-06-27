@@ -42,6 +42,7 @@ public final class FirorizePipelines {
             .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
             .build();
 
+    @SuppressWarnings("deprecation") // LOCATION_BLOCKS is still the supported block-atlas id
     private static final RenderType CUSTOM_TINT_LAYER = RenderType.create(
             "firorize_custom_tint",
             RenderSetup.builder(CUSTOM_TINT)

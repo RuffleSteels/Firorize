@@ -18,6 +18,7 @@ import net.minecraft.resources.Identifier;
 @Environment(EnvType.CLIENT)
 public final class FireSprites {
 
+    @SuppressWarnings("deprecation") // LOCATION_BLOCKS is still the supported block-atlas id
     public static final Identifier ATLAS = TextureAtlas.LOCATION_BLOCKS;
 
     public static AtlasManager atlasManager() {

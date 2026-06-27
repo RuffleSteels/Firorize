@@ -113,6 +113,7 @@ public class TestModel extends WrapperBlockStateModel {
     }
 
     /** Resolves the fire colour {@code int[]{baseRGB, overlayRGB}} for the fire at {@code pos}. */
+    @SuppressWarnings("deprecation") // builtInRegistryHolder().tags() is the supported per-block tag stream
     private int[] computeColor(BlockAndTintGetter blockView, BlockPos pos, BlockState state) {
         ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
 

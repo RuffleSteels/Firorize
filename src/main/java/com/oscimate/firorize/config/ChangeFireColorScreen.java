@@ -1435,7 +1435,7 @@ public class ChangeFireColorScreen extends Screen {
         }
 
         @Environment(value=EnvType.CLIENT)
-        /** The entry whose left + (add) box contains (mx,my), or null. Used for click-drag multi-add. */
+        /* The entry whose left + (add) box contains (mx,my), or null. Used for click-drag multi-add. */
         BlockEntry entryAtAddBox(double mx, double my) {
             BlockEntry e = getEntryAtPosition(mx, my);
             if (e == null) return null;
