@@ -4,7 +4,11 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.QuadInstance;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.oscimate.firorize.FirorizePipelines;
 import com.oscimate.firorize.test.TestModel;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.render.AltModelBlockRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -14,6 +18,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 
@@ -21,15 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Renders a {@link BlockSceneRenderState} (a list of transformed, optionally tinted block models)
- * inside the config screen as a Picture-in-Picture element (registered in {@code Main}). Block models
- * are rendered to the offscreen buffer via {@code VertexConsumer.putBakedQuad}, following vanilla's
- * {@code BlockFeatureRenderer} pattern; the PiP base composites the result and flushes the buffer.
+ * Renders a {@link BlockSceneRenderState} (a list of transformed, optionally custom-tinted block
+ * models) inside the config screen as a Picture-in-Picture element (registered in {@code Main}).
  *
- * <p>Note: {@code customTint} (fire) ops are flat-tinted toward the target colour here. The full HSV
- * shader recolour ({@code TestModel.emitQuads} + the custom_tint pipeline) only runs through Fabric's
- * block emit path, which isn't driven from this PiP renderer — so the in-config fire preview is an
- * approximation of the in-world result.
+ * <p>Normal blocks are rendered straight to the offscreen buffer via {@code collectParts} +
+ * {@code VertexConsumer.putBakedQuad} (vanilla {@code BlockFeatureRenderer} pattern). Fire
+ * ({@code customTint}) ops instead go through Fabric's block-emit path so {@link TestModel#emitQuads}
+ * runs (re-texturing the fire onto the grayscale config sprite and stamping the target colour onto the
+ * vertices); the resulting quads are pushed into Firorize's {@code custom_tint} render type, whose
+ * shader does the HSV colorisation — matching the in-world look. The PiP base composites + flushes.
  */
 public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRenderState> {
     private static final Direction[] DIRECTIONS = Direction.values();
@@ -72,37 +77,65 @@ public class BlockSceneRenderer extends PictureInPictureRenderer<BlockSceneRende
 
             int color = 0xFF000000
                     | ((int) (op.r() * 255) << 16) | ((int) (op.g() * 255) << 8) | (int) (op.b() * 255);
-            if (op.customTint()) {
-                TestModel.configPreviewColor = color;
-            }
-
             BlockStateModel model = models.get(op.state());
-            // Deterministic per-block seed: otherwise random-variant blocks (e.g. netherrack's rotated
-            // variants) re-roll every frame and flicker/spin.
-            this.random.setSeed(op.state().getSeed(net.minecraft.core.BlockPos.ZERO));
-            model.collectParts(this.random, this.parts);
-            for (BlockStateModelPart part : this.parts) {
-                for (Direction d : DIRECTIONS) {
-                    for (BakedQuad quad : part.getQuads(d)) {
-                        putQuad(buffer, poseStack, quad, op.customTint(), color);
-                    }
-                }
-                for (BakedQuad quad : part.getQuads(null)) {
-                    putQuad(buffer, poseStack, quad, op.customTint(), color);
-                }
+
+            if (op.customTint() && mc.level != null && renderFireTinted(mc, poseStack, op, model, color)) {
+                // handled by the custom_tint shader path
+            } else {
+                renderPlain(buffer, poseStack, model, op, color);
             }
-            this.parts.clear();
 
             if (op.pop()) poseStack.popPose();
         }
         poseStack.popPose();
     }
 
+    /** Normal block models: emit baked quads directly, tinting only tint-indexed (or all, for fire fallback) quads. */
+    private void renderPlain(VertexConsumer buffer, PoseStack poseStack, BlockStateModel model,
+                             BlockSceneRenderState.BlockDrawOp op, int color) {
+        this.random.setSeed(op.state().getSeed(BlockPos.ZERO));
+        model.collectParts(this.random, this.parts);
+        for (BlockStateModelPart part : this.parts) {
+            for (Direction d : DIRECTIONS) {
+                for (BakedQuad quad : part.getQuads(d)) putQuad(buffer, poseStack, quad, op.customTint(), color);
+            }
+            for (BakedQuad quad : part.getQuads(null)) putQuad(buffer, poseStack, quad, op.customTint(), color);
+        }
+        this.parts.clear();
+    }
+
     private void putQuad(VertexConsumer buffer, PoseStack poseStack, BakedQuad quad, boolean customTint, int color) {
-        // Custom-tint (fire) quads are flat-tinted; normal blocks only tint their tint-indexed quads
-        // (e.g. foliage) exactly like vanilla, leaving everything else white.
         boolean tinted = customTint || quad.materialInfo().tintIndex() != -1;
         this.quadInstance.setColor(tinted ? color : -1);
         buffer.putBakedQuad(poseStack.last(), quad, this.quadInstance);
+    }
+
+    /**
+     * Fire preview through the custom_tint shader: run {@link TestModel#emitQuads} (config branch, since
+     * {@code Main.inConfig} is true) into a Fabric mesh, then copy the quads into the custom_tint buffer
+     * (POSITION_TEX_COLOR). Returns false (falling back to plain tint) if the renderer path is
+     * unavailable or throws.
+     */
+    private boolean renderFireTinted(Minecraft mc, PoseStack poseStack, BlockSceneRenderState.BlockDrawOp op,
+                                     BlockStateModel model, int color) {
+        try {
+            TestModel.configPreviewColor = color;
+            MutableMesh mesh = Renderer.get().mutableMesh();
+            AltModelBlockRenderer renderer = Renderer.get().altModelBlockRenderer(false, false, mc.getBlockColors());
+            long seed = op.state().getSeed(BlockPos.ZERO);
+            renderer.tesselateBlock(mesh.emitter(), 1f, 1f, 1f, mc.level, BlockPos.ZERO, op.state(), model, seed);
+
+            VertexConsumer tint = this.bufferSource.getBuffer(FirorizePipelines.getCustomTint());
+            PoseStack.Pose pose = poseStack.last();
+            mesh.forEach(quad -> {
+                for (int i = 0; i < 4; i++) {
+                    tint.addVertex(pose, quad.x(i), quad.y(i), quad.z(i)).setUv(quad.u(i), quad.v(i)).setColor(quad.color(i));
+                }
+            });
+            mesh.clear();
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 }
