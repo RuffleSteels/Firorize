@@ -4,6 +4,7 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -29,7 +30,7 @@ public final class FirorizePipelines {
             .withSampler("Sampler0")
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withDepthStencilState(DepthStencilState.DEFAULT)
-            .withVertexFormat(VertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
+            .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
             .build();
 
     /** Draws the HSV colour-wheel in the config screen. Lightness (Value) is carried in vertex-colour alpha. */
@@ -38,7 +39,7 @@ public final class FirorizePipelines {
             .withVertexShader("core/firorize/rendertype_color_wheel")
             .withFragmentShader("core/firorize/rendertype_color_wheel")
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-            .withVertexFormat(VertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
+            .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
             .build();
 
     private static final RenderType CUSTOM_TINT_LAYER = RenderType.create(

@@ -41,7 +41,7 @@ public class PlaceholderField extends EditBox {
         int l = this.isBordered() ? this.getY() + (this.height - 8) / 2 : this.getY();
         int m = k;
 
-        if (placeholder != null && getText().isEmpty() && !this.isFocused()) {
+        if (placeholder != null && getValue().isEmpty() && !this.isFocused()) {
             context.text(this.font, this.placeholder, m, l, placeholderColor);
         }
     }

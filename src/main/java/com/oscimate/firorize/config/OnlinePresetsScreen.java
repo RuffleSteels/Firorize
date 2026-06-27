@@ -125,7 +125,7 @@ public class OnlinePresetsScreen extends Screen {
         refreshIconY = boxY + 6;
         Button refreshButton = new Button.Builder(Component.empty(), b -> { state = null; load(); })
                 .bounds(refreshIconX, refreshIconY, 16, 16).build();
-        refreshButton.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.create(Component.translatable("firorize.config.tooltip.refresh")));
+        refreshButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("firorize.config.tooltip.refresh")));
         addRenderableWidget(refreshButton);
 
         super.init();
@@ -287,7 +287,7 @@ public class OnlinePresetsScreen extends Screen {
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         minecraft.setScreen(parent);
     }
 
@@ -312,9 +312,9 @@ public class OnlinePresetsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         if (view == View.INBOX) {
             int dy = boxY + 28; // padded below the title so it clears the refresh/close buttons

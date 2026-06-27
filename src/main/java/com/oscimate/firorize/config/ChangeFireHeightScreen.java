@@ -36,10 +36,6 @@ public class ChangeFireHeightScreen extends Screen {
         super.init();
     }
     @Override
-    public void close() {
-        onClose();
-    }
-    @Override
     public void resize(int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
 //        Main.setScale(width, height, minecraft);
@@ -47,9 +43,9 @@ public class ChangeFireHeightScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
         // TODO(26.1.2 port): the live first-person fire-height preview used immediate-mode 3D vertex
         // rendering inside render(), which is incompatible with the new GUI render-extraction model.
         // Re-implement it as a Picture-in-Picture renderer (like BlockSceneRenderer) if the preview is

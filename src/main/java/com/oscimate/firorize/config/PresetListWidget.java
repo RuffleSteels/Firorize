@@ -87,7 +87,7 @@ class PresetListWidget
     @Override
     public void setSelected(@Nullable PresetListWidget.PresetEntry entry) {
         if (entry == null) return;
-        if (!entry.equals(getSelectedOrNull())) {
+        if (!entry.equals(getSelected())) {
             // Switching to a different profile: undo/redo history does not carry across profiles.
             instance.clearHistory();
             instance.searchScreenListWidget.setSelected(instance.searchScreenListWidget.children().get(0));
@@ -211,7 +211,7 @@ class PresetListWidget
         private float alphaa;
 
         @Override
-        public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             int x = getX();
             int y = getY();
             int entryWidth = getWidth();

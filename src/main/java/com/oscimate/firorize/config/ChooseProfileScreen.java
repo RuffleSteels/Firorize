@@ -80,7 +80,7 @@ public class ChooseProfileScreen extends Screen {
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         minecraft.setScreen(origin);
     }
 
@@ -104,8 +104,8 @@ public class ChooseProfileScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
         if (names.isEmpty()) {
             context.centeredText(font, Component.translatable("firorize.config.status.noProfiles"),
                     width / 2, boxY + boxH / 2 - 4, 0xFFC0C0C0);

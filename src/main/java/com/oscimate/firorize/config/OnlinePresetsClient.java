@@ -60,7 +60,7 @@ public final class OnlinePresetsClient {
 
     /** Reads the local player's identity from their Minecraft session, or null if unavailable. */
     public static McAuth currentIdentity() {
-        Session session = Minecraft.getInstance().getUser();
+        User session = Minecraft.getInstance().getUser();
         UUID uuid = session.getProfileId();
         String name = session.getName();
         if (uuid == null || name == null || name.isBlank()) return null;

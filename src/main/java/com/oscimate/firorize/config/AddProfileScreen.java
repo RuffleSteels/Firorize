@@ -95,7 +95,7 @@ public class AddProfileScreen extends Screen {
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         minecraft.setScreen(parent);
     }
 
@@ -160,8 +160,8 @@ public class AddProfileScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta); // renderBackground (parent + dim + box) then the dialog widgets
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta); // renderBackground (parent + dim + box) then the dialog widgets
 
         // Validation feedback as red text in the dialog (matching the other dialogs), not a tooltip.
         if (nameError != null) {

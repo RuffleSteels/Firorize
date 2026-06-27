@@ -160,7 +160,7 @@ public class ColoredCycleButton extends AbstractButton {
     private void cycle(int amount) {
         if (!isAdding && values.size() > 1) {
             instance.isCycling = true;
-            this.setIndex(Mth.floorMod(this.index + amount, this.values.size()));
+            this.setIndex(Math.floorMod(this.index + amount, this.values.size()));
 
             if (this.index == 1 && !removing) {
                 instance.tempColor = ChangeFireColorScreen.pickedColor.clone();

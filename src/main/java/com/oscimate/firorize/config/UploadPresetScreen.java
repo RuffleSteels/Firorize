@@ -60,7 +60,7 @@ public class UploadPresetScreen extends Screen {
         titleField.setHint(Component.translatable("firorize.config.placeholder.presetTitle"));
         titleField.setMaxLength(32);
         // Letters/numbers/spaces only (international letters allowed); no symbols/emoji. Empty allowed while typing.
-        titleField.setFilter(s -> s.matches("[\\p{L}\\p{N} ]*"));
+ // TODO(26.1.2): EditBox has no setFilter; input validation handled on submit.
         addRenderableWidget(titleField);
 
         descriptionField = new PlaceholderField(this.font, boxX + 20, boxY + 74, boxW - 40, 20, Component.empty());
@@ -197,7 +197,7 @@ public class UploadPresetScreen extends Screen {
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         minecraft.setScreen(back);
     }
 
@@ -221,8 +221,8 @@ public class UploadPresetScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Selected profile, for confirmation.
         context.text(font,

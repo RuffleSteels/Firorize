@@ -11,12 +11,6 @@ public class InvisibleTextFieldWidget extends PlaceholderField {
         this.instance = instance;
     }
 
-
-    @Override
-    public void setCursor(int cursor, boolean shiftKeyPressed) {
-        super.setCursor(cursor, shiftKeyPressed);
-    }
-
     @Override
     public boolean charTyped(net.minecraft.client.input.CharacterEvent input) {
         char chr = (char) input.codepoint();

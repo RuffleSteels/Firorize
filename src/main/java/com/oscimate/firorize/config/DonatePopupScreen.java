@@ -70,7 +70,7 @@ public class DonatePopupScreen extends Screen {
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         minecraft.setScreen(parent);
     }
 
@@ -99,8 +99,8 @@ public class DonatePopupScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         int ty = boxY + 34;
         for (FormattedCharSequence line : font.split(Component.translatable("firorize.donate.popup.body"), boxW - 24)) {

@@ -208,7 +208,7 @@ public class ChangeFireColorScreen extends Screen {
 
         Main.CONFIG_MANAGER.save();
 
-        int i = this.minecraft.getWindow().calculateScaleFactor(this.minecraft.options.getGuiScale().getValue(), this.minecraft.forcesUnicodeFont());
+        int i = this.minecraft.getWindow().calculateScale(this.minecraft.options.guiScale().get(), this.minecraft.options.forceUnicodeFont().get());
         this.minecraft.getWindow().setGuiScale(i);
 
         minecraft.setScreen(parent);
@@ -688,11 +688,6 @@ public class ChangeFireColorScreen extends Screen {
     }
 
     @Override
-    public void close() {
-        onClose();
-    }
-
-    @Override
     public void resize(int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
         Main.setScale(width, height, minecraft);
@@ -1042,11 +1037,11 @@ public class ChangeFireColorScreen extends Screen {
 
     @Override
     @SuppressWarnings("deprecation") // TextureAtlas.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         DonationTracker.onConfigFrame();
         context.pose().pushMatrix();
 
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Reset-profile button icon (reset.png), centred in its 20×20 button.
         drawResetIcon(context, profileButtonXs[1], profileButtonY);
@@ -1288,7 +1283,7 @@ public class ChangeFireColorScreen extends Screen {
             this.clearEntries();
             generateEntries();
             // The scroll-amount getter was removed in 1.21.x, so the list resets to the top on refresh.
-            setScrollY(0.0);
+            setScrollAmount(0.0);
             num = 0;
         }
         @Override
@@ -1467,7 +1462,7 @@ public class ChangeFireColorScreen extends Screen {
             private boolean isSelected = false;
 
             @Override
-            public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 int x = getX();
                 int y = getY();
                 int entryWidth = getWidth();
