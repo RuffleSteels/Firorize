@@ -37,6 +37,10 @@ public class ConfigScreen extends Screen {
         this.addDrawableChild(new ButtonWidget.Builder(Text.translatable("firorize.config.button.changeFireColorScreen"), button -> doStuff(new ChangeFireColorScreen(this))).dimensions(width / 2 - buttonWidth - buttonWidth/2 + 40, height/2 - 15 - 20, buttonWidth, 20).build());
 
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, height/2 + 15, 200, 20).build());
+
+        KofiBannerButton kofiBanner = new KofiBannerButton(this, width / 2 - 90, height/2 + 43, 180, 22);
+        kofiBanner.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(Text.translatable("firorize.donate.tooltip")));
+        this.addDrawableChild(kofiBanner);
         super.init();
     }
 
@@ -48,6 +52,7 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        DonationTracker.onConfigFrame();
         super.render(context, mouseX, mouseY, delta);
         context.drawText(this.textRenderer, "Improved Fire Overlay", this.width / 2 - textRenderer.getWidth("Improved Fire Overlay") / 2, height/2 - windowHeight/2 - 20*3 - 5, 0xFFFFFF, false);
     }

@@ -60,7 +60,7 @@ public class ChangeFireHeightScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-
+        DonationTracker.onConfigFrame();
         super.render(context, mouseX, mouseY, delta);
 
         MatrixStack matrixStack = context.getMatrices();
@@ -75,7 +75,7 @@ public class ChangeFireHeightScreen extends Screen {
         modelView.identity();
         RenderSystem.applyModelViewMatrix();
 
-        matrixStack.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider()), 0.0);
+        matrixStack.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider() - 2), 0.0);
 
         RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
         RenderSystem.depthFunc(519);

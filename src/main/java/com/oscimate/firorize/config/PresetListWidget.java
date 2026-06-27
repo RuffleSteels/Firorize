@@ -126,8 +126,10 @@ class PresetListWidget
     protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
         int i = this.getX() + (this.width - entryWidth) / 2;
         int j = this.getX() + (this.width + entryWidth) / 2;
-        context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
-        context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
+        // Even 1px border on all four sides (the old right edge overshot by ~6px). Matches the other
+        // outlines in the UI.
+        context.fill(i, y - 1, j, y + entryHeight + 1, borderColor);
+        context.fill(i + 1, y, j - 1, y + entryHeight, fillColor);
     }
 
     @Override
@@ -182,7 +184,7 @@ class PresetListWidget
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (mouseX >= x+getWidth()-entryHeight-10 && mouseX <= x+getWidth()-10 && mouseY >= y && mouseY <= y+entryHeight) {
+            if (mouseX >= x+getWidth()-entryHeight-4 && mouseX <= x+getWidth()-4 && mouseY >= y && mouseY <= y+entryHeight) {
                 if (!languageDefinition.equals("Initial")) {
                     // Deleting a profile is destructive and not undoable — confirm first, in a box
                     // drawn over the config screen (not a separate world-backed screen).
@@ -193,6 +195,9 @@ class PresetListWidget
                             Text.translatable("firorize.config.confirm.deleteProfile.message"),
                             () -> {
                                 Main.CONFIG_MANAGER.getFireColorPresets().remove(toDelete);
+                                Main.CONFIG_MANAGER.getImportedProfiles().remove(toDelete); // drop the online marker too
+                                Main.CONFIG_MANAGER.getImportedAuthors().remove(toDelete);   // and its recorded author
+                                Main.CONFIG_MANAGER.getInboxImports().remove(toDelete);      // and the friend-import flag
                                 PresetListWidget.this.children().remove(self);
                                 // setSelected updates currentPreset to the new selection; save afterwards
                                 // so the persisted currentPreset never dangles at the deleted profile.
@@ -209,14 +214,36 @@ class PresetListWidget
         @Override
         public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             if (!languageDefinition.equals("Initial")) {
-                if (mouseX >= x+entryWidth-entryHeight-10 && mouseX <= x+entryWidth-10 && mouseY >= y && mouseY <= y+entryHeight) {
+                if (mouseX >= x+entryWidth-entryHeight-4 && mouseX <= x+entryWidth-4 && mouseY >= y && mouseY <= y+entryHeight) {
                     alphaa = 1f;
                 } else {
                     alphaa = 0.5f;
                 }
-                context.fill(x+entryWidth-entryHeight-10, y, x+entryWidth-10, y + entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alphaa).getRGB());
-                instance.drawX(context, entryWidth, entryHeight, y, x);
-                context.drawBorder(x+entryWidth-entryHeight-10, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+                context.fill(x+entryWidth-entryHeight-4, y, x+entryWidth-4, y + entryHeight, new Color(1f/255*44, 1f/255*44, 1f/255*44, alphaa).getRGB());
+                instance.drawX(context, entryWidth, entryHeight, y, x + 6);
+                context.drawBorder(x+entryWidth-entryHeight-4, y, entryHeight, entryHeight, new Color(1f/255*99, 1f/255*99, 1f/255*99, 0.8f).getRGB());
+            }
+            // Marker for imported profiles (drawn on the left; the name is centred). A person silhouette
+            // for profiles sent by a friend via the inbox, otherwise the globe for the public gallery.
+            if (Main.CONFIG_MANAGER.getImportedProfiles().contains(languageDefinition)) {
+                int iconX = x + 4;
+                int iconY = y + (entryHeight - 9) / 2;
+                boolean fromFriend = Main.CONFIG_MANAGER.getInboxImports().contains(languageDefinition);
+                if (fromFriend) {
+                    instance.drawPerson(context, iconX, iconY);
+                } else {
+                    instance.drawGlobe(context, iconX, iconY);
+                }
+                // Hovering shows who the profile came from.
+                if (mouseX >= iconX && mouseX <= iconX + 9 && mouseY >= iconY && mouseY <= iconY + 9) {
+                    String author = Main.CONFIG_MANAGER.getImportedAuthors().get(languageDefinition);
+                    if (author == null || author.isBlank()) {
+                        instance.globeTooltip = Text.translatable("firorize.config.tooltip.importedOnline");
+                    } else {
+                        instance.globeTooltip = Text.translatable(
+                                fromFriend ? "firorize.config.tooltip.sentBy" : "firorize.config.tooltip.createdBy", author);
+                    }
+                }
             }
             context.drawCenteredTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + PresetListWidget.this.instance.wheelCoords[0], y+1, 0xFFFFFF);
         }

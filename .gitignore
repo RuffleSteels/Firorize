@@ -4,6 +4,11 @@ build/
 out/
 classes/
 
+.env
+
+# cloudflare worker (kept local only; not published)
+cloudflare-worker/
+
 # eclipse
 
 *.launch

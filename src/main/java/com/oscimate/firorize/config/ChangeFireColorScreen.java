@@ -459,8 +459,12 @@ public class ChangeFireColorScreen extends Screen {
     public Color[] tempColor;
     public ButtonWidget addColorButton;
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
-    public ButtonWidget shareProfileButton;
+    public ButtonWidget browseOnlineButton;
+    public ButtonWidget shareBottomButton;
+    public ButtonWidget inboxButton;
     public ButtonWidget resetProfileButton;
+    /** Set by {@link PresetListWidget} while hovering an imported profile's globe; drawn once then cleared. */
+    public net.minecraft.text.Text globeTooltip = null;
     private final KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> comparedCurrentFire;
     public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
     public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80;
@@ -497,11 +501,30 @@ public class ChangeFireColorScreen extends Screen {
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this, false);this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
-        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30, wheelCoords[0], 15, this, textRenderer);
+        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, textRenderer);
 
-        this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[0], profileButtonY, 20, 20).build();
+        // Two button rows stack directly under the profile list (the list height above was shrunk by
+        // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
+        // "Inbox" text button to its right (together spanning the list width).
+        this.browseOnlineButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
+                .dimensions(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
 
-        this.shareProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> saveProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
+        int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
+        int row2Gap = 2;
+        // Inbox button wraps narrowly to its label and stays right-aligned at the end of the row;
+        // Share fills the remaining width to its left.
+        Text inboxLabel = Text.translatable("firorize.config.button.inbox");
+        int inboxSize = textRenderer.getWidth(inboxLabel) + 12;
+        int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
+        this.shareBottomButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
+                .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
+        this.inboxButton = new ButtonWidget.Builder(inboxLabel, button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
+                .dimensions(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
+        // Pull the inbox count so the notification badge is up to date when this screen opens.
+        OnlinePresetsClient.refreshInboxCount();
+
+        // Right-aligned: Add flush against the panel's right edge, Reset directly to its left.
+        this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
         this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
         this.addDrawableChild(addButton);
 //        textFieldWidget.setChangedListener(this::updateCursor);
@@ -531,7 +554,9 @@ public class ChangeFireColorScreen extends Screen {
 
 
         this.addDrawableChild(presetListWidget);
-        this.addDrawableChild(shareProfileButton);
+        this.addDrawableChild(browseOnlineButton);
+        this.addDrawableChild(inboxButton);
+        this.addDrawableChild(shareBottomButton);
         this.addDrawableChild(searchOptions[0]);
         this.addDrawableChild(searchOptions[1]);
         this.addDrawableChild(searchOptions[2]);
@@ -554,8 +579,12 @@ public class ChangeFireColorScreen extends Screen {
             this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
         }
 
-        shareProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
-        shareProfileButton.setTooltipDelay(Duration.ofMillis(750L));
+        shareBottomButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
+        shareBottomButton.setTooltipDelay(Duration.ofMillis(750L));
+        browseOnlineButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.onlinePresets")));
+        browseOnlineButton.setTooltipDelay(Duration.ofMillis(750L));
+        inboxButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.inboxButton")));
+        inboxButton.setTooltipDelay(Duration.ofMillis(750L));
         addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
         addButton.setTooltipDelay(Duration.ofMillis(750L));
         resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
@@ -612,14 +641,97 @@ public class ChangeFireColorScreen extends Screen {
     }
 
 
-    private void saveProfile() {
-        try {
-            MinecraftClient.getInstance().keyboard.setClipboard(serializeToString(KeyValuePair.of(Main.CONFIG_MANAGER.getCurrentBlockFireColors(), Main.CONFIG_MANAGER.getPriorityOrder())));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    /** A tiny pixel-art "WWW" globe (9×9), drawn top-left at (px,py). Marks online-imported profiles. */
+    public void drawGlobe(DrawContext context, int px, int py) {
+        final int size = 9, cx = 4, cy = 4;
+        final double r = 4.3;
+        final int ocean = 0xFF3A78C2;
+        final int line = 0xFFDDEEFF;
+        for (int gy = 0; gy < size; gy++) {
+            for (int gx = 0; gx < size; gx++) {
+                int dx = gx - cx, dy = gy - cy;
+                if (dx * dx + dy * dy > r * r) continue;
+                boolean grid = gx == cx || gy == cy
+                        || ((gx == 2 || gx == 6) && Math.abs(dy) <= 3)
+                        || ((gy == 2 || gy == 6) && Math.abs(dx) <= 3);
+                context.fill(px + gx, py + gy, px + gx + 1, py + gy + 1, grid ? line : ocean);
+            }
         }
-        tooltipTimer = 40;
-        shareProfileButton.setFocused(false);
+    }
+
+    /** A tiny pixel-art head-and-shoulders silhouette (9×9), drawn top-left at (px,py). Marks
+     *  profiles sent by another player via the inbox. */
+    public void drawPerson(DrawContext context, int px, int py) {
+        final int body = 0xFFDDE3EC;
+        context.fill(px + 3, py + 1, px + 6, py + 4, body);
+        context.fill(px + 2, py + 5, px + 7, py + 6, body);
+        context.fill(px + 1, py + 6, px + 8, py + 9, body);
+    }
+
+    /** Draws the reset.png sprite centred in the 20×20 reset-profile button at (px,py). Uses the
+     *  block atlas the same way {@link UndoButton} draws its icon. */
+    private static final int RESET_ICON_SIZE = 14;
+    @SuppressWarnings("deprecation") // BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
+    public void drawResetIcon(DrawContext context, int px, int py) {
+        Sprite reset = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/reset")).getSprite();
+        int off = (20 - RESET_ICON_SIZE) / 2; // centred in the 20×20 button
+        context.drawSprite(px + off, py + off, 10, RESET_ICON_SIZE, RESET_ICON_SIZE, reset);
+    }
+
+    /** True while this screen is being drawn purely as a static backdrop behind a modal dialog. In
+     *  that mode the live colour wheel and the immediate-mode 3D block/fire previews are suppressed so
+     *  they don't paint over (or depth-fight with) the overlaying dialog. */
+    private boolean renderingAsBackdrop = false;
+
+    /** Renders this config screen as a static modal backdrop (previews/wheel suppressed). */
+    void renderAsBackdrop(DrawContext context, float delta) {
+        boolean prev = renderingAsBackdrop;
+        renderingAsBackdrop = true;
+        try {
+            this.render(context, -1, -1, delta);
+        } finally {
+            renderingAsBackdrop = prev;
+        }
+    }
+
+    /** Shared by the config dialogs: renders {@code behind} as a modal backdrop so the dialog overlays
+     *  the existing screen rather than cutting through to the blurred game. Unlike 1.21.11's 2D GUI,
+     *  1.21.1 is z-layered, so the backdrop is pushed back in z (compounding with each nested dialog)
+     *  to keep it — and its text/widgets — strictly behind the overlaying dialog and its dim. */
+    public static void renderModalBackdrop(DrawContext context, @Nullable Screen behind, float delta) {
+        if (behind == null) return;
+        context.getMatrices().push();
+        context.getMatrices().translate(0, 0, -200);
+        if (behind instanceof ChangeFireColorScreen cfc) {
+            cfc.renderAsBackdrop(context, delta);
+        } else {
+            behind.render(context, -1, -1, delta);
+        }
+        context.getMatrices().pop();
+    }
+
+    /** Red notification badge on the Inbox button showing how many items are waiting (capped "9+"). */
+    private void drawInboxBadge(DrawContext context) {
+        int count = OnlinePresetsClient.inboxCount();
+        if (count <= 0 || inboxButton == null) return;
+        int cx = inboxButton.getX() + inboxButton.getWidth() - 5;
+        int cy = inboxButton.getY() + 3;
+        drawDisc(context, cx, cy, 5.5, 0xFF101010); // dark outline for contrast
+        drawDisc(context, cx, cy, 4.5, 0xFFCC2222);
+        String label = count > 9 ? "9+" : Integer.toString(count);
+        context.drawText(this.textRenderer, label, cx - this.textRenderer.getWidth(label) / 2, cy - 3, 0xFFFFFFFF, false);
+    }
+
+    /** Filled circle of radius {@code r} centred at (cx,cy). */
+    private void drawDisc(DrawContext context, int cx, int cy, double r, int color) {
+        int rr = (int) Math.ceil(r);
+        for (int gy = -rr; gy <= rr; gy++) {
+            for (int gx = -rr; gx <= rr; gx++) {
+                if (gx * gx + gy * gy <= r * r) {
+                    context.fill(cx + gx, cy + gy, cx + gx + 1, cy + gy + 1, color);
+                }
+            }
+        }
     }
 
     @Override
@@ -803,6 +915,8 @@ public class ChangeFireColorScreen extends Screen {
     }
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        addDragging = false;
+        dragAdded.clear();
         clicked = false;
         sliderClicked = false;
         // End of a colour-wheel/slider gesture: record one undo step if the colour actually changed.
@@ -820,6 +934,13 @@ public class ChangeFireColorScreen extends Screen {
     private boolean isClick = false;
 
     private boolean isOnAdd = false;
+
+    // Drag-to-add across the search list's left + boxes, so a run of entries can be selected by
+    // dragging over their + icons instead of clicking each one. Tracked at the screen level because
+    // the screen always receives mouseDragged (the entries' mouseClicked returns false, so the list
+    // widget never becomes the drag target).
+    private boolean addDragging = false;
+    private final java.util.Set<String> dragAdded = new java.util.HashSet<>();
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
@@ -869,10 +990,26 @@ public class ChangeFireColorScreen extends Screen {
         if ((clicked || sliderClicked) && gestureStartColor == null) {
             gestureStartColor = before;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        boolean result = super.mouseClicked(mouseX, mouseY, button);
+        // Begin a drag-to-add gesture if the press landed on a search entry's left + box. The press
+        // itself already handled the first entry, so seed the de-dup set with it.
+        SearchScreenListWidget.BlockEntry addBoxEntry = searchScreenListWidget == null ? null : searchScreenListWidget.entryAtAddBox(mouseX, mouseY);
+        if (addBoxEntry != null) {
+            addDragging = true;
+            dragAdded.clear();
+            dragAdded.add(addBoxEntry.languageDefinition);
+        }
+        return result;
     }
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (addDragging) {
+            SearchScreenListWidget.BlockEntry e = searchScreenListWidget.entryAtAddBox(mouseX, mouseY);
+            if (e != null && dragAdded.add(e.languageDefinition)) {
+                e.addViaDrag();
+            }
+            return true;
+        }
         if (clicked) {
             updateColorPicker(mouseX, mouseY, false);
         }
@@ -921,18 +1058,17 @@ public class ChangeFireColorScreen extends Screen {
     @Override
     @SuppressWarnings("deprecation") // SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE is deprecated but still the supported atlas id in 1.21
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        DonationTracker.onConfigFrame();
         context.getMatrices().push();
 
         super.render(context, mouseX, mouseY, delta);
 
-        Sprite RESET = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/reset")).getSprite();
-        context.drawSprite(profileButtonXs[0] + (20 - RESET.getContents().getWidth())/2, profileButtonY + (20 - RESET.getContents().getHeight())/2, 10, RESET.getContents().getWidth(), RESET.getContents().getHeight(), RESET);
+        // Reset-profile button icon (reset.png), centred in its 20×20 button.
+        drawResetIcon(context, profileButtonXs[1], profileButtonY);
 
-        Sprite SHARE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.of("firorize:block/share")).getSprite();
-        context.drawSprite(profileButtonXs[1] + (20 - SHARE.getContents().getWidth())/2, profileButtonY + (20 - SHARE.getContents().getHeight())/2, 10, SHARE.getContents().getWidth(), SHARE.getContents().getHeight(), SHARE);
-
-
-
+        // Live colour wheel + 3D block/fire previews. Suppressed when this screen is drawn as a modal
+        // backdrop so they don't paint over (or depth-fight with) the dialog overlaying it.
+        if (!renderingAsBackdrop) {
         context.getMatrices().push();
 
 
@@ -982,10 +1118,12 @@ public class ChangeFireColorScreen extends Screen {
 
         int scale = 15;
 
-        if (Math.ceil(allBlockUnders.size()/11f) > 4) {
-            double amount = 0.15 * ((Math.ceil(allBlockUnders.size()/11f)-4)/2);
+        // Preview grid: 11 columns, ~7 rows visible before it scrolls (tighter row spacing than before,
+        // matching the newer versions). The threshold/range track the 7-row visible window.
+        if (Math.ceil(allBlockUnders.size()/11f) > 7) {
+            double amount = 0.15 * ((Math.ceil(allBlockUnders.size()/11f)-7)/2);
             dist = (float) (dist + (forwards ? amount : -amount));
-            if (dist > (31 * (Math.ceil(allBlockUnders.size()/11f)-4))) {
+            if (dist > (10 * (Math.ceil(allBlockUnders.size()/11f)-7))) {
                 counter++;
                 forwards = false;
             } else if (dist < 1) {
@@ -1004,7 +1142,7 @@ public class ChangeFireColorScreen extends Screen {
 
             context.getMatrices().push();
 
-            context.getMatrices().translate((blockSearchDimensions[0]-21)/10f*(i%11), (height-blockSearchDimensions[1]-40-20)/4f*((double) (i / 11)), 0);
+            context.getMatrices().translate((blockSearchDimensions[0]-21)/10f*(i%11), (height-blockSearchDimensions[1]-40-20)/7f*((double) (i / 11)), 0);
 
             context.getMatrices().multiply(q);
             context.getMatrices().scale(-1, 1, 1);
@@ -1094,13 +1232,16 @@ public class ChangeFireColorScreen extends Screen {
         RenderSystem.depthFunc(515);
 
         context.getMatrices().pop();
+        }
 
-        if (tooltipTimer > 0) {
-            context.drawTooltip(this.textRenderer, Text.translatable("firorize.config.tooltip.copied"), shareProfileButton.getX() + 50, shareProfileButton.getY() - 10);
+        if (globeTooltip != null) {
+            context.drawTooltip(this.textRenderer, globeTooltip, mouseX, mouseY);
+            globeTooltip = null;
         }
         context.getMatrices().pop();
 
-        if (confirmActive) renderConfirm(context, mouseX, mouseY);
+        drawInboxBadge(context);
+        if (confirmActive && !renderingAsBackdrop) renderConfirm(context, mouseX, mouseY);
     }
 
     @Environment(value= EnvType.CLIENT)
@@ -1149,8 +1290,9 @@ public class ChangeFireColorScreen extends Screen {
                     }
                 });
                 Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).keyList().forEach(string -> {
-                    TagKey<Block> tag = Main.blockTagList.stream().filter(tagg -> tagg.id().toString().equals(string)).findFirst().get();
-                    if (Main.blockTagList.contains(tag)) {
+                    // Cross-version profiles may carry tags that don't exist in this version; skip
+                    // them instead of resolving (findFirst().get() would throw) so they're ignored.
+                    if (Main.blockTagList.stream().anyMatch(tagg -> tagg.id().toString().equals(string))) {
                         ChangeFireColorScreen.SearchScreenListWidget.BlockEntry blockEntry = new ChangeFireColorScreen.SearchScreenListWidget.BlockEntry(string);
                         first.add(blockEntry);
                         blockEntry.isCustomized = true;
@@ -1250,10 +1392,28 @@ public class ChangeFireColorScreen extends Screen {
 
         @Override
         protected void drawSelectionHighlight(DrawContext context, int y, int entryWidth, int entryHeight, int borderColor, int fillColor) {
-            int i = this.getX() + (this.width - entryWidth) / 2;
-            int j = this.getX() + (this.width + entryWidth) / 2;
-            context.fill(i, y - 2, j, y + entryHeight + 2, borderColor);
-            context.fill(i + 1, y - 1, j - 1 - 6, y + entryHeight + 1, fillColor);
+            // No-op: selection is drawn per-entry in renderEntry via drawSelectionBorder, which merges
+            // the borders of adjacent selected entries. The vanilla per-entry highlight would re-draw a
+            // full divider between them, so it's suppressed here.
+        }
+
+        /**
+         * Draws the selection outline for one selected entry. When the entry above/below is also
+         * selected the border between them is filled in (no separating line) so a run of selected
+         * entries reads as a single block; an isolated selected entry gets a full 1px border.
+         */
+        private void drawSelectionBorder(DrawContext context, int entryWidth, int y, int entryHeight, boolean prevSelected, boolean nextSelected) {
+            int color = this.isFocused() ? -1 : -8355712;
+            int left = this.getX() + (this.width - entryWidth) / 2;
+            int right = getScrollbarX() - 1; // keep the right edge clear of the scrollbar
+            // Extend the coloured edge and black interior through the gap to a selected neighbour.
+            // The entries sit 4px apart (itemHeight 15 − entryHeight 11), so a selected entry must
+            // reach +1 further into the gap than the 1px-spacing reference to close the vertical seam.
+            int outerBottom = nextSelected ? y + entryHeight + 3 : y + entryHeight + 1;
+            int innerTop = prevSelected ? y - 4 : y - 1;
+            int innerBottom = nextSelected ? y + entryHeight + 4 : y + entryHeight;
+            context.fill(left, y - 1, right, outerBottom, color);
+            context.fill(left + 1, innerTop + 1, right - 1, innerBottom, 0xFF000000);
         }
 
         @Override
@@ -1355,7 +1515,22 @@ public class ChangeFireColorScreen extends Screen {
             entry.x = x;
             entry.entryHeight = entryHeight;
             entry.y = y;
+            // Draw the selection outline ourselves (before the entry content) so adjacent selected
+            // entries merge into one block instead of each showing a full divider.
+            if (selected.contains(index)) {
+                drawSelectionBorder(context, entryWidth, y, entryHeight, selected.contains(index - 1), selected.contains(index + 1));
+            }
             super.renderEntry(context, mouseX, mouseY, delta, index, x, y, entryWidth, entryHeight);
+        }
+
+        /** The entry whose left + (add) box contains (mx,my), or null. Used for click-drag multi-add.
+         *  The hitbox is the full entry-height left square (the visual + glyph is drawn inset). */
+        BlockEntry entryAtAddBox(double mx, double my) {
+            BlockEntry e = getEntryAtPosition(mx, my);
+            if (e == null) return null;
+            // Hitbox is the full entry-height left square, extended 4px to the right (matching the
+            // click/hover hitbox) so a drag over the + boxes doesn't fall into a mis-select edge.
+            return (mx >= e.x && mx <= e.x + e.entryHeight + 4 && my >= e.y && my <= e.y + e.entryHeight) ? e : null;
         }
 
         @Environment(value=EnvType.CLIENT)
@@ -1378,7 +1553,9 @@ public class ChangeFireColorScreen extends Screen {
                 context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, Text.literal(languageDefinition), (entryWidth-6) / 2  + blockSearchCoords[0], y+1, 0xFFFFFF);
                 boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT);
                 if ((shiftPressed && index < Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(currentSearchButton).size() - 1) || (!shiftPressed && index > 0)) {
-                    if (mouseX >= x && mouseX <= x + entryHeight && mouseY >= y && mouseY <= y + entryHeight) {
+                    // +4 so the add hitbox extends a little past the full-size + box: aiming at the +
+                    // no longer mis-selects the row on the right edge.
+                    if (mouseX >= x && mouseX <= x + entryHeight + 4 && mouseY >= y && mouseY <= y + entryHeight) {
                         alpha = 1f;
                     } else {
                         alpha = 0.5f;
@@ -1442,7 +1619,7 @@ public class ChangeFireColorScreen extends Screen {
                         return false;
                     }
                 }
-                if (mouseX >= x && mouseX <= x+entryHeight && mouseY >= y && mouseY <= y+entryHeight) {
+                if (mouseX >= x && mouseX <= x+entryHeight+4 && mouseY >= y && mouseY <= y+entryHeight) {
                     if (isCustomized && currentSearchButton == 1) {
                         int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
                         boolean shiftPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT);
@@ -1497,6 +1674,17 @@ public class ChangeFireColorScreen extends Screen {
                     isOnAdd = false;
                 } else {
                     ChangeFireColorScreen.this.searchScreenListWidget.selected.add(ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this));
+                }
+            }
+            /** Adds this entry during a + box click-drag, mirroring a + click in multi-add mode. */
+            void addViaDrag() {
+                if (isCustomized) return; // already coloured; don't reorder/replace on a drag
+                int index = ChangeFireColorScreen.this.searchScreenListWidget.children().indexOf(this);
+                if (selected.contains(index)) return;
+                if (selected.isEmpty()) {
+                    ChangeFireColorScreen.this.searchScreenListWidget.setSelected(this);
+                } else {
+                    onAddButton();
                 }
             }
             @Override

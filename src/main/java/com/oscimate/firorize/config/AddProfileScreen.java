@@ -18,10 +18,19 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 
+/**
+ * "New profile" dialog. Lets the player create a profile from the current colours or from defaults,
+ * giving it a name. Styled as a centred dark box over a dimmed config screen, matching the
+ * delete-profile confirm box ({@link ChangeFireColorScreen#renderConfirm}) and {@link UploadPresetScreen}.
+ *
+ * <p>{@link #deserializeFromString} remains here (used by {@link OnlinePresetListWidget} to import
+ * online presets), but the old clipboard "paste a code" entry point has been removed in favour of
+ * the username-based sharing flow.
+ */
 public class AddProfileScreen extends Screen {
     private final ChangeFireColorScreen parent;
     protected AddProfileScreen(ChangeFireColorScreen parent) {
-        super(Text.translatable("options.videoTitle"));
+        super(Text.translatable("firorize.config.title.newProfile"));
         this.parent = parent;
     }
 
@@ -31,28 +40,35 @@ public class AddProfileScreen extends Screen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    public  ButtonWidget fromExistingButton;
+    public ButtonWidget fromExistingButton;
     public ButtonWidget fromNewButton;
-    public  ButtonWidget fromCodeButton;
     public TextFieldWidget presetNameField;
-    private final String[] profileNameTooltips = new String[]{"firorize.config.tooltip.empty", "firorize.config.tooltip.exists"};
-    private String profileNameTooltip = "";
-    private int profileNameTooltipTime = 0;
+    private Text nameError = null;
+
+    private int boxX, boxY, boxW, boxH;
 
     @Override
     protected void init() {
         parent.isPresetAdd = false;
-        this.presetNameField = new PlaceholderField(this.textRenderer, width/2 - 65, height/2  - 25, 130, 20, ScreenTexts.DONE);
-        this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting()).dimensions(width/2 - 60 - 15 - 120, height/2+5, 120, 20).build();
-        this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button ->  addFromNew()).dimensions(width/2 - 60, height/2+5, 120, 20).build();
-        this.fromCodeButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCodeButton1"), button ->  fromCode()).dimensions(width/2 + 60 + 15, height/2+5, 120, 20).build();
+        boxW = Math.min(300, width - 40);
+        boxH = 120;
+        boxX = (width - boxW) / 2;
+        boxY = (height - boxH) / 2;
 
+        this.presetNameField = new PlaceholderField(this.textRenderer, boxX + 20, boxY + 34, boxW - 40, 20, ScreenTexts.DONE);
         presetNameField.setMaxLength(Integer.MAX_VALUE);
-        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), button -> close()).dimensions(width/2 + 60 + 15 + 100, height/2  - 25, 20, 20).build());
+
+        int btnW = (boxW - 40 - 6) / 2;
+        this.fromExistingButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting())
+                .dimensions(boxX + 20, boxY + 64, btnW, 20).build();
+        this.fromNewButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.profileFromNewButton"), button -> addFromNew())
+                .dimensions(boxX + 20 + btnW + 6, boxY + 64, btnW, 20).build();
+
+        this.addDrawableChild(new ButtonWidget.Builder(Text.literal("x"), button -> close())
+                .dimensions(boxX + boxW - 22, boxY + 6, 16, 16).build());
         this.addDrawableChild(presetNameField);
         this.addDrawableChild(fromExistingButton);
         this.addDrawableChild(fromNewButton);
-        this.addDrawableChild(fromCodeButton);
         super.init();
         Main.inConfig = true;
 
@@ -60,40 +76,7 @@ public class AddProfileScreen extends Screen {
         fromExistingButton.setTooltipDelay(Duration.ofMillis(750L));
         fromNewButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromNewButton")));
         fromNewButton.setTooltipDelay(Duration.ofMillis(750L));
-        fromCodeButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.profileFromCodeButton")));
-        fromCodeButton.setTooltipDelay(Duration.ofMillis(750L));
         presetNameField.setPlaceholder(Text.translatable("firorize.config.placeholder.newProfileNameField"));
-    }
-
-    private int tooltipTime = 0;
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (tooltipTime > 0) {
-            tooltipTime--;
-        }
-        if (profileNameTooltipTime > 0) {
-            profileNameTooltipTime--;
-        }
-    }
-
-    private boolean pasteTime = false;
-
-    private void fromCode()  {
-        if (!pasteTime) {
-            fromCodeButton.setMessage(Text.translatable("firorize.config.button.profileFromCodeButton2"));
-            pasteTime = true;
-        } else {
-            pasteTime = false;
-            KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile = deserializeFromString(MinecraftClient.getInstance().keyboard.getClipboard());
-            fromCodeButton.setMessage(Text.translatable("firorize.config.button.profileFromCodeButton1"));
-            if (newProfile == null) {
-                tooltipTime = 30;
-            } else {
-                addProfile(newProfile);
-            }
-        }
     }
 
     public void addFromExisting() {
@@ -122,11 +105,9 @@ public class AddProfileScreen extends Screen {
     public void addProfile(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
         if (newProfile != null) {
             if (presetNameField.getText().isEmpty()) {
-                profileNameTooltip = profileNameTooltips[0];
-                profileNameTooltipTime = 30;
+                nameError = Text.translatable("firorize.config.tooltip.empty");
             } else if (Main.CONFIG_MANAGER.getFireColorPresets().keySet().stream().anyMatch(presetNameField.getText()::equalsIgnoreCase)) {
-                profileNameTooltip = profileNameTooltips[1];
-                profileNameTooltipTime = 30;
+                nameError = Text.translatable("firorize.config.tooltip.exists");
             } else {
                 parent.presetListWidget.addProfile(presetNameField.getText(), newProfile);
                 Main.setScale(width, height, client);
@@ -160,34 +141,27 @@ public class AddProfileScreen extends Screen {
         }
         return null;
     }
+
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.applyBlur(delta);
-
-
-        this.renderDarkening(context);
+        // Render the config screen behind as a modal backdrop (pushed back in z, previews suppressed),
+        // then a dim overlay and the dialog box (matching the profile-delete confirm box), rather than
+        // blurring through to the game.
+        ChangeFireColorScreen.renderModalBackdrop(context, parent, delta);
+        context.fill(0, 0, this.width, this.height, 0xB0000000);
+        context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
+        context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
+        context.drawBorder(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
+        context.drawCenteredTextWithShadow(textRenderer, getTitle(), width / 2, boxY + 9, 0xFFFFFFFF);
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, -500);
-        parent.render(context, 0, 0, delta);
-        context.getMatrices().pop();
-        context.getMatrices().push();
+        super.render(context, mouseX, mouseY, delta); // renderBackground (parent + dim + box) then the dialog widgets
 
-        context.getMatrices().translate(0, 0, -490);
-
-
-        super.render(context, mouseX, mouseY, delta);
-
-        if (tooltipTime > 0) {
-            context.drawTooltip(textRenderer, Text.translatable("firorize.config.tooltip.invalidCode"), fromCodeButton.getX() + 10, fromCodeButton.getY() - 5);
+        // Validation feedback as red text in the dialog (matching the other dialogs), not a tooltip.
+        if (nameError != null) {
+            context.drawCenteredTextWithShadow(textRenderer, nameError, width / 2, boxY + boxH - 18, 0xFFE08080);
         }
-        if (profileNameTooltipTime > 0) {
-            context.drawTooltip(textRenderer, Text.translatable(profileNameTooltip), presetNameField.getX() + 10, presetNameField.getY() + presetNameField.getHeight() + 5);
-        }
-
-        context.getMatrices().pop();
     }
 }
