@@ -2,6 +2,7 @@ package com.oscimate.firorize;
 
 import com.oscimate.firorize.config.ConfigManager;
 import com.oscimate.firorize.config.ConfigScreen;
+import com.oscimate.firorize.config.KeyValuePair;
 import com.oscimate.firorize.config.render.BlockSceneRenderer;
 import com.oscimate.firorize.mixin.fire_overlays.client.FireBlockInvoker;
 import com.oscimate.firorize.test.TestModel;
@@ -115,42 +116,17 @@ public class Main implements ClientModInitializer {
                         }
 
                         if (!blockUnder.equals(Blocks.AIR)) {
-                            ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
-                            if ((blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString())) ||
-                                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getEntityWorld().getBiome(mutable).getKey().get().getValue().toString()) ||
-                                    list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString()))) {
-
-                                ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(new int[]{2});
-
-                                for (int ii = 0; ii < 3; ii++) {
-                                    int order = Main.CONFIG_MANAGER.getPriorityOrder().get(ii);
-
-                                    if (order == 0) {
-                                        if (list.get(0).containsKey(Registries.BLOCK.getId(blockUnder).toString())) {
-                                            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(0).get(Registries.BLOCK.getId(blockUnder).toString()));
-                                            return;
-                                        }
-                                    } else if (order == 1) {
-                                        if (blockUnder.getDefaultState().streamTags().anyMatch(tag -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1).containsKey(tag.id().toString()))) {
-                                            ListOrderedMap<String, int[]> map = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(1);
-                                            // Match against the block's real tags by id string directly. Cross-version
-                                            // profiles may hold tags absent in this version; those simply never match
-                                            // a real tag here, so they're ignored without resolving them.
-                                            String matchedTag = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().anyMatch(tagg -> tagg.id().toString().equals(tag))).findFirst().orElse(null);
-                                            if (matchedTag != null) {
-                                                ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(list.get(1).get(matchedTag).clone());
-                                                return;
-                                            }
-                                        }
-                                    } else if (order == 2) {
-                                        if (Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().get(2).containsKey(entity.getEntityWorld().getBiome(mutable).getKey().get().getValue().toString())) {
-                                            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(list.get(2).get(String.valueOf(entity.getEntityWorld().getBiome(mutable).getKey().get().getValue().toString())).clone());
-                                            return;
-                                        }
-                                    }
-                                }
+                            // Walk every active profile (top of the list first) and use the first that
+                            // maps this block/tag/biome. A match wins outright; otherwise the fire shows
+                            // the top active profile's base colour (tentative — a later fire block in the
+                            // bounding box may still resolve a specific colour and take over).
+                            String biomeKey = entity.getEntityWorld().getBiome(mutable).getKey().get().getValue().toString();
+                            int[] resolved = resolveActiveFireColor(blockUnder, biomeKey);
+                            if (resolved != null) {
+                                ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(resolved);
+                                return;
                             } else {
-                                ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
+                                ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(topActiveBase().clone());
                             }
                         }
                     } else {
@@ -159,7 +135,7 @@ public class Main implements ClientModInitializer {
                             ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(new int[]{2});
                         }
                         else if (((RenderFireColorAccessor) entity).firorize$getRenderFireColor() == null) {
-                            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
+                            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(topActiveBase().clone());
                         }
                     }
                 }
@@ -169,8 +145,56 @@ public class Main implements ClientModInitializer {
         // whose block-under is air, or no priority match) can leave it unset, which would NPE the
         // render redirects that dereference firorize$getRenderFireColor()[0].
         if (((RenderFireColorAccessor) entity).firorize$getRenderFireColor() == null) {
-            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight().clone());
+            ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(topActiveBase().clone());
         }
+    }
+
+    /**
+     * Resolves the fire colour for a block by <b>profile list order</b>: each profile is a single type
+     * (block / tag / biome — see {@link ConfigManager#getProfileType}), so this walks the active
+     * profiles top-to-bottom and returns the colour of the first one whose own category matches this
+     * block/tag/biome. Priority is therefore controlled entirely by reordering profiles. Returns
+     * {@code null} if no active profile matches. Shared by the burning-entity / first-person overlay
+     * ({@link #settingFireColor}) and the in-world fire block ({@code TestModel}) so both honour the
+     * same active-profile order. {@code biomeKey} may be {@code null} (biome profiles then never match).
+     */
+    public static int[] resolveActiveFireColor(Block blockUnder, String biomeKey) {
+        String blockKey = Registries.BLOCK.getId(blockUnder).toString();
+        ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = CONFIG_MANAGER.getFireColorPresets();
+        for (String name : presets.keyList()) {
+            if (!CONFIG_MANAGER.getActiveProfiles().contains(name)) continue;
+            ArrayList<ListOrderedMap<String, int[]>> list = presets.get(name).getLeft().getLeft();
+            switch (CONFIG_MANAGER.getProfileType(name)) {
+                case 0 -> {
+                    if (list.get(0).containsKey(blockKey)) return list.get(0).get(blockKey).clone();
+                }
+                case 1 -> {
+                    ListOrderedMap<String, int[]> map = list.get(1);
+                    // Match stored tag ids against the block's real tags. Cross-version profiles may hold
+                    // tags absent in this version; those simply never match and are ignored.
+                    String matchedTag = map.keyList().stream().filter(tag -> blockUnder.getDefaultState().streamTags().anyMatch(tg -> tg.id().toString().equals(tag))).findFirst().orElse(null);
+                    if (matchedTag != null) return map.get(matchedTag).clone();
+                }
+                case 2 -> {
+                    if (biomeKey != null && list.get(2).containsKey(biomeKey)) return list.get(2).get(biomeKey).clone();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The base (no-match) fire colour: the top-most active profile's base, or the live editing
+     * buffer's base if no profile is active. Never null, so callers can {@code .clone()} safely.
+     */
+    public static int[] topActiveBase() {
+        ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = CONFIG_MANAGER.getFireColorPresets();
+        for (String name : presets.keyList()) {
+            if (CONFIG_MANAGER.getActiveProfiles().contains(name)) {
+                return presets.get(name).getLeft().getRight();
+            }
+        }
+        return CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
     }
 
     public static final KeyBinding configKeybind = KeyBindingHelper.registerKeyBinding(
