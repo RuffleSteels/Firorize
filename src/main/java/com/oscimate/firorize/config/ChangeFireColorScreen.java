@@ -1508,6 +1508,26 @@ public class ChangeFireColorScreen extends Screen {
             super(minecraft, width, height, x, y);
             generateEntries();
         }
+
+        @Override
+        public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+            super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+            // Tag and biome lists are populated from the server/datapack registries, which only exist
+            // once a world is loaded. In the main menu they're empty, so the list would otherwise be
+            // blank with no explanation — spell out why instead.
+            boolean needsWorld = (currentSearchButton == 1 && Main.blockTagList.isEmpty())
+                    || (currentSearchButton == 2 && Main.biomeKeyList.isEmpty());
+            if (needsWorld) {
+                Component msg = Component.translatable(currentSearchButton == 1
+                        ? "firorize.config.status.noTagsNoWorld" : "firorize.config.status.noBiomesNoWorld");
+                int cx = getX() + getWidth() / 2;
+                int cy = getY() + getHeight() / 2 - ChangeFireColorScreen.this.font.lineHeight;
+                for (FormattedCharSequence line : ChangeFireColorScreen.this.font.split(msg, getWidth() - 24)) {
+                    context.centeredText(ChangeFireColorScreen.this.font, line, cx, cy, 0xFF9A9A9A);
+                    cy += ChangeFireColorScreen.this.font.lineHeight + 1;
+                }
+            }
+        }
         public int num = 0;
         public void test() {
             test(true);
