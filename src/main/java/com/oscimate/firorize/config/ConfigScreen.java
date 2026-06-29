@@ -33,6 +33,10 @@ public class ConfigScreen extends Screen {
 
     @Override
     protected void init() {
+        // This entry screen renders no in-world fire preview, so it must own inConfig=false. Asserting
+        // it here (not just relying on ChangeFireColorScreen.onClose) hardens against any modal layered
+        // over this screen forcing it true and leaking it back to the world. See DonatePopupScreen.
+        Main.inConfig = false;
         this.addDrawableChild(new ButtonWidget.Builder(Text.translatable("firorize.config.button.changeFireHeightScreen"), button -> this.client.setScreen(new ChangeFireHeightScreen(this))).dimensions(width / 2 + buttonWidth/2 - 40, height/2 - 15 - 20, buttonWidth, 20).build());
         this.addDrawableChild(new ButtonWidget.Builder(Text.translatable("firorize.config.button.changeFireColorScreen"), button -> doStuff(new ChangeFireColorScreen(this))).dimensions(width / 2 - buttonWidth - buttonWidth/2 + 40, height/2 - 15 - 20, buttonWidth, 20).build());
 

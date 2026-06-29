@@ -36,6 +36,9 @@ public class ChangeFireHeightScreen extends Screen {
     }
     @Override
     protected void init() {
+        // No in-world fire preview here, so own inConfig=false (hardening against modals — e.g. the
+        // Ko-fi popup — forcing it true and leaking it back to the world). See DonatePopupScreen.
+        Main.inConfig = false;
         FireHeightSliderWidget customTimeSliderWidget = new FireHeightSliderWidget(this.width / 2 - 75, 10, 150, 20, Text.translatable("firorize.config.title.height"), (double) Main.CONFIG_MANAGER.getCurrentFireHeightSlider() /100);
         this.addDrawableChild(customTimeSliderWidget);
         this.addDrawableChild(new ButtonWidget.Builder(ScreenTexts.DONE, button -> onClose()).dimensions(width / 2 - 100, 50, 200, 20).build());
