@@ -55,20 +55,24 @@ public class BuiltinUploadScreen extends Screen {
 
         titleField = new PlaceholderField(this.font, boxX + 20, boxY + 46, boxW - 40, 20, Component.empty());
         titleField.setHint(Component.translatable("firorize.config.placeholder.presetTitle"));
+        titleField.setMaxLength(32);
         titleField.setValue(initialTitle);
         addRenderableWidget(titleField);
 
         descriptionField = new PlaceholderField(this.font, boxX + 20, boxY + 74, boxW - 40, 20, Component.empty());
         descriptionField.setHint(Component.translatable("firorize.config.placeholder.presetDescription"));
+        descriptionField.setMaxLength(150);
         descriptionField.setValue(initialDescription);
         addRenderableWidget(descriptionField);
 
         sortOrderField = new PlaceholderField(this.font, boxX + 20, boxY + 102, boxW - 40, 20, Component.empty());
         sortOrderField.setHint(Component.translatable("firorize.config.placeholder.sortOrder"));
+        sortOrderField.setMaxLength(6);
         addRenderableWidget(sortOrderField);
 
         passwordField = new PlaceholderField(this.font, boxX + 20, boxY + 130, boxW - 40, 20, Component.empty());
         passwordField.setHint(Component.translatable("firorize.config.placeholder.builtinPassword"));
+        passwordField.setMaxLength(128);
         addRenderableWidget(passwordField);
 
         uploadButton = new PanelButton(boxX + (boxW - 140) / 2, boxY + boxH - 28, 140, 20,
@@ -89,6 +93,10 @@ public class BuiltinUploadScreen extends Screen {
             return;
         }
         String password = passwordField.getValue();
+        if (password.isEmpty()) {
+            setStatus(Component.translatable("firorize.config.status.passwordRequired"), true);
+            return;
+        }
 
         KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> profile =
                 Main.CONFIG_MANAGER.getFireColorPresets().get(profileName);
