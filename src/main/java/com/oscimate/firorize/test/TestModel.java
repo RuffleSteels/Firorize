@@ -17,9 +17,7 @@ import net.minecraft.client.resources.model.sprite.SpriteId;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.world.level.biome.Biome;
@@ -27,13 +25,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import org.apache.commons.collections4.map.ListOrderedMap;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-
-import static com.oscimate.firorize.Main.CONFIG_MANAGER;
 
 /**
  * Wraps the vanilla FIRE / SOUL_FIRE {@link BlockStateModel} and recolours its quads per-position:
@@ -112,18 +106,13 @@ public class TestModel extends WrapperBlockStateModel {
         }
     }
 
-    /** Resolves the fire colour {@code int[]{baseRGB, overlayRGB}} for the fire at {@code pos}. */
-    @SuppressWarnings("deprecation") // builtInRegistryHolder().tags() is the supported per-block tag stream
+    /**
+     * Resolves the fire colour {@code int[]{baseRGB, overlayRGB}} for the fire at {@code pos} by the
+     * same active-profile list order as {@link Main#resolveActiveFireColor} (top of the profile list
+     * wins), so the in-world fire block agrees with the burning-entity / first-person overlay instead
+     * of tracking whichever profile is open in the editor.
+     */
     private int[] computeColor(BlockAndTintGetter blockView, BlockPos pos, BlockState state) {
-        ArrayList<ListOrderedMap<String, int[]>> list = CONFIG_MANAGER.getCurrentBlockFireColors().getLeft();
-
-        if (blockView.getBlockState(pos).getBlock().equals(Blocks.AIR)) {
-            if (soulFire && list.get(0).keyList().contains("minecraft:soul_sand")) {
-                return list.get(0).get("minecraft:soul_sand");
-            }
-            return CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-        }
-
         Block blockUnder;
         if (!soulFire) {
             if (state.getValue(FireBlock.NORTH)) {
@@ -143,43 +132,19 @@ public class TestModel extends WrapperBlockStateModel {
             blockUnder = blockView.getBlockState(pos.below()).getBlock();
         }
 
-        Holder<Biome> biome = ((FabricBlockGetter) blockView).getBiomeFabric(pos);
-
-        if ((blockUnder.equals(Blocks.AIR) && unique != null)
-                || blockUnder.builtInRegistryHolder().tags().anyMatch(tag -> list.get(1).containsKey(tag.location().toString()))
-                || (biome != null && list.get(2).containsKey(biome.unwrapKey().get().identifier().toString()))
-                || list.get(0).containsKey(BuiltInRegistries.BLOCK.getKey(blockUnder).toString())) {
-            for (int i = 0; i < 3; i++) {
-                int order = CONFIG_MANAGER.getPriorityOrder().get(i);
-                if (order == 0) {
-                    if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
-                        blockUnder = unique;
-                    }
-                    if (blockUnder != null && list.get(0).containsKey(BuiltInRegistries.BLOCK.getKey(blockUnder).toString())) {
-                        unique = blockUnder;
-                        return list.get(0).get(BuiltInRegistries.BLOCK.getKey(blockUnder).toString());
-                    }
-                } else if (order == 1) {
-                    if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
-                        blockUnder = unique;
-                    }
-                    if (blockUnder != null && blockUnder.builtInRegistryHolder().tags().anyMatch(tag -> list.get(1).containsKey(tag.location().toString()))) {
-                        unique = blockUnder;
-                        ListOrderedMap<String, int[]> map = list.get(1);
-                        Block finalBlockUnder = blockUnder;
-                        List<TagKey<Block>> tags = map.keyList().stream()
-                                .filter(tag -> finalBlockUnder.builtInRegistryHolder().tags().map(tagg -> tagg.location().toString()).toList().contains(tag))
-                                .map(tag -> Main.blockTagList.stream().filter(tagg -> tagg.location().toString().equals(tag)).findFirst().get())
-                                .toList();
-                        return list.get(1).get(tags.get(0).location().toString());
-                    }
-                } else if (order == 2) {
-                    if (biome != null && list.get(2).containsKey(biome.unwrapKey().get().identifier().toString())) {
-                        return list.get(2).get(biome.unwrapKey().get().identifier().toString());
-                    }
-                }
-            }
+        // Animation frames occasionally read the source block as air; reuse the last non-air block
+        // under this fire so its colour doesn't flicker. Soul fire only burns on soul soil/sand, so
+        // fall back to soul_sand when even the cache is empty.
+        if (blockUnder == null || blockUnder.equals(Blocks.AIR)) {
+            blockUnder = unique != null ? unique : (soulFire ? Blocks.SOUL_SAND : null);
+        } else {
+            unique = blockUnder;
         }
-        return CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+
+        Holder<Biome> biome = ((FabricBlockGetter) blockView).getBiomeFabric(pos);
+        String biomeKey = biome == null ? null : biome.unwrapKey().get().identifier().toString();
+
+        int[] resolved = blockUnder == null ? null : Main.resolveActiveFireColor(blockUnder, biomeKey);
+        return resolved != null ? resolved : Main.topActiveBase().clone();
     }
 }

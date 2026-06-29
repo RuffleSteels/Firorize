@@ -40,58 +40,80 @@ public class AddProfileScreen extends Screen {
         return super.mouseClicked(click, doubled);
     }
 
-    public Button fromExistingButton;
-    public Button fromNewButton;
+    public Button blockButton;
+    public Button tagButton;
+    public Button biomeButton;
     public EditBox presetNameField;
     private Component nameError = null;
 
     private int boxX, boxY, boxW, boxH;
+    // Caption (heading + wrapped grey description) drawn between the name field and the type buttons,
+    // explaining that a profile recolours fire by one thing. Positions/lines computed once in init().
+    private int promptY, descX, descY;
+    private java.util.List<net.minecraft.util.FormattedCharSequence> descLines = java.util.List.of();
 
     @Override
     protected void init() {
         parent.isPresetAdd = false;
-        // Box sized snugly to its content: title, name field, the two buttons, and a reserved line
-        // for the validation message — no dead space at the bottom.
+        // Box sized snugly to its content: title, name field, a short caption explaining the choice,
+        // the three type buttons, and a reserved line for the validation message — no dead space.
         int pad = 10;
         boxW = Math.min(300, width - 40);
-        boxH = 96;
+
+        // Caption wrapped to the box width; the box grows to fit however many lines it takes.
+        descLines = font.split(Component.translatable("firorize.config.newProfile.description"), boxW - pad * 2);
+
+        int nameTop = 28;
+        int promptTop = nameTop + 20 + 8;                 // heading, below the name field
+        int descTop = promptTop + font.lineHeight + 2;    // grey description under the heading
+        int buttonsTop = descTop + descLines.size() * font.lineHeight + 8;
+        boxH = buttonsTop + 20 + 18;                       // buttons + reserved validation line
+
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
+        descX = boxX + pad;
+        promptY = boxY + promptTop;
+        descY = boxY + descTop;
 
-        this.presetNameField = new PlaceholderField(this.font, boxX + pad, boxY + 28, boxW - pad * 2, 20, CommonComponents.GUI_DONE);
+        this.presetNameField = new PlaceholderField(this.font, boxX + pad, boxY + nameTop, boxW - pad * 2, 20, CommonComponents.GUI_DONE);
         presetNameField.setMaxLength(Integer.MAX_VALUE);
 
-        int btnW = (boxW - pad * 2 - 6) / 2;
-        this.fromExistingButton = new Button.Builder(Component.translatable("firorize.config.button.profileFromCurrentButton"), button -> addFromExisting())
-                .bounds(boxX + pad, boxY + 54, btnW, 20).build();
-        this.fromNewButton = new Button.Builder(Component.translatable("firorize.config.button.profileFromNewButton"), button -> addFromNew())
-                .bounds(boxX + pad + btnW + 6, boxY + 54, btnW, 20).build();
+        // Pick the profile's single type; the profile starts empty for that category. Each button's
+        // tooltip spells out what that category recolours by.
+        int gap = 6;
+        int btnW = (boxW - pad * 2 - gap * 2) / 3;
+        this.blockButton = new Button.Builder(Component.translatable("firorize.config.type.block"), button -> createOfType(0))
+                .bounds(boxX + pad, boxY + buttonsTop, btnW, 20).build();
+        this.tagButton = new Button.Builder(Component.translatable("firorize.config.type.tag"), button -> createOfType(1))
+                .bounds(boxX + pad + btnW + gap, boxY + buttonsTop, btnW, 20).build();
+        this.biomeButton = new Button.Builder(Component.translatable("firorize.config.type.biome"), button -> createOfType(2))
+                .bounds(boxX + pad + (btnW + gap) * 2, boxY + buttonsTop, btnW, 20).build();
+        blockButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.newProfile.tip.block")));
+        tagButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.newProfile.tip.tag")));
+        biomeButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.newProfile.tip.biome")));
 
         this.addRenderableWidget(new Button.Builder(Component.literal("x"), button -> onClose())
                 .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
         this.addRenderableWidget(presetNameField);
-        this.addRenderableWidget(fromExistingButton);
-        this.addRenderableWidget(fromNewButton);
+        this.addRenderableWidget(blockButton);
+        this.addRenderableWidget(tagButton);
+        this.addRenderableWidget(biomeButton);
         super.init();
         Main.inConfig = true;
 
-        fromExistingButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.profileFromCurrentButton")));
-        fromExistingButton.setTooltipDelay(Duration.ofMillis(750L));
-        fromNewButton.setTooltip(Tooltip.create(Component.translatable("firorize.config.tooltip.profileFromNewButton")));
-        fromNewButton.setTooltipDelay(Duration.ofMillis(750L));
         presetNameField.setHint(Component.translatable("firorize.config.placeholder.newProfileNameField"));
     }
 
-    public void addFromExisting() {
-        ArrayList<Integer> tempPriorityOrder = new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder());
-        KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> tempCurrentColors = Main.CONFIG_MANAGER.getCurrentBlockFireColors();
-        ArrayList<ListOrderedMap<String, int[]>> tempStuff = new ArrayList<>(tempCurrentColors.getLeft());
-
-        addProfile(KeyValuePair.of(KeyValuePair.of(tempStuff, tempCurrentColors.getRight().clone()), tempPriorityOrder));
-    }
-
-    public void addFromNew() {
-        addProfile(Main.CONFIG_MANAGER.getDefaultProfile());
+    /** Creates an empty single-type profile (all three maps present but only the chosen one will ever
+     *  be filled) with a default base colour. */
+    private void createOfType(int type) {
+        ArrayList<ListOrderedMap<String, int[]>> maps = new ArrayList<>();
+        maps.add(new ListOrderedMap<>());
+        maps.add(new ListOrderedMap<>());
+        maps.add(new ListOrderedMap<>());
+        KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> profile =
+                KeyValuePair.of(KeyValuePair.of(maps, new int[]{-7456000, -6456034}), new ArrayList<>(java.util.List.of(0, 1, 2)));
+        addProfile(profile, type);
     }
 
     @Override
@@ -106,14 +128,14 @@ public class AddProfileScreen extends Screen {
         super.resize(minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
     }
 
-    public void addProfile(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile) {
+    public void addProfile(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile, int type) {
         if (newProfile != null) {
             if (presetNameField.getValue().isEmpty()) {
                 nameError = Component.translatable("firorize.config.tooltip.empty");
             } else if (Main.CONFIG_MANAGER.getFireColorPresets().keySet().stream().anyMatch(presetNameField.getValue()::equalsIgnoreCase)) {
                 nameError = Component.translatable("firorize.config.tooltip.exists");
             } else {
-                parent.presetListWidget.addProfile(presetNameField.getValue(), newProfile);
+                parent.presetListWidget.addProfile(presetNameField.getValue(), newProfile, type);
                 Main.setScale(width, height, minecraft);
                 minecraft.setScreen(parent);
             }
@@ -157,6 +179,15 @@ public class AddProfileScreen extends Screen {
         context.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF1A1A1A);
         context.outline(boxX, boxY, boxW, boxH, 0xFF8B8B8B);
         context.text(font, getTitle(), boxX + 10, boxY + 9, 0xFFFFFFFF);
+
+        // Caption between the name field and the type buttons: a brighter heading and a wrapped grey
+        // description, clarifying that the chosen button decides how this profile picks its colour.
+        context.text(font, Component.translatable("firorize.config.newProfile.prompt"), descX, promptY, 0xFFD8D8D8);
+        int ly = descY;
+        for (net.minecraft.util.FormattedCharSequence line : descLines) {
+            context.text(font, line, descX, ly, 0xFF9A9A9A);
+            ly += font.lineHeight;
+        }
     }
 
     @Override

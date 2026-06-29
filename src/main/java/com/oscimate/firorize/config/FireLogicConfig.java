@@ -75,6 +75,24 @@ public class FireLogicConfig {
         return inboxImports;
     }
 
+    public LinkedHashSet<String> activeProfiles = Main.CONFIG_MANAGER.getActiveProfiles();
+
+    public LinkedHashSet<String> getActiveProfiles() {
+        return activeProfiles;
+    }
+
+    public LinkedHashSet<String> builtinImports = Main.CONFIG_MANAGER.getBuiltinImports();
+
+    public LinkedHashSet<String> getBuiltinImports() {
+        return builtinImports;
+    }
+
+    public LinkedHashMap<String, Integer> profileTypes = Main.CONFIG_MANAGER.getProfileTypes();
+
+    public LinkedHashMap<String, Integer> getProfileTypes() {
+        return profileTypes;
+    }
+
     public long accumulatedConfigTimeMs = Main.CONFIG_MANAGER.getAccumulatedConfigTimeMs();
 
     public long getAccumulatedConfigTimeMs() {
