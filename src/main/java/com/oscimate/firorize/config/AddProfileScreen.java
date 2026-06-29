@@ -13,10 +13,13 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Set;
 
 /**
  * "New profile" dialog. Lets the player create a profile from the current colours or from defaults,
@@ -120,13 +123,61 @@ public class AddProfileScreen extends Screen {
         }
     }
 
+    // Only these classes may be instantiated while deserializing a shared/imported profile. Profile
+    // codes come from untrusted sources (the gallery, other players, the clipboard), so the stream is
+    // locked to the exact data-holder shape — KeyValuePair + the collections/primitives it contains.
+    // Everything else (i.e. any Java deserialization "gadget" class) is rejected before readObject can
+    // construct it, which is what makes processing this external data safe.
+    private static final Set<Class<?>> ALLOWED_DESERIALIZE_CLASSES = Set.of(
+            KeyValuePair.class, ListOrderedMap.class, ArrayList.class, HashMap.class,
+            // Number is Integer's superclass; its class descriptor is resolved while reading any
+            // boxed Integer in the priority list, so it must be allowed or every import is rejected.
+            Integer.class, Number.class, String.class);
+
+    // Array component types that legitimately appear as the backing store of the collections above
+    // (ArrayList's Object[] elementData, HashMap's HashMap.Entry[]/Object[] table). Arrays carry no
+    // behaviour of their own — each element is filtered individually as it resolves — so allowing
+    // these structural arrays is safe and is required for the profile graph to deserialize at all.
+    private static final Set<Class<?>> ALLOWED_ARRAY_COMPONENTS = Set.of(
+            Object.class, java.util.Map.Entry.class);
+
+    /** Hard limit on a decoded profile blob; the Worker caps uploads at 100 000 chars, this guards the
+     *  clipboard path and bounds resource use during deserialization. */
+    private static final int MAX_PROFILE_BYTES = 200_000;
+
+    private static final ObjectInputFilter PROFILE_FILTER = info -> {
+        // Resource-exhaustion guards (apply to the whole stream, serialClass is null for these).
+        if (info.depth() > 50 || info.references() > 10_000 || info.streamBytes() > MAX_PROFILE_BYTES) {
+            return ObjectInputFilter.Status.REJECTED;
+        }
+        if (info.arrayLength() > 100_000) return ObjectInputFilter.Status.REJECTED;
+        Class<?> c = info.serialClass();
+        if (c == null) return ObjectInputFilter.Status.UNDECIDED; // not a class check (depth/refs/array)
+        if (c.isArray()) {
+            Class<?> base = c;
+            while (base.isArray()) base = base.getComponentType();
+            // int[] etc. (primitive), arrays of allowlisted holders, and the structural Object[]/
+            // Map.Entry[] backing arrays. Anything else stays rejected.
+            return base.isPrimitive()
+                    || ALLOWED_DESERIALIZE_CLASSES.contains(base)
+                    || ALLOWED_ARRAY_COMPONENTS.contains(base)
+                    ? ObjectInputFilter.Status.ALLOWED : ObjectInputFilter.Status.REJECTED;
+        }
+        return ALLOWED_DESERIALIZE_CLASSES.contains(c)
+                ? ObjectInputFilter.Status.ALLOWED : ObjectInputFilter.Status.REJECTED;
+    };
+
     @SuppressWarnings("unchecked") // shape is validated by the instanceof checks above the cast
     public static KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> deserializeFromString(String str) {
         try {
             byte[] data = Base64.getDecoder().decode(str);
+            if (data.length > MAX_PROFILE_BYTES) return null;
 
             try (ByteArrayInputStream bais = new ByteArrayInputStream(data);
                  ObjectInputStream ois = new ObjectInputStream(bais)) {
+                // Lock the stream to the known profile shape *before* reading, so untrusted gadget
+                // classes are refused at resolve time rather than constructed.
+                ois.setObjectInputFilter(PROFILE_FILTER);
                 Object obj = ois.readObject();
 
                 if (obj instanceof KeyValuePair<?, ?>) {
