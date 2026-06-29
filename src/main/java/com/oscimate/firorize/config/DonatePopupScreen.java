@@ -24,6 +24,12 @@ import java.time.Duration;
  */
 public class DonatePopupScreen extends Screen {
     private final Screen parent;
+    // The in-world-preview state of the screen this popup interrupts, captured at construction (before
+    // setScreen runs the parent's removed(), which can clear it). Restored in init() so the popup is
+    // transparent to Main.inConfig: forcing it true would leave it stuck on after returning to a
+    // non-preview parent (entry/height screen), making world fire render through the config-preview
+    // sprite path until the colour editor is reopened.
+    private final boolean parentInConfig = Main.inConfig;
     private int boxX, boxY, boxW, boxH;
 
     public DonatePopupScreen(Screen parent) {
@@ -66,7 +72,7 @@ public class DonatePopupScreen extends Screen {
         this.addRenderableWidget(support);
         this.addRenderableWidget(later);
         super.init();
-        Main.inConfig = true;
+        Main.inConfig = parentInConfig;
     }
 
     @Override
