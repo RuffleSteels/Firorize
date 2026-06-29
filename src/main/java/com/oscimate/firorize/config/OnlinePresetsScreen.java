@@ -7,44 +7,43 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * Online profiles dialog, in one of two {@link View}s reached by their own buttons on the colour
- * editor:
+ * The Import Profiles hub, opened from the colour editor. One panel with a custom tab strip switching
+ * between three views:
  * <ul>
- *   <li><b>Community Profiles</b> — a searchable list of the player's own uploads (under a "My
- *       Uploads" header, with Delete) followed by everyone else's (Import). The Upload button lives
- *       here.</li>
- *   <li><b>Inbox</b> — profiles privately sent to the player ("Received", Import/Dismiss) and their
- *       own outgoing sends ("Sent", Cancel). Requires a Minecraft session.</li>
+ *   <li><b>Community</b> — the player's own uploads (Delete) and everyone else's (Import); Upload lives here.</li>
+ *   <li><b>Built-in</b> — curated default profiles served from the Worker's {@code /builtin} table (Import only).</li>
+ *   <li><b>Inbox</b> — profiles privately sent to the player (Import/Dismiss) and their own sends (Cancel); Send lives here.</li>
  * </ul>
- * Styled inside a centred panel matching {@link ChangeFireColorScreen#renderConfirm}.
+ * Everything is drawn on the dark Firorize panel with {@link PanelButton}s rather than vanilla buttons,
+ * so the whole section reads as one surface.
  */
 public class OnlinePresetsScreen extends Screen {
-    public enum View { BROWSE, INBOX }
+    public enum View { COMMUNITY, BUILTIN, INBOX }
 
     private enum State { LOADING, LOADED, ERROR, NEED_AUTH }
 
     public final ChangeFireColorScreen parent;
-    private final View view;
+    private View view;
 
     private OnlinePresetListWidget listWidget;
     private State state = null;
 
-    // Browse data: the player's own uploads and everyone else's (already split).
+    // Community data: the player's own uploads and everyone else's (already split).
     private List<OnlinePreset> myUploads = List.of();
     private List<OnlinePreset> community = List.of();
+    // Built-in (curated) data.
+    private List<OnlinePreset> builtin = List.of();
     private PlaceholderField searchField;
-    private Button uploadButton;
+    private PanelButton actionButton; // Upload (Community) / Send (Inbox); null on Built-in
 
     // Inbox data.
     private List<OnlinePreset> inboxReceived = List.of();
@@ -62,7 +61,11 @@ public class OnlinePresetsScreen extends Screen {
     private int refreshIconX, refreshIconY;
 
     public OnlinePresetsScreen(ChangeFireColorScreen parent, View view) {
-        super(Component.translatable(view == View.INBOX ? "firorize.config.title.inbox" : "firorize.config.title.communityProfiles"));
+        super(Component.translatable(switch (view) {
+            case BUILTIN -> "firorize.config.title.builtinProfiles";
+            case INBOX -> "firorize.config.title.inbox";
+            case COMMUNITY -> "firorize.config.title.communityProfiles";
+        }));
         this.parent = parent;
         this.view = view;
     }
@@ -75,38 +78,36 @@ public class OnlinePresetsScreen extends Screen {
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
 
+        boolean hasSearch = view != View.INBOX;
+        boolean hasAction = view != View.BUILTIN;
+
         int listY;
         int listH;
-        if (view == View.BROWSE) {
+        if (hasSearch) {
             searchField = new PlaceholderField(this.font, boxX + 10, boxY + 24, boxW - 20, 16, Component.empty());
             searchField.setHint(Component.translatable("firorize.config.placeholder.search"));
             searchField.setMaxLength(48);
-            searchField.setResponder(s -> applyBrowse());
+            searchField.setResponder(s -> applyList());
             addRenderableWidget(searchField);
-
             listY = boxY + 46;
-            listH = boxH - 46 - 34;
         } else {
-            // Room for the wrapped inbox description under the title (which sits lower than the
-            // title/buttons row), and the Send button at the bottom.
+            // Inbox: leave room for the wrapped description under the title.
             listY = boxY + 52;
-            listH = boxH - 52 - 30;
         }
+        listH = boxH - (listY - boxY) - (hasAction ? 34 : 22);
 
         listWidget = new OnlinePresetListWidget(boxX + 10, listY, boxW - 20, listH, this, this.font);
         addRenderableWidget(listWidget);
 
-        if (view == View.BROWSE) {
-            uploadButton = new Button.Builder(Component.translatable("firorize.config.button.uploadPreset"),
-                    b -> minecraft.setScreen(new ChooseProfileScreen(this, this)))
-                    .bounds(boxX + boxW - 10 - 100, boxY + boxH - 26, 100, 18).build();
-            addRenderableWidget(uploadButton);
+        if (hasAction) {
+            Component label = Component.translatable(view == View.INBOX
+                    ? "firorize.config.button.inboxSend" : "firorize.config.button.uploadPreset");
+            int w = Math.max(100, font.width(label) + 24);
+            actionButton = new PanelButton(boxX + boxW - 10 - w, boxY + boxH - 26, w, 18, label,
+                    b -> minecraft.setScreen(new ChooseProfileScreen(this, this)));
+            addRenderableWidget(actionButton);
         } else {
-            // Inbox view: quick access to send a profile to a friend.
-            uploadButton = new Button.Builder(Component.translatable("firorize.config.button.inboxSend"),
-                    b -> minecraft.setScreen(new ChooseProfileScreen(this, this)))
-                    .bounds(boxX + boxW - 10 - 110, boxY + boxH - 26, 110, 18).build();
-            addRenderableWidget(uploadButton);
+            actionButton = null;
         }
 
         // Privacy policy: small gray underlined clickable text (not a button), bottom-left of the panel.
@@ -116,15 +117,14 @@ public class OnlinePresetsScreen extends Screen {
         privacyX = boxX + 10;
         privacyY = boxY + boxH - 16;
 
-        addRenderableWidget(new Button.Builder(Component.literal("x"), b -> onClose())
-                .bounds(boxX + boxW - 22, boxY + 6, 16, 16).build());
+        addRenderableWidget(new PanelButton(boxX + boxW - 22, boxY + 6, 16, 16, Component.literal("x"), b -> onClose()));
 
-        // Refresh: re-pulls the current view from the Worker. Same 16×16 footprint as the close
-        // button beside it; the refresh.png sprite is drawn over it in render() (see drawRefreshIcon).
+        // Refresh: re-pulls the current view from the Worker. The refresh.png sprite is drawn over it
+        // in render() (see drawRefreshIcon).
         refreshIconX = boxX + boxW - 42;
         refreshIconY = boxY + 6;
-        Button refreshButton = new Button.Builder(Component.empty(), b -> { state = null; load(); })
-                .bounds(refreshIconX, refreshIconY, 16, 16).build();
+        PanelButton refreshButton = new PanelButton(refreshIconX, refreshIconY, 16, 16, Component.empty(),
+                b -> { state = null; load(); });
         refreshButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("firorize.config.tooltip.refresh")));
         addRenderableWidget(refreshButton);
 
@@ -133,14 +133,17 @@ public class OnlinePresetsScreen extends Screen {
     }
 
     private void load() {
-        if (view == View.BROWSE) loadBrowse();
-        else loadInbox();
+        switch (view) {
+            case COMMUNITY -> loadCommunity();
+            case BUILTIN -> loadBuiltin();
+            case INBOX -> loadInbox();
+        }
     }
 
-    private void loadBrowse() {
+    private void loadCommunity() {
         if (state == State.LOADING) return;
         if (state == State.LOADED) {
-            applyBrowse();
+            applyList();
             return;
         }
         state = State.LOADING;
@@ -160,16 +163,40 @@ public class OnlinePresetsScreen extends Screen {
                         Set<Integer> mineIds = myUploads.stream().map(OnlinePreset::id).collect(Collectors.toSet());
                         community = all.stream().filter(p -> !mineIds.contains(p.id())).toList();
                         state = State.LOADED;
-                        applyBrowse();
+                        applyList();
                     }
                 }));
     }
 
-    /** Re-filters the cached browse data by the search box and pushes it to the list. */
-    private void applyBrowse() {
+    private void loadBuiltin() {
+        if (state == State.LOADING) return;
+        if (state == State.LOADED) {
+            applyList();
+            return;
+        }
+        state = State.LOADING;
+        OnlinePresetsClient.fetchBuiltin()
+                .whenComplete((list, err) -> Minecraft.getInstance().execute(() -> {
+                    if (err != null) {
+                        OnlinePresetsClient.LOGGER.error("Failed to fetch built-in profiles", err);
+                        state = State.ERROR;
+                    } else {
+                        builtin = list;
+                        state = State.LOADED;
+                        applyList();
+                    }
+                }));
+    }
+
+    /** Re-filters the cached Community/Built-in data by the search box and pushes it to the list. */
+    private void applyList() {
         if (listWidget == null) return;
         String q = searchField == null ? "" : searchField.getValue().trim().toLowerCase();
-        listWidget.setBrowse(filter(myUploads, q), filter(community, q));
+        if (view == View.BUILTIN) {
+            listWidget.setBuiltin(filter(builtin, q));
+        } else {
+            listWidget.setBrowse(filter(myUploads, q), filter(community, q));
+        }
     }
 
     private static List<OnlinePreset> filter(List<OnlinePreset> presets, String q) {
@@ -244,9 +271,9 @@ public class OnlinePresetsScreen extends Screen {
                 }));
     }
 
-    /** Called by {@link UploadPresetScreen} after a successful upload to re-pull the browse lists. */
+    /** Called by {@link UploadPresetScreen} after a successful upload to re-pull the Community lists. */
     public void refresh() {
-        if (view == View.BROWSE) {
+        if (view == View.COMMUNITY) {
             state = null;
             load();
         }
@@ -301,8 +328,6 @@ public class OnlinePresetsScreen extends Screen {
     @Override
     public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Overlay the live config screen (dimmed) rather than cutting through to the blurred game.
-        // renderAsBackdrop suppresses the config's deferred 3D/colour-wheel elements, which otherwise
-        // composite in a later pass and would draw on top of this dialog.
         ChangeFireColorScreen.renderModalBackdrop(context, parent, delta);
         context.fill(0, 0, this.width, this.height, 0xB0000000);
         context.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF000000);
@@ -317,7 +342,7 @@ public class OnlinePresetsScreen extends Screen {
         super.extractRenderState(context, mouseX, mouseY, delta);
 
         if (view == View.INBOX) {
-            int dy = boxY + 28; // padded below the title so it clears the refresh/close buttons
+            int dy = boxY + 28;
             for (net.minecraft.util.FormattedCharSequence line : font.split(Component.translatable("firorize.config.label.inboxDescription"), boxW - 20)) {
                 context.text(font, line, boxX + 10, dy, 0xFF9A9A9A);
                 dy += 10;
@@ -335,10 +360,8 @@ public class OnlinePresetsScreen extends Screen {
             context.centeredText(font, flashText, width / 2, boxY + boxH - 40, flashError ? 0xFFE08080 : 0xFF80E080);
         }
 
-        // refresh.png sprite, centred over its (label-less) button.
         drawRefreshIcon(context, refreshIconX, refreshIconY);
 
-        // Privacy policy link: small, gray, underlined; brighter on hover.
         int privacyColor = overPrivacy(mouseX, mouseY) ? 0xFFCFCFCF : 0xFF8C8C8C;
         context.pose().pushMatrix();
         context.pose().scale(PRIVACY_SCALE, PRIVACY_SCALE);
@@ -346,9 +369,7 @@ public class OnlinePresetsScreen extends Screen {
         context.pose().popMatrix();
     }
 
-    /** Draws the {@code firorize:block/refresh} sprite centred in the 16×16 refresh button at (px,py).
-     *  Rendered smaller than the button so it doesn't crowd the edges. Uses the block atlas the same
-     *  way {@link UndoButton} draws its icon. */
+    /** Draws the {@code firorize:block/refresh} sprite centred in the 16×16 refresh button at (px,py). */
     private static final int REFRESH_ICON_SIZE = 11;
     private void drawRefreshIcon(GuiGraphicsExtractor context, int px, int py) {
         TextureAtlasSprite refresh = FireSprites.block(FireSprites.atlasManager(), "firorize:block/refresh");
@@ -362,7 +383,12 @@ public class OnlinePresetsScreen extends Screen {
         if (state == State.ERROR) return Component.translatable("firorize.config.status.loadFailed");
         if (state == State.NEED_AUTH) return Component.translatable("firorize.config.status.signIn");
         if (state == State.LOADED && listWidget != null && listWidget.isEmpty()) {
-            return Component.translatable(view == View.INBOX ? "firorize.config.status.noInbox" : "firorize.config.status.noPresets");
+            String key = switch (view) {
+                case INBOX -> "firorize.config.status.noInbox";
+                case BUILTIN -> "firorize.config.status.noBuiltin";
+                case COMMUNITY -> "firorize.config.status.noPresets";
+            };
+            return Component.translatable(key);
         }
         return null;
     }

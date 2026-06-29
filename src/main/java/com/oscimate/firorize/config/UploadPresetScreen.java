@@ -1,5 +1,7 @@
 package com.oscimate.firorize.config;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Window;
 import com.oscimate.firorize.Main;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -90,6 +92,16 @@ public class UploadPresetScreen extends Screen {
 
     private void submit() {
         if (submitting) return;
+
+        // Hidden developer path: Shift+Alt while pressing Upload opens the built-in upload dialog
+        // (publishes to the curated built-in table behind a server-side password) instead of the
+        // public community upload. Only available for the public (non-private) upload flow.
+        if (!privateMode && devUploadCombo()) {
+            minecraft.setScreen(new BuiltinUploadScreen(this, origin, profileName,
+                    titleField.getValue().trim(), descriptionField.getValue().trim()));
+            return;
+        }
+
         String title = titleField.getValue().trim();
         if (title.isEmpty()) {
             setStatus(Component.translatable("firorize.config.status.titleRequired"), true);
@@ -158,6 +170,15 @@ public class UploadPresetScreen extends Screen {
         } else {
             setStatus(errorMessage(res.error()), true);
         }
+    }
+
+    /** True while Shift+Alt are both held (queried from the keyboard, since the button's onPress
+     *  carries no modifier info). Reveals the hidden developer built-in upload path. */
+    private static boolean devUploadCombo() {
+        Window w = Minecraft.getInstance().getWindow();
+        boolean shift = InputConstants.isKeyDown(w, InputConstants.KEY_LSHIFT) || InputConstants.isKeyDown(w, InputConstants.KEY_RSHIFT);
+        boolean alt = InputConstants.isKeyDown(w, InputConstants.KEY_LALT) || InputConstants.isKeyDown(w, InputConstants.KEY_RALT);
+        return shift && alt;
     }
 
     /** Splits a comma/whitespace-separated list into lowercased, de-duplicated usernames. */
