@@ -42,8 +42,10 @@ import java.util.List;
 public class Main implements ClientModInitializer {
     public static final String MODID = "firorize";
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
-    public static List<TagKey<Block>> blockTagList = null;
-    public static List<RegistryKey<Biome>> biomeKeyList = null;
+    // Populated on TAGS_LOADED; default to empty (not null) so the config screen
+    // opened without a world/server doesn't NPE when iterating these.
+    public static List<TagKey<Block>> blockTagList = new ArrayList<>();
+    public static List<RegistryKey<Biome>> biomeKeyList = new ArrayList<>();
     public static boolean inConfig = false;
     private static int[] getNextResolution(int width, int height) {
         double widthScale = Math.ceil((double) width / 1920);
