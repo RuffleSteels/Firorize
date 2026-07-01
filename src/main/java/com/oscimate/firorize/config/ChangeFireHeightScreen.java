@@ -71,6 +71,17 @@ public class ChangeFireHeightScreen extends Screen {
         float h = sprite.getMinV();
         float i = sprite.getMaxV();
         float j = 1.0F;
+
+        // This geometry is added to the entity buffer source, which flushes with the camera's
+        // view-rotation matrix (conjugate of the camera rotation) applied — that locks the fire to
+        // world-north, so it only appears when the player faces north. Bake the camera's forward
+        // rotation into the pose so the view rotation cancels out, leaving the fire screen-locked
+        // directly in front of the player (vanilla's screen-effect behaviour). Out of a world there
+        // is no live camera/view rotation, so we leave the matrix at identity (already correct).
+        if (client.player != null) {
+            matrices.multiply(client.gameRenderer.getCamera().getRotation());
+        }
+
         matrices.translate(0.0, FireHeightSliderWidget.getFireHeight(Main.CONFIG_MANAGER.getCurrentFireHeightSlider() - (client.world == null ? 2 : 0)), 0.0);
 
         for (int k = 0; k < 2; k++) {
