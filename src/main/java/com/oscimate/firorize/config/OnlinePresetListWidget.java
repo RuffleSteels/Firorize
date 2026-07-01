@@ -37,7 +37,15 @@ public class OnlinePresetListWidget extends ClickableWidget {
     private static final int SCROLLBAR_W = 4;
 
     /** Per-row behaviour. HEADER is a non-interactive section label. */
-    private enum RowKind { HEADER, BROWSE_IMPORT, UPLOAD_DELETE, INBOX_IMPORT, SENT_CANCEL }
+    private enum RowKind { HEADER, BROWSE_IMPORT, BUILTIN_IMPORT, UPLOAD_DELETE, INBOX_IMPORT, SENT_CANCEL }
+
+    // Type badge labels + accent colours, indexed 0 block / 1 tag / 2 biome.
+    private static final String[] TYPE_BADGE_KEYS = {
+            "firorize.config.type.block", "firorize.config.type.tag", "firorize.config.type.biome"
+    };
+    private static final int[][] TYPE_BADGE_COLORS = {
+            {143, 208, 143}, {143, 175, 224}, {224, 176, 112}
+    };
 
     private static final int ACTION_BTN_W = 64;
     private static final int BTN_GAP = 6;
@@ -71,6 +79,15 @@ public class OnlinePresetListWidget extends ClickableWidget {
         if (community != null && !community.isEmpty()) {
             if (haveMine) rows.add(new Row(RowKind.HEADER, null, Text.translatable("firorize.config.label.community")));
             for (OnlinePreset p : community) rows.add(new Row(RowKind.BROWSE_IMPORT, p, null));
+        }
+        scrollY = 0;
+    }
+
+    /** Built-in view: a single flat list of curated default profiles, each with an Import action. */
+    public void setBuiltin(List<OnlinePreset> presets) {
+        rows.clear();
+        if (presets != null) {
+            for (OnlinePreset p : presets) rows.add(new Row(RowKind.BUILTIN_IMPORT, p, null));
         }
         scrollY = 0;
     }
@@ -174,7 +191,23 @@ public class OnlinePresetListWidget extends ClickableWidget {
         Text time = row.preset.relativeTime();
         int timeWidth = textRenderer.getWidth(time);
         int titleX = x + PAD + 11;
-        int titleMax = w - PAD - timeWidth - 6 - (titleX - x);
+
+        // Type badge (derived from the profile data), to the left of the time.
+        int type = row.type();
+        int badgeW = 0;
+        if (type >= 0) {
+            Text badge = Text.translatable(TYPE_BADGE_KEYS[type]);
+            int bw = textRenderer.getWidth(badge) + 6;
+            int badgeX = x + w - PAD - timeWidth - 6 - bw;
+            int badgeY = y + (HEADER_H - 11) / 2;
+            context.fill(badgeX, badgeY, badgeX + bw, badgeY + 11, 0xFF2A2A2A);
+            context.drawBorder(badgeX, badgeY, bw, 11, 0xFF5A5A5A);
+            int[] tc = TYPE_BADGE_COLORS[type];
+            context.drawText(textRenderer, badge, badgeX + 3, badgeY + 2, 0xFF000000 | (tc[0] << 16) | (tc[1] << 8) | tc[2], false);
+            badgeW = bw + 6;
+        }
+
+        int titleMax = w - PAD - timeWidth - 6 - badgeW - (titleX - x);
         String title = textRenderer.trimToWidth(row.preset.displayTitle(), Math.max(8, titleMax));
         context.drawTextWithShadow(textRenderer, Text.literal(title), titleX, y + (HEADER_H - 8) / 2, 0xFFFFFFFF);
         context.drawTextWithShadow(textRenderer, time, x + w - PAD - timeWidth, y + (HEADER_H - 8) / 2, 0xFF909090);
@@ -186,10 +219,13 @@ public class OnlinePresetListWidget extends ClickableWidget {
                 ty += LINE_H;
             }
             if (!row.descriptionLines().isEmpty()) ty += 2;
-            Text attribution = row.kind == RowKind.SENT_CANCEL
-                    ? Text.translatable("firorize.config.label.toRecipient", row.preset.displayRecipient())
-                    : Text.translatable("firorize.config.label.byAuthor", row.preset.displayAuthor());
-            context.drawTextWithShadow(textRenderer, attribution, x + PAD, ty, 0xFF7090C0);
+            // Built-ins carry no author/attribution; everything else shows who it came from / went to.
+            if (row.kind != RowKind.BUILTIN_IMPORT) {
+                Text attribution = row.kind == RowKind.SENT_CANCEL
+                        ? Text.translatable("firorize.config.label.toRecipient", row.preset.displayRecipient())
+                        : Text.translatable("firorize.config.label.byAuthor", row.preset.displayAuthor());
+                context.drawTextWithShadow(textRenderer, attribution, x + PAD, ty, 0xFF7090C0);
+            }
 
             // Primary (rightmost) and optional secondary action button.
             int[] primary = primaryRect(x, y, h, w);
@@ -223,7 +259,7 @@ public class OnlinePresetListWidget extends ClickableWidget {
 
     private Text primaryLabel(Row row) {
         return switch (row.kind) {
-            case BROWSE_IMPORT, INBOX_IMPORT -> Text.translatable("firorize.config.button.importPreset");
+            case BROWSE_IMPORT, INBOX_IMPORT, BUILTIN_IMPORT -> Text.translatable("firorize.config.button.importPreset");
             case UPLOAD_DELETE -> row.confirmActionUntil > System.currentTimeMillis()
                     ? Text.translatable("firorize.config.button.confirmDelete")
                     : Text.translatable("firorize.config.button.deletePreset");
@@ -318,8 +354,9 @@ public class OnlinePresetListWidget extends ClickableWidget {
 
     private void onPrimary(Row row) {
         switch (row.kind) {
-            case BROWSE_IMPORT -> importPreset(row.preset, row.preset.displayAuthor(), 0);
-            case INBOX_IMPORT -> importPreset(row.preset, row.preset.displayAuthor(), row.preset.id());
+            case BROWSE_IMPORT -> importPreset(row.preset, row.preset.displayAuthor(), 0, false);
+            case BUILTIN_IMPORT -> importPreset(row.preset, "", 0, true);
+            case INBOX_IMPORT -> importPreset(row.preset, row.preset.displayAuthor(), row.preset.id(), false);
             case UPLOAD_DELETE -> confirmThen(row, () -> screen.deleteUpload(row.preset.id()));
             case SENT_CANCEL -> confirmThen(row, () -> screen.deleteSend(row.preset.id()));
             case HEADER -> { }
@@ -380,7 +417,7 @@ public class OnlinePresetListWidget extends ClickableWidget {
      * Deserializes the preset into a new local profile, recording its author for the globe tooltip.
      * When {@code dismissSendId > 0} (an inbox import) the originating send is removed afterwards.
      */
-    private void importPreset(OnlinePreset preset, String author, int dismissSendId) {
+    private void importPreset(OnlinePreset preset, String author, int dismissSendId, boolean builtin) {
         KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> profile =
                 AddProfileScreen.deserializeFromString(preset.data());
         if (profile == null) {
@@ -390,10 +427,12 @@ public class OnlinePresetListWidget extends ClickableWidget {
         String name = uniqueName(preset.displayTitle());
         int type = ConfigManager.deriveType(profile);
         screen.parent.presetListWidget.addProfile(name, profile, type < 0 ? 0 : type);
-        // Mark this local profile as imported so the preset list shows the online marker (persisted),
-        // and remember who it came from for the tooltip. Inbox imports get the person/"Sent by" marker.
+        // Mark this local profile as imported so the preset list shows a marker (persisted), and
+        // remember who it came from for the tooltip. Built-in imports get the built-in marker, inbox
+        // imports get the person/"Sent by" marker, everything else the globe.
         Main.CONFIG_MANAGER.getImportedProfiles().add(name);
         Main.CONFIG_MANAGER.getImportedAuthors().put(name, author);
+        if (builtin) Main.CONFIG_MANAGER.getBuiltinImports().add(name);
         if (dismissSendId > 0) Main.CONFIG_MANAGER.getInboxImports().add(name);
         Main.CONFIG_MANAGER.save();
         screen.flashMessage(Text.translatable("firorize.config.status.imported", name), false);
@@ -424,11 +463,21 @@ public class OnlinePresetListWidget extends ClickableWidget {
         long confirmActionUntil = 0;
         private List<OrderedText> cachedLines;
         private int cachedWidth = -1;
+        private int cachedType = -2; // -2 = not computed, -1 = unknown/undeserializable, 0/1/2 = type
 
         private Row(RowKind kind, OnlinePreset preset, Text headerLabel) {
             this.kind = kind;
             this.preset = preset;
             this.headerLabel = headerLabel;
+        }
+
+        /** The profile's type, derived once from its data (block/tag/biome), or -1 if undeterminable. */
+        int type() {
+            if (cachedType == -2) {
+                var profile = preset == null ? null : AddProfileScreen.deserializeFromString(preset.data());
+                cachedType = profile == null ? -1 : ConfigManager.deriveType(profile);
+            }
+            return cachedType;
         }
 
         List<OrderedText> descriptionLines() {

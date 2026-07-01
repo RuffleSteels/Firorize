@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * Styled inside a centred panel matching {@link ChangeFireColorScreen#renderConfirm}.
  */
 public class OnlinePresetsScreen extends Screen {
-    public enum View { BROWSE, INBOX }
+    public enum View { COMMUNITY, BUILTIN, INBOX }
 
     private enum State { LOADING, LOADED, ERROR, NEED_AUTH }
 
@@ -41,9 +41,11 @@ public class OnlinePresetsScreen extends Screen {
     private OnlinePresetListWidget listWidget;
     private State state = null;
 
-    // Browse data: the player's own uploads and everyone else's (already split).
+    // Community data: the player's own uploads and everyone else's (already split).
     private List<OnlinePreset> myUploads = List.of();
     private List<OnlinePreset> community = List.of();
+    // Built-in (curated) data.
+    private List<OnlinePreset> builtin = List.of();
     private PlaceholderField searchField;
     private ButtonWidget uploadButton;
 
@@ -63,7 +65,11 @@ public class OnlinePresetsScreen extends Screen {
     private int refreshIconX, refreshIconY;
 
     public OnlinePresetsScreen(ChangeFireColorScreen parent, View view) {
-        super(Text.translatable(view == View.INBOX ? "firorize.config.title.inbox" : "firorize.config.title.communityProfiles"));
+        super(Text.translatable(switch (view) {
+            case BUILTIN -> "firorize.config.title.builtinProfiles";
+            case INBOX -> "firorize.config.title.inbox";
+            case COMMUNITY -> "firorize.config.title.communityProfiles";
+        }));
         this.parent = parent;
         this.view = view;
     }
@@ -76,38 +82,35 @@ public class OnlinePresetsScreen extends Screen {
         boxX = (width - boxW) / 2;
         boxY = (height - boxH) / 2;
 
+        boolean hasSearch = view != View.INBOX;   // Community/Built-in are searchable; Inbox isn't
+        boolean hasAction = view != View.BUILTIN;  // Community=Upload, Inbox=Send; Built-in has no action
+
         int listY;
-        int listH;
-        if (view == View.BROWSE) {
+        if (hasSearch) {
             searchField = new PlaceholderField(this.textRenderer, boxX + 10, boxY + 24, boxW - 20, 16, Text.empty());
             searchField.setPlaceholder(Text.translatable("firorize.config.placeholder.search"));
             searchField.setMaxLength(48);
-            searchField.setChangedListener(s -> applyBrowse());
+            searchField.setChangedListener(s -> applyList());
             addDrawableChild(searchField);
-
             listY = boxY + 46;
-            listH = boxH - 46 - 34;
         } else {
-            // Room for the wrapped inbox description under the title (which sits lower than the
-            // title/buttons row), and the Send button at the bottom.
+            // Inbox: leave room for the wrapped description under the title.
             listY = boxY + 52;
-            listH = boxH - 52 - 30;
         }
+        int listH = boxH - (listY - boxY) - (hasAction ? 34 : 22);
 
         listWidget = new OnlinePresetListWidget(boxX + 10, listY, boxW - 20, listH, this, this.textRenderer);
         addDrawableChild(listWidget);
 
-        if (view == View.BROWSE) {
-            uploadButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.uploadPreset"),
-                    b -> client.setScreen(new ChooseProfileScreen(this, this)))
-                    .dimensions(boxX + boxW - 10 - 100, boxY + boxH - 26, 100, 18).build();
+        if (hasAction) {
+            Text label = Text.translatable(view == View.INBOX
+                    ? "firorize.config.button.inboxSend" : "firorize.config.button.uploadPreset");
+            int w = Math.max(100, textRenderer.getWidth(label) + 24);
+            uploadButton = new ButtonWidget.Builder(label, b -> client.setScreen(new ChooseProfileScreen(this, this)))
+                    .dimensions(boxX + boxW - 10 - w, boxY + boxH - 26, w, 18).build();
             addDrawableChild(uploadButton);
         } else {
-            // Inbox view: quick access to send a profile to a friend.
-            uploadButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.inboxSend"),
-                    b -> client.setScreen(new ChooseProfileScreen(this, this)))
-                    .dimensions(boxX + boxW - 10 - 110, boxY + boxH - 26, 110, 18).build();
-            addDrawableChild(uploadButton);
+            uploadButton = null;
         }
 
         // Privacy policy: small gray underlined clickable text (not a button), bottom-left of the panel.
@@ -134,14 +137,17 @@ public class OnlinePresetsScreen extends Screen {
     }
 
     private void load() {
-        if (view == View.BROWSE) loadBrowse();
-        else loadInbox();
+        switch (view) {
+            case COMMUNITY -> loadCommunity();
+            case BUILTIN -> loadBuiltin();
+            case INBOX -> loadInbox();
+        }
     }
 
-    private void loadBrowse() {
+    private void loadCommunity() {
         if (state == State.LOADING) return;
         if (state == State.LOADED) {
-            applyBrowse();
+            applyList();
             return;
         }
         state = State.LOADING;
@@ -161,16 +167,40 @@ public class OnlinePresetsScreen extends Screen {
                         Set<Integer> mineIds = myUploads.stream().map(OnlinePreset::id).collect(Collectors.toSet());
                         community = all.stream().filter(p -> !mineIds.contains(p.id())).toList();
                         state = State.LOADED;
-                        applyBrowse();
+                        applyList();
                     }
                 }));
     }
 
-    /** Re-filters the cached browse data by the search box and pushes it to the list. */
-    private void applyBrowse() {
+    private void loadBuiltin() {
+        if (state == State.LOADING) return;
+        if (state == State.LOADED) {
+            applyList();
+            return;
+        }
+        state = State.LOADING;
+        OnlinePresetsClient.fetchBuiltin()
+                .whenComplete((list, err) -> MinecraftClient.getInstance().execute(() -> {
+                    if (err != null) {
+                        OnlinePresetsClient.LOGGER.error("Failed to fetch built-in profiles", err);
+                        state = State.ERROR;
+                    } else {
+                        builtin = list;
+                        state = State.LOADED;
+                        applyList();
+                    }
+                }));
+    }
+
+    /** Re-filters the cached Community/Built-in data by the search box and pushes it to the list. */
+    private void applyList() {
         if (listWidget == null) return;
         String q = searchField == null ? "" : searchField.getText().trim().toLowerCase();
-        listWidget.setBrowse(filter(myUploads, q), filter(community, q));
+        if (view == View.BUILTIN) {
+            listWidget.setBuiltin(filter(builtin, q));
+        } else {
+            listWidget.setBrowse(filter(myUploads, q), filter(community, q));
+        }
     }
 
     private static List<OnlinePreset> filter(List<OnlinePreset> presets, String q) {
@@ -247,7 +277,7 @@ public class OnlinePresetsScreen extends Screen {
 
     /** Called by {@link UploadPresetScreen} after a successful upload to re-pull the browse lists. */
     public void refresh() {
-        if (view == View.BROWSE) {
+        if (view == View.COMMUNITY) {
             state = null;
             load();
         }
@@ -362,7 +392,12 @@ public class OnlinePresetsScreen extends Screen {
         if (state == State.ERROR) return Text.translatable("firorize.config.status.loadFailed");
         if (state == State.NEED_AUTH) return Text.translatable("firorize.config.status.signIn");
         if (state == State.LOADED && listWidget != null && listWidget.isEmpty()) {
-            return Text.translatable(view == View.INBOX ? "firorize.config.status.noInbox" : "firorize.config.status.noPresets");
+            String key = switch (view) {
+                case INBOX -> "firorize.config.status.noInbox";
+                case BUILTIN -> "firorize.config.status.noBuiltin";
+                case COMMUNITY -> "firorize.config.status.noPresets";
+            };
+            return Text.translatable(key);
         }
         return null;
     }

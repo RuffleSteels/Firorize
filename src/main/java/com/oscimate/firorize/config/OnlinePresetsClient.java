@@ -97,6 +97,17 @@ public final class OnlinePresetsClient {
         return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(OnlinePresetsClient::parseList);
     }
 
+    /** GET /builtin → curated built-in/default profiles (public, no identity needed). */
+    public static CompletableFuture<List<OnlinePreset>> fetchBuiltin() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(WORKER_URL + "/builtin"))
+                .timeout(Duration.ofSeconds(15))
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+        return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(OnlinePresetsClient::parseList);
+    }
+
     /** GET /mine → the player's own uploads. */
     public static CompletableFuture<List<OnlinePreset>> fetchMine(McAuth auth) {
         HttpRequest request = authored(HttpRequest.newBuilder()
@@ -124,6 +135,31 @@ public final class OnlinePresetsClient {
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(body), StandardCharsets.UTF_8)), auth).build();
+
+        return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(OnlinePresetsClient::parseResult);
+    }
+
+    /**
+     * POST /builtin — developer-only publish of a curated built-in profile, gated by a shared
+     * {@code password} (sent as {@code X-Builtin-Password} and verified server-side, never a Minecraft
+     * identity). Resolves to an {@link ApiResult} — {@code success=false} with the Worker's error code
+     * (e.g. "unauthorized" for a wrong/unset password) on rejection.
+     */
+    public static CompletableFuture<ApiResult> uploadBuiltin(String data, String title, String description, int sortOrder, String password) {
+        JsonObject body = new JsonObject();
+        body.addProperty("data", data);
+        body.addProperty("title", title);
+        body.addProperty("description", description);
+        body.addProperty("sort_order", sortOrder);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(WORKER_URL + "/builtin"))
+                .timeout(Duration.ofSeconds(15))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .header("X-Builtin-Password", password)
+                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(body), StandardCharsets.UTF_8))
+                .build();
 
         return CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(OnlinePresetsClient::parseResult);
     }

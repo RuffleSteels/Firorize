@@ -567,6 +567,7 @@ public class ChangeFireColorScreen extends Screen {
     public ButtonWidget addColorButton;
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
     public ButtonWidget browseOnlineButton;
+    public ButtonWidget builtinButton;
     public ButtonWidget shareBottomButton;
     public ButtonWidget inboxButton;
     public ButtonWidget resetProfileButton;
@@ -613,10 +614,18 @@ public class ChangeFireColorScreen extends Screen {
         this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48 - PresetListWidget.DESC_GAP - PresetListWidget.TOP_GAP, wheelCoords[0], 15, this, textRenderer);
 
         // Two button rows stack directly under the profile list (the list height above was shrunk by
-        // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
-        // "Inbox" text button to its right (together spanning the list width).
-        this.browseOnlineButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
-                .dimensions(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
+        // 48 to leave room): the "Import profiles…" pair (Community | Built-in) split across the width,
+        // then a wide Share button with a square "Inbox" text button to its right.
+        int importRowY = presetListWidget.getY() + presetListWidget.getHeight() + 4;
+        int importGap = 2;
+        int importHalf = (presetListWidget.getWidth() - importGap) / 2;
+        this.browseOnlineButton = new PanelButton(presetListWidget.getX(), importRowY, importHalf, 20,
+                Text.translatable("firorize.config.button.community"),
+                button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.COMMUNITY)));
+        this.builtinButton = new PanelButton(presetListWidget.getX() + importHalf + importGap, importRowY,
+                presetListWidget.getWidth() - importHalf - importGap, 20,
+                Text.translatable("firorize.config.button.builtin"),
+                button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BUILTIN)));
 
         int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
         int row2Gap = 2;
@@ -662,6 +671,7 @@ public class ChangeFireColorScreen extends Screen {
 
         this.addDrawableChild(presetListWidget);
         this.addDrawableChild(browseOnlineButton);
+        this.addDrawableChild(builtinButton);
         this.addDrawableChild(inboxButton);
         this.addDrawableChild(shareBottomButton);
         this.addDrawableChild(overlayToggles[0]);
@@ -684,6 +694,8 @@ public class ChangeFireColorScreen extends Screen {
         shareBottomButton.setTooltipDelay(Duration.ofMillis(750L));
         browseOnlineButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.onlinePresets")));
         browseOnlineButton.setTooltipDelay(Duration.ofMillis(750L));
+        builtinButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.builtinProfiles")));
+        builtinButton.setTooltipDelay(Duration.ofMillis(750L));
         inboxButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.inboxButton")));
         inboxButton.setTooltipDelay(Duration.ofMillis(750L));
         addButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.addProfileButton")));
