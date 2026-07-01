@@ -1121,9 +1121,9 @@ public class ChangeFireColorScreen extends Screen {
         // Preview grid: 11 columns, ~7 rows visible before it scrolls (tighter row spacing than before,
         // matching the newer versions). The threshold/range track the 7-row visible window.
         if (Math.ceil(allBlockUnders.size()/11f) > 7) {
-            double amount = 0.15 * ((Math.ceil(allBlockUnders.size()/11f)-7)/2);
+            double amount = .5 * ((Math.ceil(allBlockUnders.size()/11f)-7)/2);
             dist = (float) (dist + (forwards ? amount : -amount));
-            if (dist > (10 * (Math.ceil(allBlockUnders.size()/11f)-7))) {
+            if (dist > (10 * (Math.ceil(allBlockUnders.size()/11f)-4))) {
                 counter++;
                 forwards = false;
             } else if (dist < 1) {
