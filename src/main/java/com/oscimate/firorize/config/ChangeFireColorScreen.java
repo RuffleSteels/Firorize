@@ -568,8 +568,8 @@ public class ChangeFireColorScreen extends Screen {
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
     public ButtonWidget browseOnlineButton;
     public ButtonWidget builtinButton;
-    public ButtonWidget shareBottomButton;
-    public ButtonWidget inboxButton;
+    public PanelButton shareBottomButton;
+    public PanelButton inboxButton;
     public ButtonWidget resetProfileButton;
     /** Toggles {@link PresetListWidget#reorderMode} so profiles can be drag-reordered (their order is
      *  the inter-profile priority — top active wins). */
@@ -634,10 +634,11 @@ public class ChangeFireColorScreen extends Screen {
         Text inboxLabel = Text.translatable("firorize.config.button.inbox");
         int inboxSize = textRenderer.getWidth(inboxLabel) + 12;
         int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
-        this.shareBottomButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
-                .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
-        this.inboxButton = new ButtonWidget.Builder(inboxLabel, button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
-                .dimensions(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
+        this.shareBottomButton = new PanelButton(presetListWidget.getX(), row2Y, shareW, 20,
+                Text.translatable("firorize.config.button.share"),
+                button -> client.setScreen(new ChooseProfileScreen(this, null)));
+        this.inboxButton = new PanelButton(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20, inboxLabel,
+                button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)));
         // Pull the inbox count so the notification badge is up to date when this screen opens.
         OnlinePresetsClient.refreshInboxCount();
 
@@ -1193,6 +1194,32 @@ public class ChangeFireColorScreen extends Screen {
 
         this.applyBlur(delta);
         this.renderDarkening(context);
+
+        // Panel behind the whole profiles section (title + buttons + list + import/share rows) so it
+        // reads as one section of the UI, mirroring the search-column panel. Drawn before its widgets.
+        if (browseOnlineButton != null && !renderingAsBackdrop) {
+            context.fill(profilesPanelX1(), profilesPanelY1(), profilesPanelX2(), profilesPanelY2(), 0xFF242424);
+        }
+        // Solid panel behind the whole search column (title + search field + list) so it reads as one
+        // section of the UI and gives the title text contrast. Extends down past the Apply/Done row.
+        if (!renderingAsBackdrop) {
+            context.fill(searchPanelX1(), searchPanelY1(), searchPanelX2(), searchPanelY2(), 0xFF242424);
+        }
+    }
+
+    // ---- Section panel rectangles (shared by the background fill and the foreground outline) ----
+
+    private int searchPanelX1() { return blockSearchCoords[0] - 4; }
+    private int searchPanelY1() { return blockSearchCoords[1] - 4; }
+    private int searchPanelX2() { return blockSearchCoords[0] + blockSearchDimensions[0] + 4; }
+    /** Bottom of the search panel — just below the Apply/Done button row (at 20 + list height). */
+    private int searchPanelY2() { return 20 + blockSearchDimensions[1] + 20 + 4; }
+
+    private int profilesPanelX1() { return presetListWidget.getX() - 8; }
+    private int profilesPanelY1() { return profileButtonY - 6; }
+    private int profilesPanelX2() { return presetListWidget.getX() + presetListWidget.getWidth() + 8; }
+    private int profilesPanelY2() {
+        return (shareBottomButton != null ? shareBottomButton.getY() + shareBottomButton.getHeight() : profileButtonY) + 5;
     }
 
     @Override
@@ -1206,6 +1233,16 @@ public class ChangeFireColorScreen extends Screen {
         // Reorder + reset profile button icons, centred in their 20×20 buttons.
         drawReorderIcon(context, profileButtonXs[0], profileButtonY);
         drawResetIcon(context, profileButtonXs[1], profileButtonY);
+
+        // Outline framing the whole profiles section (matches the panel fill in renderBackground).
+        if (browseOnlineButton != null) {
+            context.drawBorder(profilesPanelX1(), profilesPanelY1(),
+                    profilesPanelX2() - profilesPanelX1(), profilesPanelY2() - profilesPanelY1(), 0xFF5A5A5A);
+        }
+        // Outline framing the whole search column (matches the panel fill drawn in renderBackground) so
+        // the title, search field and list read as one bordered section.
+        context.drawBorder(searchPanelX1(), searchPanelY1(),
+                searchPanelX2() - searchPanelX1(), searchPanelY2() - searchPanelY1(), 0xFF5A5A5A);
 
         // Section title above the search list saying what the selected profile's single category
         // recolours (replaces the old block/tag/biome tabs). Styled as a divider-rule heading — a
