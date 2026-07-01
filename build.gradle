@@ -159,7 +159,12 @@ publishMods {
     github {
         accessToken = providers.environmentVariable("GITHUB_TOKEN")
         repository = "RuffleSteels/Firorize"
-        commitish = "master"
+        commitish = "1.21-1.21.1"
+        // Namespace the tag/release by Minecraft version so the same mod_version can be
+        // released against multiple MC versions without GitHub tag_name collisions
+        // (e.g. "1.21.1-v1.4.1"). The default tag would be just the bare mod_version.
+        tagName = "${project.minecraft_version}-v${project.mod_version}"
+        displayName = "${project.project_name} ${project.mod_version} for ${project.minecraft_version}"
     }
     curseforge {
         accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
