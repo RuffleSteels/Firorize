@@ -139,23 +139,59 @@ public class ChangeFireColorScreen extends Screen {
         return true;
     }
 
-    private final ArrayList<Integer> comparedPriorityOrder;
+    // Snapshot of the persistent profile state taken when the screen opens: each profile's colour data
+    // keyed by name, the active set, and the profile order. The close-time texture reload fires only
+    // when one of these actually changed — NOT when the user merely selected a different profile row
+    // (selecting overwrites the live editing buffer but changes nothing persistent).
+    private final java.util.LinkedHashMap<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> comparedProfileData;
+    private final java.util.LinkedHashSet<String> comparedActiveProfiles;
+    private final ArrayList<String> comparedProfileOrder;
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
-        this.comparedCurrentFire = deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors());
-        this.comparedPriorityOrder = new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder());
+        this.comparedProfileData = snapshotProfileData();
+        this.comparedActiveProfiles = new java.util.LinkedHashSet<>(Main.CONFIG_MANAGER.getActiveProfiles());
+        this.comparedProfileOrder = new ArrayList<>(Main.CONFIG_MANAGER.getFireColorPresets().keyList());
         this.parent = parent;
+    }
+
+    /** True when {@link PresetListWidget} has a real selected profile to edit/commit. */
+    public boolean hasProfile() {
+        return presetListWidget != null && presetListWidget.curPresetID != null
+                && Main.CONFIG_MANAGER.getFireColorPresets().containsKey(presetListWidget.curPresetID);
+    }
+
+    /** Deep snapshot of every profile's colour data (the 3 maps + base), keyed by name, taken when the
+     *  screen opens. Independent of the live editing buffer, so switching the selected profile doesn't
+     *  register as a change in {@link #profileDataChanged()}. */
+    private static java.util.LinkedHashMap<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> snapshotProfileData() {
+        java.util.LinkedHashMap<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> out = new java.util.LinkedHashMap<>();
+        ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = Main.CONFIG_MANAGER.getFireColorPresets();
+        for (String name : presets.keyList()) out.put(name, deepClone(presets.get(name).getLeft()));
+        return out;
+    }
+
+    /** True when any profile's colours/base differ from the open-time snapshot, or a profile was
+     *  added/removed. Invariant to which profile is selected, so it only reports real edits. */
+    private boolean profileDataChanged() {
+        ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = Main.CONFIG_MANAGER.getFireColorPresets();
+        if (!comparedProfileData.keySet().equals(presets.keySet())) return true;
+        for (java.util.Map.Entry<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> e : comparedProfileData.entrySet()) {
+            KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> cur = presets.get(e.getKey());
+            if (cur == null || !fireColorsEqual(e.getValue(), cur.getLeft())) return true;
+        }
+        return false;
     }
     public void onClose() {
         Main.inConfig = false;
-        if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder())
-                || !fireColorsEqual(comparedCurrentFire, Main.CONFIG_MANAGER.getCurrentBlockFireColors()))) {
+        // Flush the live editing buffer back into the selected preset *before* comparing, so the
+        // selected profile's latest edits count as a real profile-data change (skipped when no
+        // profile exists). Reload only when profile colours, the active set, or the profile order
+        // actually changed — not when the user merely switched which profile is selected.
+        commitToPreset();
+        if (!isPresetAdd && (profileDataChanged()
+                || !comparedActiveProfiles.equals(Main.CONFIG_MANAGER.getActiveProfiles())
+                || !comparedProfileOrder.equals(Main.CONFIG_MANAGER.getFireColorPresets().keyList()))) {
             MinecraftClient.getInstance().reloadResources();  }
-
-        int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
-        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
-        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
 
         Main.CONFIG_MANAGER.save();
 
@@ -406,6 +442,7 @@ public class ChangeFireColorScreen extends Screen {
 
     /** Copies the live currentBlockFireColors + priority order into the active preset (no disk write). */
     public void commitToPreset() {
+        if (!hasProfile()) return;
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
         Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
@@ -463,11 +500,13 @@ public class ChangeFireColorScreen extends Screen {
     public ButtonWidget shareBottomButton;
     public ButtonWidget inboxButton;
     public ButtonWidget resetProfileButton;
+    /** Toggles {@link PresetListWidget#reorderMode} so profiles can be drag-reordered (their order is
+     *  the inter-profile priority — top active wins). */
+    public ButtonWidget reorderProfilesButton;
     /** Set by {@link PresetListWidget} while hovering an imported profile's globe; drawn once then cleared. */
     public net.minecraft.text.Text globeTooltip = null;
-    private final KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> comparedCurrentFire;
     public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
-    public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80;
+    public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80 + PresetListWidget.TOP_GAP;
 
     public int profileButtonXInitial = (wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20;
     public boolean isCycling = false;
@@ -501,7 +540,7 @@ public class ChangeFireColorScreen extends Screen {
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this, false);this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
-        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, textRenderer);
+        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48 - PresetListWidget.DESC_GAP - PresetListWidget.TOP_GAP, wheelCoords[0], 15, this, textRenderer);
 
         // Two button rows stack directly under the profile list (the list height above was shrunk by
         // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
@@ -537,29 +576,24 @@ public class ChangeFireColorScreen extends Screen {
         searchOptions[1]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.tags"), 1);
         searchOptions[2]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.biomes"), 2);
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 2; j++) {
-                if (2*i+j != 0 && 2*i+j != 5) {
-                    int finalJ = j;
-                    MoveableButton button = ((MoveableButton) searchOptions[i]);
-                    movableArrowButtons[2 * i + j] = new ButtonWidget.Builder(Text.literal(""), buttonn -> button.move(finalJ != 0)).dimensions(button.getXX()[j], button.getYY(), button.getHeight(), 13).build();
-                    this.addDrawableChild(movableArrowButtons[2 * i + j]);
+        // Single-type profiles: the block/tag/biome tabs and their priority arrows are gone — each
+        // profile is one category and the editor is locked to it (see PresetListWidget#setSelected →
+        // changeSearchOption). The searchOptions[] buttons are still constructed (changeSearchOption
+        // flips their .active), but they're not added to the screen, so the category can't be switched.
 
-                    movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
-                    movableArrowButtons[2 * i + j].setTooltipDelay(Duration.ofMillis(750L));
-                }
-            }
-        }
-
-
+        // Reorder toggle sits left of Reset/Add on the profile button row.
+        this.reorderProfilesButton = new ButtonWidget.Builder(Text.literal(""), button -> {
+            presetListWidget.reorderMode = !presetListWidget.reorderMode;
+            button.setFocused(false);
+        }).dimensions(profileButtonXs[0], profileButtonY, 20, 20).build();
+        this.addDrawableChild(reorderProfilesButton);
+        reorderProfilesButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.reorderProfilesButton")));
+        reorderProfilesButton.setTooltipDelay(Duration.ofMillis(750L));
 
         this.addDrawableChild(presetListWidget);
         this.addDrawableChild(browseOnlineButton);
         this.addDrawableChild(inboxButton);
         this.addDrawableChild(shareBottomButton);
-        this.addDrawableChild(searchOptions[0]);
-        this.addDrawableChild(searchOptions[1]);
-        this.addDrawableChild(searchOptions[2]);
         this.addDrawableChild(overlayToggles[0]);
         this.addDrawableChild(overlayToggles[1]);
         this.addDrawableChild(undoButton);
@@ -569,14 +603,11 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(invisibleTextFieldWidget);
         this.addDrawableChild(resetProfileButton);
 
-        if (client.world == null) {
-            searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
-            searchOptions[1].active = false;
-            searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
-            searchOptions[2].active = false;
-            searchOptions[0].active = false;
-        } else {
-            this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
+        // Lock the editor to the selected profile's single category (block/tag/biome). A biome/tag
+        // profile in the main menu lists nothing until a world provides the registry — the search list
+        // shows an explanatory message in that case (see SearchScreenListWidget).
+        if (presetListWidget.curPresetID != null) {
+            this.changeSearchOption(Main.CONFIG_MANAGER.getProfileType(presetListWidget.curPresetID));
         }
 
         shareBottomButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
@@ -666,6 +697,33 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(px + 3, py + 1, px + 6, py + 4, body);
         context.fill(px + 2, py + 5, px + 7, py + 6, body);
         context.fill(px + 1, py + 6, px + 8, py + 9, body);
+    }
+
+    /** Gold star marker for profiles imported from the curated built-in gallery. */
+    public void drawBuiltin(DrawContext context, int px, int py) {
+        final int gold = 0xFFFFC83C;
+        String[] star = {
+                "....X....",
+                "....X....",
+                "...XXX...",
+                "XXXXXXXXX",
+                ".XXXXXXX.",
+                "..XXXXX..",
+                "..XXXXX..",
+                ".XX...XX.",
+                "XX.....XX",
+        };
+        for (int gy = 0; gy < star.length; gy++) {
+            for (int gx = 0; gx < star[gy].length(); gx++) {
+                if (star[gy].charAt(gx) == 'X') context.fill(px + gx, py + gy, px + gx + 1, py + gy + 1, gold);
+            }
+        }
+    }
+
+    /** Small tick drawn inside the active-profile checkbox. */
+    public void drawCheckmark(DrawContext context, int x, int y, int color) {
+        int[][] pts = {{2, 4}, {3, 5}, {4, 6}, {5, 5}, {6, 4}, {7, 3}, {8, 2}};
+        for (int[] p : pts) context.fill(x + p[0], y + p[1], x + p[0] + 2, y + p[1] + 2, color);
     }
 
     /** Draws the reset.png sprite centred in the 20×20 reset-profile button at (px,py). Uses the
@@ -1338,6 +1396,26 @@ public class ChangeFireColorScreen extends Screen {
         public SearchScreenListWidget(MinecraftClient client, int width, int height, int x, int y) {
             super(client, width, height, x, y);
             generateEntries();
+        }
+
+        @Override
+        public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            super.renderWidget(context, mouseX, mouseY, delta);
+            // Tag and biome lists are populated from the server/datapack registries, which only exist
+            // once a world is loaded. In the main menu they're null/empty, so the list would otherwise
+            // be blank with no explanation — spell out why instead.
+            boolean needsWorld = (currentSearchButton == 1 && (Main.blockTagList == null || Main.blockTagList.isEmpty()))
+                    || (currentSearchButton == 2 && (Main.biomeKeyList == null || Main.biomeKeyList.isEmpty()));
+            if (needsWorld) {
+                Text msg = Text.translatable(currentSearchButton == 1
+                        ? "firorize.config.status.noTagsNoWorld" : "firorize.config.status.noBiomesNoWorld");
+                int cx = getX() + getWidth() / 2;
+                int cy = getY() + getHeight() / 2 - ChangeFireColorScreen.this.textRenderer.fontHeight;
+                for (net.minecraft.text.OrderedText line : ChangeFireColorScreen.this.textRenderer.wrapLines(msg, getWidth() - 24)) {
+                    context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, line, cx, cy, 0xFF9A9A9A);
+                    cy += ChangeFireColorScreen.this.textRenderer.fontHeight + 1;
+                }
+            }
         }
         public int num = 0;
         public void test() {

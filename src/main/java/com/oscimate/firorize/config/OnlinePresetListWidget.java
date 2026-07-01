@@ -388,7 +388,8 @@ public class OnlinePresetListWidget extends ClickableWidget {
             return;
         }
         String name = uniqueName(preset.displayTitle());
-        screen.parent.presetListWidget.addProfile(name, profile);
+        int type = ConfigManager.deriveType(profile);
+        screen.parent.presetListWidget.addProfile(name, profile, type < 0 ? 0 : type);
         // Mark this local profile as imported so the preset list shows the online marker (persisted),
         // and remember who it came from for the tooltip. Inbox imports get the person/"Sent by" marker.
         Main.CONFIG_MANAGER.getImportedProfiles().add(name);
