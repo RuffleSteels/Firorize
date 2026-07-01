@@ -72,6 +72,76 @@ public class ChangeFireColorScreen extends Screen {
         context.fill(x+entryWidth-entryHeight-entryHeight/2 + 3, y+entryHeight/2 + 3, x+entryWidth-entryHeight-entryHeight/2 + 2, y+entryHeight/2 + 2, colorInt);
         context.fill(x+entryWidth-entryHeight-entryHeight/2 - 1, y+entryHeight/2 + 3, x+entryWidth-entryHeight-entryHeight/2 - 2, y+entryHeight/2 + 2, colorInt);
     }
+
+    private static final String[] REORDER_GLYPH = {
+            ".......",
+            "...X...",
+            "..XXX..",
+            ".......",
+            "XXXXXXX",
+            ".......",
+            "XXXXXXX",
+            ".......",
+            "XXXXXXX",
+            ".......",
+            "..XXX..",
+            "...X...",
+            ".......",
+    };
+
+    // Magnifying glass (6×7), drawn at the right of the search field so it's obvious the field is a search box.
+    private static final String[] SEARCH_GLYPH = {
+            ".XXX..",
+            "X...X.",
+            "X...X.",
+            "X...X.",
+            ".XXX..",
+            "....X.",
+            ".....X",
+    };
+
+    /** Draws the magnifying-glass glyph top-left at (px,py) in the given ARGB colour. */
+    private void drawSearchIcon(DrawContext context, int px, int py, int color) {
+        for (int gy = 0; gy < SEARCH_GLYPH.length; gy++) {
+            for (int gx = 0; gx < SEARCH_GLYPH[gy].length(); gx++) {
+                if (SEARCH_GLYPH[gy].charAt(gx) == 'X') {
+                    context.fill(px + gx, py + gy, px + gx + 1, py + gy + 1, color);
+                }
+            }
+        }
+    }
+
+    /** Draws the reorder glyph centred in the 20×20 reorder button. Tinted brighter (and with a lit
+     *  interior) while reorder mode is active so the toggle state is obvious. */
+    public void drawReorderIcon(DrawContext context, int px, int py) {
+        boolean on = presetListWidget != null && presetListWidget.reorderMode;
+        if (on) {
+            context.fill(px + 1, py + 1, px + 19, py + 19, 0x40FFFFFF);
+        }
+        int color = on ? 0xFFFFFFFF : 0xFFBFBFBF;
+        int offX = px + (20 - 7) / 2;
+        int offY = py + (20 - REORDER_GLYPH.length) / 2;
+        for (int gy = 0; gy < REORDER_GLYPH.length; gy++) {
+            for (int gx = 0; gx < REORDER_GLYPH[gy].length(); gx++) {
+                if (REORDER_GLYPH[gy].charAt(gx) == 'X') {
+                    context.fill(offX + gx, offY + gy, offX + gx + 1, offY + gy + 1, color);
+                }
+            }
+        }
+    }
+
+    /** Sentence-form headers shown above the search list explaining what the list recolours, indexed
+     *  0 block / 1 tag / 2 biome. Each takes one %s arg — the bolded key term below. */
+    public static final String[] TYPE_HEADER_KEYS = {
+            "firorize.config.searchHeader.block", "firorize.config.searchHeader.tag", "firorize.config.searchHeader.biome"
+    };
+    /** The bolded term substituted into the matching TYPE_HEADER_KEYS sentence ("block" / "block tag" / "biome"). */
+    public static final String[] TYPE_HEADER_TERM_KEYS = {
+            "firorize.config.searchHeader.termBlock", "firorize.config.searchHeader.termTag", "firorize.config.searchHeader.termBiome"
+    };
+    /** Accent RGB for each type's bolded header term + divider rule (block green / tag blue / biome orange). */
+    public static final int[] TYPE_HEADER_ACCENTS = { 0x8FD08F, 0x8FAFE0, 0xE0B070 };
+
     private String hexCode = "#ffffff";
     public Color[] baseColor = new Color[]{new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]), new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1])};
     public static Color[] pickedColor = {new Color(Color.decode("#ffffff").getRGB(), true), new Color(Color.decode("#ffffff").getRGB(), true)};
@@ -1121,8 +1191,43 @@ public class ChangeFireColorScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-        // Reset-profile button icon (reset.png), centred in its 20×20 button.
+        // Reorder + reset profile button icons, centred in their 20×20 buttons.
+        drawReorderIcon(context, profileButtonXs[0], profileButtonY);
         drawResetIcon(context, profileButtonXs[1], profileButtonY);
+
+        // Section title above the search list saying what the selected profile's single category
+        // recolours (replaces the old block/tag/biome tabs). Styled as a divider-rule heading — a
+        // centred caption flanked by thin lines — with the category term bolded in its type accent
+        // colour (block green / tag blue / biome orange).
+        if (hasProfile()) {
+            int hx = blockSearchCoords[0];
+            int hy = blockSearchCoords[1];
+            int hw = blockSearchDimensions[0];
+            int accent = TYPE_HEADER_ACCENTS[currentSearchButton];
+            context.fill(hx, hy + 20, hx + hw, hy + 21, 0xFF3A3A3A);
+            Text searchHeader = Text.translatable(
+                    TYPE_HEADER_KEYS[currentSearchButton],
+                    Text.translatable(TYPE_HEADER_TERM_KEYS[currentSearchButton])
+                            .setStyle(net.minecraft.text.Style.EMPTY.withBold(true).withColor(net.minecraft.text.TextColor.fromRgb(accent))));
+            int cx = hx + hw / 2;
+            int midY = hy + 10;
+            int tw = textRenderer.getWidth(searchHeader);
+            int ruleColor = (accent & 0x00FFFFFF) | 0x55000000;
+            int leftTextEdge = cx - tw / 2 - 6;
+            int rightTextEdge = cx + tw / 2 + 6;
+            if (leftTextEdge - hx >= 12) {
+                context.fill(hx, midY, leftTextEdge, midY + 1, ruleColor);
+                context.fill(rightTextEdge, midY, hx + hw, midY + 1, ruleColor);
+            }
+            context.drawCenteredTextWithShadow(textRenderer, searchHeader, cx, hy + 5, 0xFFD8D8D8);
+
+            // Magnifying-glass icon pinned to the right of the search field so it reads as a search input.
+            if (blockUnderField != null) {
+                int iconX = blockUnderField.getX() + blockUnderField.getWidth() - 6 - 5;
+                int iconY = blockUnderField.getY() + (blockUnderField.getHeight() - 7) / 2;
+                drawSearchIcon(context, iconX, iconY, 0xFFAAAAAA);
+            }
+        }
 
         // Live colour wheel + 3D block/fire previews. Suppressed when this screen is drawn as a modal
         // backdrop so they don't paint over (or depth-fight with) the dialog overlaying it.
