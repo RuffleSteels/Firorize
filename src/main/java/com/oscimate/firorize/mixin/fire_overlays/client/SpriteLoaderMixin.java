@@ -23,11 +23,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Mixin(SpriteLoader.class)
 public class SpriteLoaderMixin {
@@ -59,23 +56,24 @@ public class SpriteLoaderMixin {
     @Inject(method = "stitch", at = @At("HEAD"))
     private void addSprites(List<SpriteContents> sp, int mipLevel, Executor executor, CallbackInfoReturnable<SpriteLoader.StitchResult> cir, @Local LocalRef<List<SpriteContents>> sprites) {
         if (id.equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)) {
-            List<int[]> ints = Stream.concat(
-                    Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
-                            .flatMap(map -> map.values().stream())
-                            .distinct()
-                            .collect(Collectors.toMap(
-                                    arr -> arr[0] + "-" + arr[1],
-                                    arr -> arr,
-                                    (existing, replacement) -> existing
-                            ))
-                            .values()
-                            .stream(),
-                    Stream.of(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight())
-                            .filter(newArr -> Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft().stream()
-                                    .flatMap(map -> map.values().stream())
-                                    .distinct()
-                                    .noneMatch(arr -> Arrays.equals(arr, newArr)))
-            ).toList();
+            // Generate a recoloured sprite for every distinct colour used by ANY profile (plus their
+            // base colours) — not just the one being edited — because multiple profiles can be active
+            // at once and each contributes colours to the in-world fire. Also include the live editing
+            // buffer so uncommitted edits preview correctly.
+            java.util.LinkedHashMap<String, int[]> distinct = new java.util.LinkedHashMap<>();
+            for (var profile : Main.CONFIG_MANAGER.getFireColorPresets().values()) {
+                for (var map : profile.getLeft().getLeft()) {
+                    for (int[] c : map.values()) distinct.putIfAbsent(c[0] + "-" + c[1], c);
+                }
+                int[] base = profile.getLeft().getRight();
+                distinct.putIfAbsent(base[0] + "-" + base[1], base);
+            }
+            for (var map : Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft()) {
+                for (int[] c : map.values()) distinct.putIfAbsent(c[0] + "-" + c[1], c);
+            }
+            int[] liveBase = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+            distinct.putIfAbsent(liveBase[0] + "-" + liveBase[1], liveBase);
+            List<int[]> ints = new ArrayList<>(distinct.values());
 
             ArrayList<Long> pointers = new ArrayList<>();
 
