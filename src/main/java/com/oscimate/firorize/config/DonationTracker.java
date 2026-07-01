@@ -50,7 +50,11 @@ public final class DonationTracker {
         long shown = Main.CONFIG_MANAGER.getDonationPopupsShown();
         if (Main.CONFIG_MANAGER.accumulatedConfigTimeMs >= (shown + 1L) * THRESHOLD_MS) {
             Screen current = client.currentScreen;
-            Main.CONFIG_MANAGER.setDonationPopupsShown((int) (shown + 1L));
+            // Catch the shown-count up to however many full thresholds have actually elapsed, not just
+            // shown+1. Otherwise any banked time beyond one threshold (e.g. a long single session, or
+            // lowering THRESHOLD_MS) leaves the condition true on the next frame, re-firing the popup.
+            long elapsed = Main.CONFIG_MANAGER.accumulatedConfigTimeMs / THRESHOLD_MS;
+            Main.CONFIG_MANAGER.setDonationPopupsShown((int) elapsed);
             Main.CONFIG_MANAGER.save();
             popupQueued = true;
             // Defer the screen swap to the end of the frame — mutating screens mid-render is unsafe.

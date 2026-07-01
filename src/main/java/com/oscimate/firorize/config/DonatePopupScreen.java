@@ -26,6 +26,10 @@ import java.time.Duration;
 public class DonatePopupScreen extends Screen {
     private final Screen parent;
     private int boxX, boxY, boxW, boxH;
+    // Capture whether the config was the in-config context when this popup opened, so closing restores
+    // it instead of forcing Main.inConfig true: forcing it true would leave it stuck on after returning
+    // to a screen that isn't the fire editor (e.g. the height screen), breaking in-world fire.
+    private final boolean parentInConfig = Main.inConfig;
 
     public DonatePopupScreen(Screen parent) {
         super(Text.translatable("firorize.donate.popup.title"));
@@ -67,7 +71,7 @@ public class DonatePopupScreen extends Screen {
         this.addDrawableChild(support);
         this.addDrawableChild(later);
         super.init();
-        Main.inConfig = true;
+        Main.inConfig = parentInConfig;
     }
 
     @Override
