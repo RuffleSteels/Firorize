@@ -5,8 +5,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import org.apache.commons.collections4.map.ListOrderedMap;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -90,6 +92,16 @@ public class UploadPresetScreen extends Screen {
 
     private void submit() {
         if (submitting) return;
+
+        // Hidden developer path: Shift+Alt while pressing Upload opens the built-in upload dialog
+        // (publishes to the curated built-in table behind a server-side password) instead of the
+        // public community upload. Only available for the public (non-private) upload flow.
+        if (!privateMode && devUploadCombo()) {
+            client.setScreen(new BuiltinUploadScreen(this, origin, profileName,
+                    titleField.getText().trim(), descriptionField.getText().trim()));
+            return;
+        }
+
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
             setStatus(Text.translatable("firorize.config.status.titleRequired"), true);
@@ -158,6 +170,15 @@ public class UploadPresetScreen extends Screen {
         } else {
             setStatus(errorMessage(res.error()), true);
         }
+    }
+
+    /** True while Shift+Alt are both held (queried from the keyboard, since the button's onPress
+     *  carries no modifier info). Reveals the hidden developer built-in upload path. */
+    private static boolean devUploadCombo() {
+        var window = MinecraftClient.getInstance().getWindow();
+        boolean shift = InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT) || InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_RIGHT_SHIFT);
+        boolean alt = InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_ALT) || InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_RIGHT_ALT);
+        return shift && alt;
     }
 
     /** Splits a comma/whitespace-separated list into lowercased, de-duplicated usernames. */

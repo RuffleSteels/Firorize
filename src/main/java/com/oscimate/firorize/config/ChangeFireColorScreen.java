@@ -120,6 +120,97 @@ public class ChangeFireColorScreen extends Screen {
                 px + off, py + off, RESET_ICON_SIZE, RESET_ICON_SIZE);
     }
 
+    /** A small star (9×9) drawn top-left at (px,py). Marks profiles imported from the curated
+     *  built-in gallery, distinct from the globe (community) and person (sent by a friend). */
+    public void drawBuiltin(DrawContext context, int px, int py) {
+        final int gold = 0xFFFFC83C;
+        // Rows of a chunky 5-point star.
+        String[] star = {
+                "....X....",
+                "....X....",
+                "...XXX...",
+                "XXXXXXXXX",
+                ".XXXXXXX.",
+                "..XXXXX..",
+                "..XXXXX..",
+                ".XX...XX.",
+                "XX.....XX",
+        };
+        for (int gy = 0; gy < star.length; gy++) {
+            for (int gx = 0; gx < star[gy].length(); gx++) {
+                if (star[gy].charAt(gx) == 'X') context.fill(px + gx, py + gy, px + gx + 1, py + gy + 1, gold);
+            }
+        }
+    }
+
+    /** A clean checkmark drawn inside the active checkbox (10×10) at top-left (x,y). */
+    public void drawCheckmark(DrawContext context, int x, int y, int color) {
+        // 2×2 squares stepped down-right into a vertex, then up-right — a standard tick.
+        int[][] pts = {{2, 4}, {3, 5}, {4, 6}, {5, 5}, {6, 4}, {7, 3}, {8, 2}};
+        for (int[] p : pts) context.fill(x + p[0], y + p[1], x + p[0] + 2, y + p[1] + 2, color);
+    }
+
+    // Three stacked horizontal bars with an up chevron above and a down chevron below — the "move
+    // up/down to reorder" glyph. Drawn in the same chunky pixel-art style as the other config icons
+    // (drawBuiltin etc.) so the button row reads consistently. 7 wide × 13 tall, centred in the 20×20 button.
+    private static final String[] REORDER_GLYPH = {
+            ".......",
+            "...X...",
+            "..XXX..",
+            ".......",
+            "XXXXXXX",
+            ".......",
+            "XXXXXXX",
+            ".......",
+            "XXXXXXX",
+            ".......",
+            "..XXX..",
+            "...X...",
+            ".......",
+    };
+
+    // Magnifying glass (6×7), drawn at the right of the search field so it's obvious the field is a search box.
+    private static final String[] SEARCH_GLYPH = {
+            ".XXX..",
+            "X...X.",
+            "X...X.",
+            "X...X.",
+            ".XXX..",
+            "....X.",
+            ".....X",
+    };
+
+    /** Draws the magnifying-glass glyph top-left at (px,py) in the given ARGB colour. */
+    private void drawSearchIcon(DrawContext context, int px, int py, int color) {
+        for (int gy = 0; gy < SEARCH_GLYPH.length; gy++) {
+            for (int gx = 0; gx < SEARCH_GLYPH[gy].length(); gx++) {
+                if (SEARCH_GLYPH[gy].charAt(gx) == 'X') {
+                    context.fill(px + gx, py + gy, px + gx + 1, py + gy + 1, color);
+                }
+            }
+        }
+    }
+
+    /** Draws the reorder glyph centred in the 20×20 reorder button. Tinted brighter (and with a lit
+     *  interior) while reorder mode is active so the toggle state is obvious. */
+    public void drawReorderIcon(DrawContext context, int px, int py) {
+        boolean on = presetListWidget != null && presetListWidget.reorderMode;
+        if (on) {
+            // Highlight the button interior so the active state reads clearly.
+            context.fill(px + 1, py + 1, px + 19, py + 19, 0x40FFFFFF);
+        }
+        int color = on ? 0xFFFFFFFF : 0xFFBFBFBF;
+        int offX = px + (20 - 7) / 2;
+        int offY = py + (20 - REORDER_GLYPH.length) / 2;
+        for (int gy = 0; gy < REORDER_GLYPH.length; gy++) {
+            for (int gx = 0; gx < REORDER_GLYPH[gy].length(); gx++) {
+                if (REORDER_GLYPH[gy].charAt(gx) == 'X') {
+                    context.fill(offX + gx, offY + gy, offX + gx + 1, offY + gy + 1, color);
+                }
+            }
+        }
+    }
+
     private String hexCode = "#ffffff";
     public Color[] baseColor = new Color[]{new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0]), new Color(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1])};
     public static Color[] pickedColor = {new Color(Color.decode("#ffffff").getRGB(), true), new Color(Color.decode("#ffffff").getRGB(), true)};
@@ -190,23 +281,54 @@ public class ChangeFireColorScreen extends Screen {
         return true;
     }
 
-    private final ArrayList<Integer> comparedPriorityOrder;
+    // Snapshots of every profile's colour data, the active set, and the profile order when the screen
+    // opened. The close-time texture reload fires only when one of these actually changed — crucially
+    // NOT when the user merely selected a different profile row. Selecting a row overwrites the live
+    // editing buffer with that profile's stored colours but changes nothing persistent, so comparing
+    // the buffer (as before) reported a phantom change and forced a needless reload.
+    private final java.util.LinkedHashMap<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> comparedProfileData;
+    private final java.util.LinkedHashSet<String> comparedActiveProfiles;
+    private final ArrayList<String> comparedProfileOrder;
     protected ChangeFireColorScreen(Screen parent) {
         super(Text.translatable("options.videoTitle"));
-        this.comparedCurrentFire = deepClone(Main.CONFIG_MANAGER.getCurrentBlockFireColors());
-        this.comparedPriorityOrder = new ArrayList<>(Main.CONFIG_MANAGER.getPriorityOrder());
+        this.comparedProfileData = snapshotProfileData();
+        this.comparedActiveProfiles = new java.util.LinkedHashSet<>(Main.CONFIG_MANAGER.getActiveProfiles());
+        this.comparedProfileOrder = new ArrayList<>(Main.CONFIG_MANAGER.getFireColorPresets().keyList());
         this.parent = parent;
+    }
+
+    /** Deep snapshot of every profile's colour data (the 3 maps + base), keyed by name, taken when the
+     *  screen opens. Independent of the live editing buffer, so switching the selected profile doesn't
+     *  register as a change in {@link #profileDataChanged()}. */
+    private static java.util.LinkedHashMap<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> snapshotProfileData() {
+        java.util.LinkedHashMap<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> out = new java.util.LinkedHashMap<>();
+        ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = Main.CONFIG_MANAGER.getFireColorPresets();
+        for (String name : presets.keyList()) out.put(name, deepClone(presets.get(name).getLeft()));
+        return out;
+    }
+
+    /** True when any profile's colours/base differ from the open-time snapshot, or a profile was
+     *  added/removed. Invariant to which profile is selected, so it only reports real edits. */
+    private boolean profileDataChanged() {
+        ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = Main.CONFIG_MANAGER.getFireColorPresets();
+        if (!comparedProfileData.keySet().equals(presets.keySet())) return true;
+        for (java.util.Map.Entry<String, KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>> e : comparedProfileData.entrySet()) {
+            KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> cur = presets.get(e.getKey());
+            if (cur == null || !fireColorsEqual(e.getValue(), cur.getLeft())) return true;
+        }
+        return false;
     }
     public void onClose() {
         Main.inConfig = false;
-        if (!isPresetAdd && (!comparedPriorityOrder.equals(Main.CONFIG_MANAGER.getPriorityOrder())
-                || !fireColorsEqual(comparedCurrentFire, Main.CONFIG_MANAGER.getCurrentBlockFireColors()))) {
+        // Flush the live editing buffer back into the selected preset *before* comparing, so the
+        // selected profile's latest edits count as a real profile-data change (skipped when no
+        // profile exists). Reload only when profile colours, the active set, or the profile order
+        // actually changed — not when the user merely switched which profile is selected.
+        commitToPreset();
+        if (!isPresetAdd && (profileDataChanged()
+                || !comparedActiveProfiles.equals(Main.CONFIG_MANAGER.getActiveProfiles())
+                || !comparedProfileOrder.equals(Main.CONFIG_MANAGER.getFireColorPresets().keyList()))) {
             MinecraftClient.getInstance().reloadResources();  }
-
-        int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
-        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
-        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
 
         Main.CONFIG_MANAGER.save();
 
@@ -454,8 +576,16 @@ public class ChangeFireColorScreen extends Screen {
         Main.CONFIG_MANAGER.save();
     }
 
+    /** True when a real profile is selected for editing. False when the profile list is empty, in
+     *  which case the colour editor is inert and must not write to a (non-existent) preset. */
+    public boolean hasProfile() {
+        return presetListWidget != null && presetListWidget.curPresetID != null
+                && Main.CONFIG_MANAGER.getFireColorPresets().containsKey(presetListWidget.curPresetID);
+    }
+
     /** Copies the live currentBlockFireColors + priority order into the active preset (no disk write). */
     public void commitToPreset() {
+        if (!hasProfile()) return;
         int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
         System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
         Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
@@ -509,13 +639,22 @@ public class ChangeFireColorScreen extends Screen {
     public Color[] tempColor;
     public ButtonWidget addColorButton;
     public InvisibleTextFieldWidget invisibleTextFieldWidget;
-    public ButtonWidget shareBottomButton;
     public ButtonWidget resetProfileButton;
-    public ButtonWidget browseOnlineButton;
-    public ButtonWidget inboxButton;
-    private final KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]> comparedCurrentFire;
+    // The "Import profiles…" group (Community + Built-in share one visual box so they read as linked),
+    // plus Share and Inbox below it. All custom panel-styled buttons.
+    public PanelButton communityButton;
+    public PanelButton builtinButton;
+    public PanelButton shareBottomButton;
+    public PanelButton inboxButton;
+    // Geometry of the "Import profiles…" group box, drawn behind the Community/Built-in buttons.
+    private int importGroupX, importGroupY, importGroupW, importGroupH;
+    // Uniform inner padding of the import-group box (sides, top above the heading, gap to the buttons,
+    // and below them). Shared by the layout in init() and the heading drawn in render().
+    private static final int IMPORT_PAD = 4;
+    // Toggles drag-to-reorder mode on the profile list.
+    public ButtonWidget reorderProfilesButton;
     public ButtonWidget[] movableArrowButtons = new ButtonWidget[6];
-    public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80;
+    public int profileButtonY = wheelCoords[0] + wheelRadius*2 + 80 + PresetListWidget.TOP_GAP;
 
     public int profileButtonXInitial = (wheelRadius*2 + sliderDimensions[0] + 20) + wheelCoords[0] - 20;
     public boolean isCycling = false;
@@ -549,29 +688,51 @@ public class ChangeFireColorScreen extends Screen {
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this, false);this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
-        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48, wheelCoords[0], 15, this, textRenderer);
+        // Height is shortened by DESC_GAP + TOP_GAP to match the downward nudges in PresetListWidget.getY(),
+        // so the list's bottom edge (and the import/share rows below) stay put while the subtitle gap and
+        // the separation above the profiles section open up.
+        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 70 - PresetListWidget.DESC_GAP - PresetListWidget.TOP_GAP, wheelCoords[0], 15, this, textRenderer);
 
-        // Two button rows stack directly under the profile list (the list height above was shrunk by
-        // 48 to leave room): "Community Profiles" full width, then a wide Share button with a square
-        // "Inbox" text button to its right (together spanning the list width).
-        this.browseOnlineButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.communityProfiles"), button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BROWSE)))
-                .dimensions(presetListWidget.getX(), presetListWidget.getY() + presetListWidget.getHeight() + 4, presetListWidget.getWidth(), 20).build();
+        int listX = presetListWidget.getX();
+        int listW = presetListWidget.getWidth();
+        int listBottom = presetListWidget.getY() + presetListWidget.getHeight();
 
-        int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
-        int row2Gap = 2;
-        // Inbox button wraps narrowly to its label and stays right-aligned at the end of the row;
-        // Share fills the remaining width to its left.
+        // "Import profiles…" group: Community + Built-in sit side by side inside one outlined box so
+        // they read as two halves of the same feature. Each opens the same screen on its own view.
+        // IMPORT_PAD is applied uniformly on every side (and between the heading and the buttons) so
+        // the surrounding panel reads as evenly padded instead of cramped on one edge.
+        int labelH = textRenderer.fontHeight;
+        importGroupX = listX - IMPORT_PAD;
+        importGroupY = listBottom + IMPORT_PAD;
+        importGroupW = listW + IMPORT_PAD * 2;
+        int importRowY = importGroupY + IMPORT_PAD + labelH + 2;
+        importGroupH = (importRowY + 18 + IMPORT_PAD) - importGroupY;
+        int half = (listW - 3) / 2;
+        this.communityButton = new PanelButton(listX, importRowY, half, 18,
+                Text.translatable("firorize.config.button.community"),
+                button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.COMMUNITY)));
+        this.builtinButton = new PanelButton(listX + listW - half, importRowY, half, 18,
+                Text.translatable("firorize.config.button.builtin"),
+                button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BUILTIN)));
+
+        // Share (wide) + Inbox (narrow) on the row below the import group.
+        int actionRowY = importRowY + 18 + 7;
         Text inboxLabel = Text.translatable("firorize.config.button.inbox");
-        int inboxSize = textRenderer.getWidth(inboxLabel) + 12;
-        int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
-        this.shareBottomButton = new ButtonWidget.Builder(Text.translatable("firorize.config.button.share"), button -> client.setScreen(new ChooseProfileScreen(this, null)))
-                .dimensions(presetListWidget.getX(), row2Y, shareW, 20).build();
-        this.inboxButton = new ButtonWidget.Builder(inboxLabel, button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)))
-                .dimensions(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20).build();
+        int inboxW = textRenderer.getWidth(inboxLabel) + 16;
+        int shareW = listW - inboxW - 2;
+        this.shareBottomButton = new PanelButton(listX, actionRowY, shareW, 18,
+                Text.translatable("firorize.config.button.share"),
+                button -> client.setScreen(new ChooseProfileScreen(this, null)));
+        this.inboxButton = new PanelButton(listX + shareW + 2, actionRowY, inboxW, 18, inboxLabel,
+                button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)));
         // Pull the inbox count so the notification badge is up to date when this screen opens.
         OnlinePresetsClient.refreshInboxCount();
 
-        // Right-aligned: Add flush against the panel's right edge, Reset directly to its left.
+        // Right-aligned row of icon buttons next to the "Profiles" title: Reorder, Reset, Add.
+        this.reorderProfilesButton = new ButtonWidget.Builder(Text.literal(""), button -> {
+            presetListWidget.reorderMode = !presetListWidget.reorderMode;
+            button.setFocused(false);
+        }).dimensions(profileButtonXs[0], profileButtonY, 20, 20).build();
         this.resetProfileButton = new ButtonWidget.Builder(Text.literal(""), button -> this.presetListWidget.resetProfile()).dimensions(profileButtonXs[1], profileButtonY, 20, 20).build();
         this.addButton = new ButtonWidget.Builder(Text.literal("+"), button -> presetListWidget.addPreset()).dimensions(profileButtonXs[2], profileButtonY, 20, 20).build();
         this.addDrawableChild(addButton);
@@ -581,33 +742,12 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[0] = new ButtonWidget.Builder(Text.translatable("firorize.config.button.baseButton"), button -> toggle(false)).dimensions(hexBoxCoords[0], hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
         overlayToggles[1]  = new ButtonWidget.Builder(Text.translatable("firorize.config.button.overlayButton"), button -> toggle(false)).dimensions(hexBoxCoords[0] + (wheelRadius*2 + 20 + sliderDimensions[0])/2, hexBoxCoords[1] + 30, (wheelRadius*2 + 20 + sliderDimensions[0])/2, 20).build();
 
-        searchOptions[0] = new MoveableButton(this, this.textRenderer, blockSearchCoords[0], blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.blocks"),  0);
-        searchOptions[1]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.tags"), 1);
-        searchOptions[2]  = new MoveableButton(this, this.textRenderer, blockSearchCoords[0]+blockSearchDimensions[0]/3*2, blockSearchCoords[1], blockSearchDimensions[0]/3, 20, Text.translatable("firorize.config.title.biomes"), 2);
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 2; j++) {
-                if (2*i+j != 0 && 2*i+j != 5) {
-                    int finalJ = j;
-                    MoveableButton button = ((MoveableButton) searchOptions[i]);
-                    movableArrowButtons[2 * i + j] = new ButtonWidget.Builder(Text.literal(""), buttonn -> button.move(finalJ != 0)).dimensions(button.getXX()[j], button.getYY(), button.getHeight(), 13).build();
-                    this.addDrawableChild(movableArrowButtons[2 * i + j]);
-
-                    movableArrowButtons[2 * i + j].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.priorityArrow")));
-                    movableArrowButtons[2 * i + j].setTooltipDelay(Duration.ofMillis(750L));
-                }
-            }
-        }
-
-
-
         this.addDrawableChild(presetListWidget);
-        this.addDrawableChild(browseOnlineButton);
-        this.addDrawableChild(inboxButton);
+        this.addDrawableChild(communityButton);
+        this.addDrawableChild(builtinButton);
         this.addDrawableChild(shareBottomButton);
-        this.addDrawableChild(searchOptions[0]);
-        this.addDrawableChild(searchOptions[1]);
-        this.addDrawableChild(searchOptions[2]);
+        this.addDrawableChild(inboxButton);
+        this.addDrawableChild(reorderProfilesButton);
         this.addDrawableChild(overlayToggles[0]);
         this.addDrawableChild(overlayToggles[1]);
         this.addDrawableChild(undoButton);
@@ -617,15 +757,9 @@ public class ChangeFireColorScreen extends Screen {
         this.addDrawableChild(invisibleTextFieldWidget);
         this.addDrawableChild(resetProfileButton);
 
-        if (client.world == null) {
-            searchOptions[1].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
-            searchOptions[1].active = false;
-            searchOptions[2].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.movableButton")));
-            searchOptions[2].active = false;
-            searchOptions[0].active = false;
-        } else {
-            this.changeSearchOption(Main.CONFIG_MANAGER.getPriorityOrder().get(0));
-        }
+        // Each profile is a single category, so there are no category tabs or priority arrows: lock the
+        // editor to the selected profile's type (a static header drawn in render() labels it).
+        this.changeSearchOption(Main.CONFIG_MANAGER.getProfileType(presetListWidget.curPresetID));
 
         shareBottomButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.shareProfileButton")));
         shareBottomButton.setTooltipDelay(Duration.ofMillis(750L));
@@ -633,8 +767,12 @@ public class ChangeFireColorScreen extends Screen {
         addButton.setTooltipDelay(Duration.ofMillis(750L));
         resetProfileButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.resetProfileButton")));
         resetProfileButton.setTooltipDelay(Duration.ofMillis(750L));
-        browseOnlineButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.onlinePresets")));
-        browseOnlineButton.setTooltipDelay(Duration.ofMillis(750L));
+        reorderProfilesButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.reorderProfilesButton")));
+        reorderProfilesButton.setTooltipDelay(Duration.ofMillis(750L));
+        communityButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.onlinePresets")));
+        communityButton.setTooltipDelay(Duration.ofMillis(750L));
+        builtinButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.builtinProfiles")));
+        builtinButton.setTooltipDelay(Duration.ofMillis(750L));
         inboxButton.setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.inboxButton")));
         inboxButton.setTooltipDelay(Duration.ofMillis(750L));
         overlayToggles[0].setTooltip(Tooltip.of(Text.translatable("firorize.config.tooltip.baseToggle")));
@@ -701,16 +839,29 @@ public class ChangeFireColorScreen extends Screen {
 
         super.resize(client.getWindow().getScaledWidth(), client.getWindow().getScaledHeight());
     }
+    /** Lang keys for the three profile types, indexed 0 block / 1 tag / 2 biome. Reused by the profile
+     *  list badge, the create dialog, and the online lists. */
+    public static final String[] TYPE_TITLE_KEYS = {
+            "firorize.config.title.blocks", "firorize.config.title.tags", "firorize.config.title.biomes"
+    };
+
+    /** Sentence-form headers shown above the search list explaining what the list recolours, indexed
+     *  0 block / 1 tag / 2 biome. Each takes one %s arg — the bolded key term below. */
+    public static final String[] TYPE_HEADER_KEYS = {
+            "firorize.config.searchHeader.block", "firorize.config.searchHeader.tag", "firorize.config.searchHeader.biome"
+    };
+    /** The bolded term substituted into the matching TYPE_HEADER_KEYS sentence ("block" / "block tag" / "biome"). */
+    public static final String[] TYPE_HEADER_TERM_KEYS = {
+            "firorize.config.searchHeader.termBlock", "firorize.config.searchHeader.termTag", "firorize.config.searchHeader.termBiome"
+    };
+    /** Accent RGB for each type's bolded header term + divider rule (block green / tag blue / biome orange),
+     *  matching the profile-list type badge colours. */
+    public static final int[] TYPE_HEADER_ACCENTS = { 0x8FD08F, 0x8FAFE0, 0xE0B070 };
+
     private int currentSearchButton = 0;
 
     public void changeSearchOption(int buttonNum) {
-        for (int i = 0; i < 3; i++) {
-            if (i != Main.CONFIG_MANAGER.getPriorityOrder().indexOf(buttonNum)) {
-                searchOptions[i].active = true;
-            } else {
-                searchOptions[i].active = false;
-            }
-        }
+        // Single-type profiles: no tabs to toggle — just point the search list at the chosen category.
         currentSearchButton = buttonNum;
         searchScreenListWidget.test(false);
         searchScreenListWidget.setSelected(searchScreenListWidget.children().get(0));
@@ -725,6 +876,11 @@ public class ChangeFireColorScreen extends Screen {
         overlayToggles[!isOverlay?1:0].active = true;
     }
     private void save() {
+        // No profile selected (empty list) → nothing to apply to.
+        if (!hasProfile()) {
+            this.saveButton.active = false;
+            return;
+        }
         // Apply is a breaking change: snapshot config before, push history after.
         historyBefore();
         int histTab = currentSearchButton;
@@ -760,10 +916,7 @@ public class ChangeFireColorScreen extends Screen {
         this.saveButton.active = false;
         this.saveButton.setFocused(false);
 
-        int[] list = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
-        System.arraycopy(list, 0, Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getRight(), 0, list.length);
-        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getLeft().getLeft(), Main.CONFIG_MANAGER.getCurrentBlockFireColors().getLeft());
-        Collections.copy(Main.CONFIG_MANAGER.getFireColorPresets().get(presetListWidget.curPresetID).getRight(), Main.CONFIG_MANAGER.getPriorityOrder());
+        commitToPreset();
 
         Main.CONFIG_MANAGER.save();
         historyAfter(histTab, histTarget, histOverlay);
@@ -1040,6 +1193,33 @@ public class ChangeFireColorScreen extends Screen {
 
         this.applyBlur(context);
         this.renderDarkening(context);
+
+        if (communityButton != null && !renderingAsBackdrop) {
+            // Panel behind the whole profiles section (title + buttons + list + import/share rows) so it
+            // reads as one section of the UI, mirroring the search-column panel. Drawn before its widgets.
+            context.fill(profilesPanelX1(), profilesPanelY1(), profilesPanelX2(), profilesPanelY2(), 0xFF242424);
+        }
+        // Solid panel behind the whole search column (title + search field + list) so it reads as one
+        // section of the UI and gives the title text contrast. Drawn before the field/list render on top.
+        // Extends down past the Apply/Done buttons so they sit inside the same panel.
+        if (!renderingAsBackdrop) {
+            context.fill(searchPanelX1(), searchPanelY1(), searchPanelX2(), searchPanelY2(), 0xFF242424);
+        }
+    }
+
+    // ---- Section panel rectangles (shared by the background fill and the foreground outline) ----
+
+    private int searchPanelX1() { return blockSearchCoords[0] - 4; }
+    private int searchPanelY1() { return blockSearchCoords[1] - 4; }
+    private int searchPanelX2() { return blockSearchCoords[0] + blockSearchDimensions[0] + 4; }
+    /** Bottom of the search panel — just below the Apply/Done button row (at 20 + list height). */
+    private int searchPanelY2() { return 20 + blockSearchDimensions[1] + 20 + 4; }
+
+    private int profilesPanelX1() { return importGroupX - 4; }
+    private int profilesPanelY1() { return profileButtonY - 6; }
+    private int profilesPanelX2() { return importGroupX + importGroupW + 4; }
+    private int profilesPanelY2() {
+        return (shareBottomButton != null ? shareBottomButton.getY() + shareBottomButton.getHeight() : importGroupY + importGroupH) + 5;
     }
 
     @Override
@@ -1050,8 +1230,63 @@ public class ChangeFireColorScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-        // Reset-profile button icon (reset.png), centred in its 20×20 button.
+        // Reorder + reset profile button icons, centred in their 20×20 buttons.
+        drawReorderIcon(context, profileButtonXs[0], profileButtonY);
         drawResetIcon(context, profileButtonXs[1], profileButtonY);
+
+        // Outline framing the whole profiles section (matches the panel fill in renderBackground).
+        if (communityButton != null) {
+            context.drawStrokedRectangle(profilesPanelX1(), profilesPanelY1(),
+                    profilesPanelX2() - profilesPanelX1(), profilesPanelY2() - profilesPanelY1(), 0xFF5A5A5A);
+        }
+
+        // "Import profiles…" group: an outlined box around the Community/Built-in buttons with a small
+        // heading, so the two read as two halves of one feature. Outline-only, so it frames the buttons
+        // without covering them (drawn after the widgets).
+        if (communityButton != null) {
+            context.drawStrokedRectangle(importGroupX, importGroupY + importGroupH - 1, importGroupW, 1, 0xFF5A5A5A);
+            context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.label.importProfiles"),
+                    importGroupX + IMPORT_PAD, importGroupY + IMPORT_PAD, 0xFFB0B0B0);
+        }
+
+        // Section title above the search list saying what the selected profile's single category
+        // recolours (replaces the old block/tag/biome tabs). Styled as a divider-rule heading — a
+        // centred caption flanked by thin lines — rather than a button, so it doesn't read as clickable.
+        // The category term is bolded in its type accent colour (block green / tag blue / biome orange).
+        int hx = blockSearchCoords[0];
+        int hy = blockSearchCoords[1];
+        int hw = blockSearchDimensions[0];
+        int accent = TYPE_HEADER_ACCENTS[currentSearchButton];
+        // Outline framing the whole search column (matches the panel fill drawn in renderBackground) so
+        // the title, search field and list read as one bordered section.
+        context.drawStrokedRectangle(searchPanelX1(), searchPanelY1(),
+                searchPanelX2() - searchPanelX1(), searchPanelY2() - searchPanelY1(), 0xFF5A5A5A);
+        // A 1px separator under the title divides the heading from the search field below it.
+        context.fill(hx, hy + 20, hx + hw, hy + 21, 0xFF3A3A3A);
+        Text searchHeader = Text.translatable(
+                TYPE_HEADER_KEYS[currentSearchButton],
+                Text.translatable(TYPE_HEADER_TERM_KEYS[currentSearchButton])
+                        .setStyle(net.minecraft.text.Style.EMPTY.withBold(true).withColor(net.minecraft.text.TextColor.fromRgb(accent))));
+        int cx = hx + hw / 2;
+        int midY = hy + 10;
+        int tw = textRenderer.getWidth(searchHeader);
+        // Thin divider rules either side of the centred caption, tinted with the type accent at low alpha.
+        // Skipped when the caption is too wide to leave a sensible rule (e.g. the long "block tag" title).
+        int ruleColor = (accent & 0x00FFFFFF) | 0x55000000;
+        int leftTextEdge = cx - tw / 2 - 6;
+        int rightTextEdge = cx + tw / 2 + 6;
+        if (leftTextEdge - hx >= 12) {
+            context.fill(hx, midY, leftTextEdge, midY + 1, ruleColor);
+            context.fill(rightTextEdge, midY, hx + hw, midY + 1, ruleColor);
+        }
+        context.drawCenteredTextWithShadow(textRenderer, searchHeader, cx, hy + 5, 0xFFD8D8D8);
+
+        // Magnifying-glass icon pinned to the right of the search field so it reads as a search input.
+        if (blockUnderField != null) {
+            int iconX = blockUnderField.getX() + blockUnderField.getWidth() - 6 - 5;
+            int iconY = blockUnderField.getY() + (blockUnderField.getHeight() - 7) / 2;
+            drawSearchIcon(context, iconX, iconY, 0xFFAAAAAA);
+        }
 
         // Colour wheel — drawn through the custom COLOR_WHEEL pipeline (lightness Value carried in
         // the quad's vertex-colour alpha; full brightness here). Skipped in backdrop mode: this custom
@@ -1281,6 +1516,26 @@ public class ChangeFireColorScreen extends Screen {
         public SearchScreenListWidget(MinecraftClient client, int width, int height, int x, int y) {
             super(client, width, height, x, y);
             generateEntries();
+        }
+
+        @Override
+        public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            super.renderWidget(context, mouseX, mouseY, delta);
+            // Tag and biome lists are populated from the server/datapack registries, which only exist
+            // once a world is loaded. In the main menu they're empty, so the list would otherwise be
+            // blank with no explanation — spell out why instead.
+            boolean needsWorld = (currentSearchButton == 1 && Main.blockTagList.isEmpty())
+                    || (currentSearchButton == 2 && Main.biomeKeyList.isEmpty());
+            if (needsWorld) {
+                Text msg = Text.translatable(currentSearchButton == 1
+                        ? "firorize.config.status.noTagsNoWorld" : "firorize.config.status.noBiomesNoWorld");
+                int cx = getX() + getWidth() / 2;
+                int cy = getY() + getHeight() / 2 - ChangeFireColorScreen.this.textRenderer.fontHeight;
+                for (OrderedText line : ChangeFireColorScreen.this.textRenderer.wrapLines(msg, getWidth() - 24)) {
+                    context.drawCenteredTextWithShadow(ChangeFireColorScreen.this.textRenderer, line, cx, cy, 0xFF9A9A9A);
+                    cy += ChangeFireColorScreen.this.textRenderer.fontHeight + 1;
+                }
+            }
         }
         public int num = 0;
         public void test() {
