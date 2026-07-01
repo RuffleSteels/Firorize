@@ -1703,8 +1703,8 @@ public class ChangeFireColorScreen extends Screen {
             historyAfter(currentSearchButton, entry.languageDefinition, isOverlay);
         }
 
-        @Environment(value=EnvType.CLIENT)
         /** The entry whose left + (add) box contains (mx,my), or null. Used for click-drag multi-add. */
+        @Environment(value=EnvType.CLIENT)
         BlockEntry entryAtAddBox(double mx, double my) {
             BlockEntry e = getEntryAtPosition(mx, my);
             if (e == null) return null;
