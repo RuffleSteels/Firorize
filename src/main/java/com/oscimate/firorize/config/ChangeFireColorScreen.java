@@ -1162,6 +1162,10 @@ public class ChangeFireColorScreen extends Screen {
         boolean prev = renderingAsBackdrop;
         renderingAsBackdrop = true;
         try {
+            // Draw the blurred/panorama background first (the section panels are suppressed while
+            // renderingAsBackdrop), then the widgets on top — otherwise the dialog cuts through to a
+            // black screen instead of the dimmed game behind it.
+            extractBackground(context, -1, -1, delta);
             extractRenderState(context, -1, -1, delta);
         } finally {
             renderingAsBackdrop = prev;
