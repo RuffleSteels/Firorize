@@ -54,7 +54,7 @@ dependencies {
 }
 
 tasks.register("generateChangelog") {
-    description = "Builds the changelog from the -Pchangelog input ('|'-separated bullet points)."
+    description = "Builds the changelog from the -Pchangelog input (used verbatim; newlines preserved)."
     doLast {
         // ---- Release type is derived from the version being published, not from any tag. ----
         def version = project.mod_version
@@ -83,22 +83,13 @@ tasks.register("generateChangelog") {
         println "Version: $version"
         println "Release type: $releaseType"
 
-        // ---- Build the changelog from the -Pchangelog text: '|' separates bullet points. ----
-        // Passed on the command line as -Pchangelog="First item|Second item|Third item".
-        def changes = new StringBuilder()
+        // ---- Changelog: use the -Pchangelog text verbatim (newlines and indentation preserved). ----
+        // Paste the release notes as-is; no separators or auto-bulleting are applied.
         def changelogInput = project.findProperty("changelog")
-        if (changelogInput) {
-            changelogInput.toString().split(/\|/).collect { it.trim() }.findAll { it }.each { line ->
-                def entry = "- ${line}".toString()
-                println "Adding changelog line: $entry"
-                changes << (changes.length() == 0 ? entry : "\n${entry}")
-            }
-        }
-
-        def releaseChangelog = changes.toString()
+        def releaseChangelog = changelogInput ? changelogInput.toString().trim() : ""
         if (releaseChangelog.isEmpty()) {
             releaseChangelog = "No Changelog Available"
-            println "No changelog provided. Pass -Pchangelog=\"item one|item two\" to populate it."
+            println "No changelog provided. Pass -Pchangelog=\"...your release notes...\" to populate it."
         }
         // Expose results to other tasks (e.g. publishMods) via project extra properties.
         project.ext.releaseChangelog = releaseChangelog
