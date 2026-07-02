@@ -219,9 +219,16 @@ public class ConfigManager {
         if(fileExists()) {
             try (Reader reader = Files.newBufferedReader(file)) {
                 jsonOutput = GSON.fromJson(reader, FireLogicConfig.class);
-            } catch (IOException e) {
+            } catch (IOException | com.google.gson.JsonParseException e) {
 
             }
+        }
+
+        if(jsonOutput == null) {
+            // File was missing, empty, truncated, or invalid JSON (parse returned null or threw): fall
+            // back to the in-memory defaults and rewrite a clean file rather than dereferencing null.
+            jsonOutput = new FireLogicConfig();
+            save();
         }
 
         if(jsonOutput.getFireHeightSlider() > 100 || jsonOutput.getFireHeightSlider() < 0) {

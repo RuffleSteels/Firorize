@@ -217,7 +217,8 @@ public class AddProfileScreen extends Screen {
                     if (pair.getLeft() instanceof KeyValuePair<?, ?>) {
                         KeyValuePair<?, ?> innerPair = (KeyValuePair<?, ?>) pair.getLeft();
                         if (innerPair.getLeft() instanceof ArrayList && innerPair.getRight() instanceof int[]
-                                && pair.getRight() instanceof ArrayList) {
+                                && pair.getRight() instanceof ArrayList
+                                && isWellFormedProfile((ArrayList<?>) innerPair.getLeft(), (int[]) innerPair.getRight())) {
                             return (KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>) obj;
                         }
                     }
@@ -227,6 +228,22 @@ public class AddProfileScreen extends Screen {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /** True only for the exact shape the rest of the mod assumes: a base colour of {base, overlay} and
+     *  three category maps (block/tag/biome), each a {@link ListOrderedMap} whose every value is an
+     *  int[] of length 2. An untrusted import can pass the class allowlist but still be the wrong shape
+     *  (missing maps, non-map entries, wrong-length colour arrays); rejecting it here stops the in-world
+     *  colour lookup ({@code Main.resolveActiveFireColor}) from throwing on it later. */
+    private static boolean isWellFormedProfile(ArrayList<?> maps, int[] base) {
+        if (base.length != 2 || maps.size() != 3) return false;
+        for (Object m : maps) {
+            if (!(m instanceof ListOrderedMap<?, ?> lom)) return false;
+            for (Object v : lom.values()) {
+                if (!(v instanceof int[] arr) || arr.length != 2) return false;
+            }
+        }
+        return true;
     }
 
     @Override
