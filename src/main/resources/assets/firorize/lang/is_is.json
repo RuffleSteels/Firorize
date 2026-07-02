@@ -48,5 +48,11 @@
   "firorize.donate.popup.title": "Líkar þér við Firorize?",
   "firorize.donate.popup.body": "Firorize er alltaf ókeypis. Ef það gleður þig, íhugaðu að styðja það á Ko-fi!",
   "firorize.donate.popup.support": "Styðja á Ko-fi",
-  "firorize.donate.popup.later": "Kannski seinna"
+  "firorize.donate.popup.later": "Kannski seinna",
+  "firorize.config.newProfile.description": "Hægt er að sérsníða lit elds eftir blokkinni, lífríkinu eða blokkarmerki blokkarinnar sem eldurinn er á. Veldu hvað þetta snið notar.",
+  "firorize.config.tooltip.profileActive": "Notað á eld — smelltu til að slökkva.",
+  "firorize.config.tooltip.profileInactive": "Ekki notað — smelltu til að kveikja.",
+  "firorize.config.tooltip.badge.block": "Þetta snið litar eld eftir blokkinni sem eldurinn er á.",
+  "firorize.config.tooltip.badge.tag": "Þetta snið litar eld eftir blokkarmerki blokkarinnar undir honum.",
+  "firorize.config.tooltip.badge.biome": "Þetta snið litar eld eftir lífríkinu sem hann er í."
 }
