@@ -1169,6 +1169,11 @@ public class ChangeFireColorScreen extends Screen {
         boolean prev = renderingAsBackdrop;
         renderingAsBackdrop = true;
         try {
+            // render() alone does NOT draw the background — vanilla's renderWithTooltip() calls
+            // renderBackground() before render(), so replaying only render() dropped the panorama/blur
+            // and the dialog cut through to black. Draw the background first (panels stay suppressed via
+            // the renderingAsBackdrop guard), then the widgets on top.
+            renderBackground(context, -1, -1, delta);
             render(context, -1, -1, delta);
         } finally {
             renderingAsBackdrop = prev;
