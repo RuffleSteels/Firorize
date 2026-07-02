@@ -362,7 +362,14 @@ public class OnlinePresetsScreen extends Screen {
         }
 
         if (flashTimer > 0 && flashText != null) {
-            context.drawCenteredTextWithShadow(textRenderer, flashText, width / 2, boxY + boxH - 40, flashError ? 0xFFE08080 : 0xFF80E080);
+            // Grey backing plate behind the status flash so the coloured text (e.g. the green
+            // "imported" message) stays legible against the preset cards scrolling behind it.
+            int fw = textRenderer.getWidth(flashText);
+            int cx = width / 2;
+            int fy = boxY + boxH - 40;
+            context.fill(cx - fw / 2 - 5, fy - 4, cx + fw / 2 + 5, fy + 12, 0xE0303030);
+            context.drawBorder(cx - fw / 2 - 5, fy - 4, fw + 10, 16, 0xFF5A5A5A);
+            context.drawCenteredTextWithShadow(textRenderer, flashText, cx, fy, flashError ? 0xFFE08080 : 0xFF80E080);
         }
 
         // refresh.png sprite, centred over its (label-less) button.

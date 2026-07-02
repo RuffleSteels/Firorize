@@ -367,6 +367,10 @@ class PresetListWidget
             return super.mouseClicked(mouseX, mouseY, button);
         }
         private float alphaa;
+        // Marquee state: when the hovered row's name is too long to fit, it auto-scrolls sideways.
+        // marqueeStart is reset each time the hover begins so the scroll always starts from the front.
+        private long marqueeStart;
+        private boolean wasHovered;
 
         @Override
         public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
@@ -450,12 +454,25 @@ class PresetListWidget
             context.drawText(PresetListWidget.this.textRenderer, badge, badgeX + 3, badgeY + 2,
                     new Color(tc[0] / 255f, tc[1] / 255f, tc[2] / 255f, dim).getRGB(), false);
 
-            // Name (left column): left-aligned after the checkbox/marker, truncated before the badge.
+            // Name (left column): left-aligned after the checkbox/marker. When it doesn't fit the
+            // space before the badge it marquee-scrolls while the row is hovered (clipped to its
+            // column); otherwise it's truncated.
             int nameX = x + (imported ? 29 : 18);
             int nameColor = active ? 0xFFFFFFFF : 0xFF707070;
             int nameMax = Math.max(8, badgeX - 4 - nameX);
-            String shown = PresetListWidget.this.textRenderer.trimToWidth(languageDefinition, nameMax);
-            context.drawTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(shown), nameX, y + (entryHeight - 8) / 2 + 1, nameColor);
+            int nameY = y + (entryHeight - 8) / 2 + 1;
+            int fullW = PresetListWidget.this.textRenderer.getWidth(languageDefinition);
+            if (hovered && fullW > nameMax) {
+                if (!wasHovered) marqueeStart = System.currentTimeMillis();
+                int off = MarqueeText.offset(fullW, nameMax, System.currentTimeMillis() - marqueeStart);
+                context.enableScissor(nameX, y, nameX + nameMax, y + entryHeight);
+                context.drawTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(languageDefinition), nameX - off, nameY, nameColor);
+                context.disableScissor();
+            } else {
+                String shown = PresetListWidget.this.textRenderer.trimToWidth(languageDefinition, nameMax);
+                context.drawTextWithShadow(PresetListWidget.this.textRenderer, Text.literal(shown), nameX, nameY, nameColor);
+            }
+            wasHovered = hovered;
         }
     }
 }
