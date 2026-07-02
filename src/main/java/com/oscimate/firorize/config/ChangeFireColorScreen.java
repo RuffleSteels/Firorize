@@ -1210,14 +1210,14 @@ public class ChangeFireColorScreen extends Screen {
 
         // Panel behind the whole profiles section (title + buttons + list + import/share rows) so it
         // reads as one section of the UI, mirroring the search-column panel. Drawn before its widgets.
-        if (browseOnlineButton != null && !renderingAsBackdrop) {
+        if (browseOnlineButton != null) {
             context.fill(profilesPanelX1(), profilesPanelY1(), profilesPanelX2(), profilesPanelY2(), 0xFF242424);
         }
         // Solid panel behind the whole search column (title + search field + list) so it reads as one
         // section of the UI and gives the title text contrast. Extends down past the Apply/Done row.
-        if (!renderingAsBackdrop) {
+//        if (!renderingAsBackdrop) {
             context.fill(searchPanelX1(), searchPanelY1(), searchPanelX2(), searchPanelY2(), 0xFF242424);
-        }
+//        }
     }
 
     // ---- Section panel rectangles (shared by the background fill and the foreground outline) ----
