@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       changelog:
-        description: "Changelog bullet points, separated by | (each becomes its own line)"
+        description: "Release notes — paste as-is (newlines and indentation are preserved verbatim)"
         required: false
         default: ""
 
@@ -22,8 +22,9 @@ jobs:
           fetch-depth: 0
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
-      - run: ./gradlew build publishMods -Pchangelog="${{ inputs.changelog }}"
+      - run: ./gradlew build publishMods -Pchangelog="$CHANGELOG"
         env:
+          CHANGELOG: ${{ inputs.changelog }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
