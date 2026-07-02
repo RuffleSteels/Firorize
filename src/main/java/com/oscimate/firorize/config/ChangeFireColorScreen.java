@@ -570,6 +570,10 @@ public class ChangeFireColorScreen extends Screen {
     public ButtonWidget builtinButton;
     public PanelButton shareBottomButton;
     public PanelButton inboxButton;
+    // "Import profiles…" group box (heading + Community/Built-in buttons + separator rule), laid out in
+    // init() and drawn in render(). Matches the 1.21.11 / 26.1.2 layout.
+    private int importGroupX, importGroupY, importGroupW, importGroupH;
+    private static final int IMPORT_PAD = 4;
     public ButtonWidget resetProfileButton;
     /** Toggles {@link PresetListWidget#reorderMode} so profiles can be drag-reordered (their order is
      *  the inter-profile priority — top active wins). */
@@ -611,33 +615,42 @@ public class ChangeFireColorScreen extends Screen {
         blockUnderField = new CustomTextFieldWidget(this.textRenderer, blockSearchCoords[0]+1, blockSearchCoords[1]+20+1, blockSearchDimensions[0]-2, 18, ScreenTexts.DONE, this, false);this.addDrawableChild(textFieldWidget);
         this.addDrawableChild(blockUnderField);
 
-        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 48 - PresetListWidget.DESC_GAP - PresetListWidget.TOP_GAP, wheelCoords[0], 15, this, textRenderer);
+        this.presetListWidget = new PresetListWidget(client,  wheelRadius*2 + sliderDimensions[0] + 20, height-hexBoxCoords[1] -60-20 - 30 - 70 - PresetListWidget.DESC_GAP - PresetListWidget.TOP_GAP, wheelCoords[0], 15, this, textRenderer);
 
-        // Two button rows stack directly under the profile list (the list height above was shrunk by
-        // 48 to leave room): the "Import profiles…" pair (Community | Built-in) split across the width,
-        // then a wide Share button with a square "Inbox" text button to its right.
-        int importRowY = presetListWidget.getY() + presetListWidget.getHeight() + 4;
+        int listX = presetListWidget.getX();
+        int listW = presetListWidget.getWidth();
+        int listBottom = presetListWidget.getY() + presetListWidget.getHeight();
+
+        // "Import profiles…" group: Community + Built-in sit side by side under a small heading, with a
+        // separator rule below them dividing the import pair from the Share/Inbox row. The list height
+        // above was shrunk (70) to leave room for the heading + both button rows.
+        int labelH = textRenderer.fontHeight;
+        importGroupX = listX - IMPORT_PAD;
+        importGroupY = listBottom + IMPORT_PAD;
+        importGroupW = listW + IMPORT_PAD * 2;
+        int importRowY = importGroupY + IMPORT_PAD + labelH + 2;
+        importGroupH = (importRowY + 20 + IMPORT_PAD) - importGroupY;
         int importGap = 2;
-        int importHalf = (presetListWidget.getWidth() - importGap) / 2;
-        this.browseOnlineButton = new PanelButton(presetListWidget.getX(), importRowY, importHalf, 20,
+        int importHalf = (listW - importGap) / 2;
+        this.browseOnlineButton = new PanelButton(listX, importRowY, importHalf, 20,
                 Text.translatable("firorize.config.button.community"),
                 button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.COMMUNITY)));
-        this.builtinButton = new PanelButton(presetListWidget.getX() + importHalf + importGap, importRowY,
-                presetListWidget.getWidth() - importHalf - importGap, 20,
+        this.builtinButton = new PanelButton(listX + importHalf + importGap, importRowY,
+                listW - importHalf - importGap, 20,
                 Text.translatable("firorize.config.button.builtin"),
                 button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.BUILTIN)));
 
-        int row2Y = presetListWidget.getY() + presetListWidget.getHeight() + 28;
+        // Share (wide) + Inbox (narrow) on the row below the separator. Inbox wraps to its label and
+        // stays right-aligned; Share fills the remaining width to its left.
+        int row2Y = importGroupY + importGroupH + 7;
         int row2Gap = 2;
-        // Inbox button wraps narrowly to its label and stays right-aligned at the end of the row;
-        // Share fills the remaining width to its left.
         Text inboxLabel = Text.translatable("firorize.config.button.inbox");
         int inboxSize = textRenderer.getWidth(inboxLabel) + 12;
-        int shareW = presetListWidget.getWidth() - inboxSize - row2Gap;
-        this.shareBottomButton = new PanelButton(presetListWidget.getX(), row2Y, shareW, 20,
+        int shareW = listW - inboxSize - row2Gap;
+        this.shareBottomButton = new PanelButton(listX, row2Y, shareW, 20,
                 Text.translatable("firorize.config.button.share"),
                 button -> client.setScreen(new ChooseProfileScreen(this, null)));
-        this.inboxButton = new PanelButton(presetListWidget.getX() + shareW + row2Gap, row2Y, inboxSize, 20, inboxLabel,
+        this.inboxButton = new PanelButton(listX + shareW + row2Gap, row2Y, inboxSize, 20, inboxLabel,
                 button -> client.setScreen(new OnlinePresetsScreen(this, OnlinePresetsScreen.View.INBOX)));
         // Pull the inbox count so the notification badge is up to date when this screen opens.
         OnlinePresetsClient.refreshInboxCount();
@@ -1238,6 +1251,14 @@ public class ChangeFireColorScreen extends Screen {
         if (browseOnlineButton != null) {
             context.drawBorder(profilesPanelX1(), profilesPanelY1(),
                     profilesPanelX2() - profilesPanelX1(), profilesPanelY2() - profilesPanelY1(), 0xFF5A5A5A);
+        }
+
+        // "Import profiles…" heading above the Community/Built-in buttons, with a separator rule at the
+        // bottom of the group dividing the import pair from the Share/Inbox row below.
+        if (browseOnlineButton != null) {
+            context.fill(importGroupX, importGroupY + importGroupH - 1, importGroupX + importGroupW, importGroupY + importGroupH, 0xFF5A5A5A);
+            context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.label.importProfiles"),
+                    importGroupX + IMPORT_PAD, importGroupY + IMPORT_PAD, 0xFFB0B0B0);
         }
         // Outline framing the whole search column (matches the panel fill drawn in renderBackground) so
         // the title, search field and list read as one bordered section.
