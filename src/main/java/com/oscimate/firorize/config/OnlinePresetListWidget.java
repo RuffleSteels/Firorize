@@ -182,7 +182,9 @@ public class OnlinePresetListWidget extends ClickableWidget {
         boolean headerHover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + HEADER_H
                 && mouseY >= getY() && mouseY <= getY() + getHeight();
 
-        context.fill(x, y, x + w, y + h, 0xFF1A1A1A);
+        // Card fill is a shade lighter than the dialog box behind it (0xFF1A1A1A) so each item reads as
+        // a distinct card — important when a card is clipped mid-scroll at the list's edge.
+        context.fill(x, y, x + w, y + h, 0xFF242424);
         context.drawStrokedRectangle(x, y, w, h, headerHover ? 0xFFB0B0B0 : 0xFF454545);
 
         // Chevron
@@ -208,9 +210,22 @@ public class OnlinePresetListWidget extends ClickableWidget {
         }
 
         int titleX = x + PAD + 11;
-        int titleMax = w - PAD - timeWidth - 6 - badgeW - (titleX - x);
-        String title = textRenderer.trimToWidth(row.preset.displayTitle(), Math.max(8, titleMax));
-        context.drawTextWithShadow(textRenderer, Text.literal(title), titleX, y + (HEADER_H - 8) / 2, 0xFFFFFFFF);
+        int titleMax = Math.max(8, w - PAD - timeWidth - 6 - badgeW - (titleX - x));
+        int titleY = y + (HEADER_H - 8) / 2;
+        String fullTitle = row.preset.displayTitle();
+        int fullW = textRenderer.getWidth(fullTitle);
+        if (headerHover && fullW > titleMax) {
+            // Hovered and too long: marquee-scroll the full title, clipped to the title column so it
+            // doesn't run under the type badge / date.
+            if (!row.wasHovered) row.marqueeStart = System.currentTimeMillis();
+            int off = MarqueeText.offset(fullW, titleMax, System.currentTimeMillis() - row.marqueeStart);
+            context.enableScissor(titleX, y, titleX + titleMax, y + HEADER_H);
+            context.drawTextWithShadow(textRenderer, Text.literal(fullTitle), titleX - off, titleY, 0xFFFFFFFF);
+            context.disableScissor();
+        } else {
+            context.drawTextWithShadow(textRenderer, Text.literal(textRenderer.trimToWidth(fullTitle, titleMax)), titleX, titleY, 0xFFFFFFFF);
+        }
+        row.wasHovered = headerHover;
         context.drawTextWithShadow(textRenderer, time, x + w - PAD - timeWidth, y + (HEADER_H - 8) / 2, 0xFF909090);
 
         if (row.expanded) {
@@ -462,6 +477,9 @@ public class OnlinePresetListWidget extends ClickableWidget {
         final Text headerLabel;      // non-null only for HEADER
         boolean expanded = false;
         long confirmActionUntil = 0;
+        // Marquee state for the title when hovered (see renderRow); start is reset on each new hover.
+        long marqueeStart;
+        boolean wasHovered;
         private List<OrderedText> cachedLines;
         private int cachedWidth = -1;
         private int cachedType = -2; // -2 = not computed, -1 = unknown/undeserializable, 0/1/2 = type

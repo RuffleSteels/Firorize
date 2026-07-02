@@ -120,6 +120,9 @@ public class ChooseProfileScreen extends Screen {
         private double scrollY = 0;
         private boolean draggingScrollbar = false;
         private int selected = -1;
+        // Marquee state: which row is currently scrolling its (too-long) name and when that hover began.
+        private int marqueeIndex = -1;
+        private long marqueeStart;
 
         ProfileList(int x, int y, int width, int height) {
             super(x, y, width, height, Text.empty());
@@ -161,8 +164,20 @@ public class ChooseProfileScreen extends Screen {
                             && mouseY >= top && mouseY <= bottom;
                     if (sel || hover) context.fill(left, y, left + rowW, y + ROW_H, sel ? 0xFF3A5A8A : 0xFF262626);
                     context.drawStrokedRectangle(left, y, rowW, ROW_H, sel ? 0xFFB0C4E0 : 0xFF333333);
-                    String name = textRenderer.trimToWidth(names.get(i), rowW - 12);
-                    context.drawTextWithShadow(textRenderer, Text.literal(name), left + 6, y + (ROW_H - 8) / 2, 0xFFFFFFFF);
+                    int nameMax = rowW - 12;
+                    int nameY = y + (ROW_H - 8) / 2;
+                    String full = names.get(i);
+                    int fullW = textRenderer.getWidth(full);
+                    if (hover && fullW > nameMax) {
+                        // Hovered and too long: marquee-scroll the full name, clipped to the row.
+                        if (marqueeIndex != i) { marqueeIndex = i; marqueeStart = System.currentTimeMillis(); }
+                        int off = MarqueeText.offset(fullW, nameMax, System.currentTimeMillis() - marqueeStart);
+                        context.enableScissor(left + 6, y, left + 6 + nameMax, y + ROW_H);
+                        context.drawTextWithShadow(textRenderer, Text.literal(full), left + 6 - off, nameY, 0xFFFFFFFF);
+                        context.disableScissor();
+                    } else {
+                        context.drawTextWithShadow(textRenderer, Text.literal(textRenderer.trimToWidth(full, nameMax)), left + 6, nameY, 0xFFFFFFFF);
+                    }
                 }
                 y += ROW_H;
             }

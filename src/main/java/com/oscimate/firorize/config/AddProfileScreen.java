@@ -49,6 +49,15 @@ public class AddProfileScreen extends Screen {
     public TextFieldWidget presetNameField;
     private Text nameError = null;
 
+    /** Sensible cap on a profile name so it fits the profile lists and matches the upload title cap. */
+    private static final int MAX_NAME_LENGTH = 32;
+
+    /** Normalises a typed name: trims the ends and collapses any run of whitespace (double/triple
+     *  spaces) to a single space. Dashes and every other character are left untouched. */
+    private static String sanitizeName(String raw) {
+        return raw.trim().replaceAll("\\s+", " ");
+    }
+
     private int boxX, boxY, boxW, boxH;
     // Caption (heading + wrapped grey description) drawn between the name field and the type buttons,
     // explaining that a profile recolours fire by one thing. Positions/lines computed once in init().
@@ -79,7 +88,7 @@ public class AddProfileScreen extends Screen {
         descY = boxY + descTop;
 
         this.presetNameField = new PlaceholderField(this.textRenderer, boxX + pad, boxY + nameTop, boxW - pad * 2, 20, ScreenTexts.DONE);
-        presetNameField.setMaxLength(Integer.MAX_VALUE);
+        presetNameField.setMaxLength(MAX_NAME_LENGTH);
 
         // Pick the profile's single type; the profile starts empty for that category. Each button's
         // tooltip spells out what that category recolours by.
@@ -133,12 +142,13 @@ public class AddProfileScreen extends Screen {
 
     public void addProfile(KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> newProfile, int type) {
         if (newProfile != null) {
-            if (presetNameField.getText().isEmpty()) {
+            String name = sanitizeName(presetNameField.getText());
+            if (name.isEmpty()) {
                 nameError = Text.translatable("firorize.config.tooltip.empty");
-            } else if (Main.CONFIG_MANAGER.getFireColorPresets().keySet().stream().anyMatch(presetNameField.getText()::equalsIgnoreCase)) {
+            } else if (Main.CONFIG_MANAGER.getFireColorPresets().keySet().stream().anyMatch(name::equalsIgnoreCase)) {
                 nameError = Text.translatable("firorize.config.tooltip.exists");
             } else {
-                parent.presetListWidget.addProfile(presetNameField.getText(), newProfile, type);
+                parent.presetListWidget.addProfile(name, newProfile, type);
                 Main.setScale(width, height, client);
                 client.setScreen(parent);
             }
