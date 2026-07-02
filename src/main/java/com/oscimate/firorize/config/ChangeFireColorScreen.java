@@ -1253,10 +1253,12 @@ public class ChangeFireColorScreen extends Screen {
                     profilesPanelX2() - profilesPanelX1(), profilesPanelY2() - profilesPanelY1(), 0xFF5A5A5A);
         }
 
-        // "Import profiles…" heading above the Community/Built-in buttons, with a separator rule at the
-        // bottom of the group dividing the import pair from the Share/Inbox row below.
+        // "Import profiles…" heading above the Community/Built-in buttons, with a separator rule dividing
+        // the import pair from the Share/Inbox row below. The rule is centred in the gap between the two
+        // rows (computed from the button geometry) so it doesn't hug the top row.
         if (browseOnlineButton != null) {
-            context.fill(importGroupX, importGroupY + importGroupH - 1, importGroupX + importGroupW, importGroupY + importGroupH, 0xFF5A5A5A);
+            int sepY = (browseOnlineButton.getY() + browseOnlineButton.getHeight() + shareBottomButton.getY()) / 2;
+            context.fill(importGroupX, sepY, importGroupX + importGroupW, sepY + 1, 0xFF5A5A5A);
             context.drawTextWithShadow(textRenderer, Text.translatable("firorize.config.label.importProfiles"),
                     importGroupX + IMPORT_PAD, importGroupY + IMPORT_PAD, 0xFFB0B0B0);
         }
