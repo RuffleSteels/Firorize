@@ -377,6 +377,10 @@ class PresetListWidget
             return super.mouseClicked(click, doubled);
         }
         private float alphaa;
+        // Marquee state: when the hovered row's name is too long to fit, it auto-scrolls sideways.
+        // marqueeStart is reset each time the hover begins so the scroll always starts from the front.
+        private long marqueeStart;
+        private boolean wasHovered;
 
         @Override
         public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
@@ -482,12 +486,25 @@ class PresetListWidget
                 badgeHoverKey = null;
             }
 
-            // Name (left column): left-aligned after the checkbox/marker, truncated before the badge.
+            // Name (left column): left-aligned after the checkbox/marker. When it doesn't fit the
+            // space before the badge it marquee-scrolls while the row is hovered (clipped to its
+            // column); otherwise it's truncated.
             int nameX = x + (imported ? 29 : 18);
             int nameColor = active ? 0xFFFFFFFF : 0xFF707070;
             int nameMax = Math.max(8, badgeX - 4 - nameX);
-            String shown = PresetListWidget.this.font.plainSubstrByWidth(languageDefinition, nameMax);
-            context.text(PresetListWidget.this.font, Component.literal(shown), nameX, y + (entryHeight - 8) / 2 + 1, nameColor);
+            int nameY = y + (entryHeight - 8) / 2 + 1;
+            int fullW = PresetListWidget.this.font.width(languageDefinition);
+            if (hovered && fullW > nameMax) {
+                if (!wasHovered) marqueeStart = System.currentTimeMillis();
+                int off = MarqueeText.offset(fullW, nameMax, System.currentTimeMillis() - marqueeStart);
+                context.enableScissor(nameX, y, nameX + nameMax, y + entryHeight);
+                context.text(PresetListWidget.this.font, Component.literal(languageDefinition), nameX - off, nameY, nameColor);
+                context.disableScissor();
+            } else {
+                String shown = PresetListWidget.this.font.plainSubstrByWidth(languageDefinition, nameMax);
+                context.text(PresetListWidget.this.font, Component.literal(shown), nameX, nameY, nameColor);
+            }
+            wasHovered = hovered;
         }
     }
 }
