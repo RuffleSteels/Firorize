@@ -48,5 +48,11 @@
   "firorize.donate.popup.title": "Нравится Firorize?",
   "firorize.donate.popup.body": "Firorize всегда бесплатен. Если он добавил красок в вашу игру, поддержите его на Ko-fi!",
   "firorize.donate.popup.support": "Поддержать на Ko-fi",
-  "firorize.donate.popup.later": "Может позже"
+  "firorize.donate.popup.later": "Может позже",
+  "firorize.config.newProfile.description": "Цвет огня можно настроить по блоку, биому или тегу блока, на котором горит огонь. Выберите, что использует этот профиль.",
+  "firorize.config.tooltip.profileActive": "Применён к огню — нажмите, чтобы отключить.",
+  "firorize.config.tooltip.profileInactive": "Не применён — нажмите, чтобы включить.",
+  "firorize.config.tooltip.badge.block": "Этот профиль окрашивает огонь по блоку, на котором он горит.",
+  "firorize.config.tooltip.badge.tag": "Этот профиль окрашивает огонь по тегу блока под ним.",
+  "firorize.config.tooltip.badge.biome": "Этот профиль окрашивает огонь по биому, в котором он находится."
 }
