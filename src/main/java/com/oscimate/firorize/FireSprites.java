@@ -44,9 +44,14 @@ public final class FireSprites {
         }
         int fireColor = color[0];
         if (fireColor < 1) {
+            // A real recolour carries {base, overlay}; the lava/soul sentinel ({2}) is length 1 but never
+            // reaches this branch (its colour[0] is 2). A malformed length-1 recolour can't name a sprite,
+            // so fall back to vanilla rather than indexing colour[1] out of bounds.
+            if (color.length < 2) return vanilla;
             Sprite sprite = block(atlas, "block/fire_1_" + Math.abs(color[0]) + "_" + Math.abs(color[1]));
             if (sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId())) {
                 int[] base = Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+                if (base == null || base.length < 2) base = new int[]{-7456000, -6456034};
                 return block(atlas, "block/fire_1_" + Math.abs(base[0]) + "_" + Math.abs(base[1]));
             }
             return sprite;
