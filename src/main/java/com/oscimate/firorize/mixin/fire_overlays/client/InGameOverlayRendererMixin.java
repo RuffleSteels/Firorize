@@ -46,6 +46,10 @@ public class InGameOverlayRendererMixin {
         }
         int fireColor = color[0];
         if (fireColor < 1) {
+            // A real recolour carries {base, overlay}; the lava sentinel ({2}) is length 1 but never
+            // reaches this branch (its colour[0] is 2). A malformed length-1 recolour can't name a
+            // sprite, so fall back to vanilla rather than indexing colour[1] out of bounds.
+            if (color.length < 2) return original.call(instance);
             Sprite sprite = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[0])+"_"+Math.abs(((RenderFireColorAccessor)client.player).firorize$getRenderFireColor()[1]))).getSprite();
             return sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId()) ? new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, Identifier.of("block/fire_1_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[0])+"_"+Math.abs(Main.CONFIG_MANAGER.getCurrentBlockFireColors().getRight()[1]))).getSprite() : sprite;
         } else if (fireColor == 2) {
