@@ -30,6 +30,15 @@ class PresetListWidget
     private static final int[][] TYPE_BADGE_COLORS = {
             {143, 208, 143}, {143, 175, 224}, {224, 176, 112}
     };
+    // Explanatory tooltip shown when the type badge is hovered, indexed 0 block / 1 tag / 2 biome.
+    private static final String[] TYPE_BADGE_TOOLTIP_KEYS = {
+            "firorize.config.tooltip.badge.block", "firorize.config.tooltip.badge.tag", "firorize.config.tooltip.badge.biome"
+    };
+    // Standard (delayed) hover for the type badge: it isn't a widget, so the delay is tracked by hand —
+    // the tooltip only shows once the pointer has rested on the same badge for BADGE_TOOLTIP_DELAY_MS.
+    private static final long BADGE_TOOLTIP_DELAY_MS = 500L;
+    private String badgeHoverKey = null;
+    private long badgeHoverStartMs = 0L;
 
     // Reorder mode: toggled by the reorder button next to the "Profiles" title. While on, rows can be
     // dragged to change the list order (which is the inter-profile priority — top wins), and the
@@ -455,6 +464,23 @@ class PresetListWidget
             int[] tc = TYPE_BADGE_COLORS[type];
             context.drawText(PresetListWidget.this.textRenderer, badge, badgeX + 3, badgeY + 2,
                     new Color(tc[0] / 255f, tc[1] / 255f, tc[2] / 255f, dim).getRGB(), false);
+
+            // Hovering the badge explains what its type recolours by, but only after a short rest on it
+            // (a standard delayed tooltip), so it doesn't flash while the pointer sweeps down the list.
+            boolean badgeHover = !reorderMode && mouseX >= badgeX && mouseX <= badgeX + badgeW
+                    && mouseY >= badgeY && mouseY <= badgeY + 11;
+            if (badgeHover) {
+                if (!languageDefinition.equals(badgeHoverKey)) {
+                    badgeHoverKey = languageDefinition;
+                    badgeHoverStartMs = System.currentTimeMillis();
+                }
+                if (System.currentTimeMillis() - badgeHoverStartMs >= BADGE_TOOLTIP_DELAY_MS) {
+                    instance.globeTooltip = Text.translatable(TYPE_BADGE_TOOLTIP_KEYS[type]);
+                }
+            } else if (languageDefinition.equals(badgeHoverKey)) {
+                // Pointer left the badge we were timing — reset so re-entering waits the full delay again.
+                badgeHoverKey = null;
+            }
 
             // Name (left column): left-aligned after the checkbox/marker. When it doesn't fit the
             // space before the badge it marquee-scrolls while the row is hovered (clipped to its
