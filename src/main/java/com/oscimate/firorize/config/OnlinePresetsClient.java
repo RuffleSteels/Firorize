@@ -238,7 +238,13 @@ public final class OnlinePresetsClient {
         if (response.statusCode() / 100 != 2) {
             throw new RuntimeException("Server returned HTTP " + response.statusCode());
         }
-        OnlinePreset[] presets = GSON.fromJson(response.body(), OnlinePreset[].class);
+        OnlinePreset[] presets;
+        try {
+            presets = GSON.fromJson(response.body(), OnlinePreset[].class);
+        } catch (RuntimeException e) {
+            // 2xx with a non-JSON / malformed body (proxy page, truncated response): treat as empty.
+            return List.of();
+        }
         return presets == null ? List.of() : Arrays.asList(presets);
     }
 

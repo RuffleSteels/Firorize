@@ -142,7 +142,7 @@ public class TestModel extends WrapperBlockStateModel {
         }
 
         Holder<Biome> biome = ((FabricBlockGetter) blockView).getBiomeFabric(pos);
-        String biomeKey = biome == null ? null : biome.unwrapKey().get().identifier().toString();
+        String biomeKey = biome == null ? null : biome.unwrapKey().map(k -> k.identifier().toString()).orElse(null);
 
         int[] resolved = blockUnder == null ? null : Main.resolveActiveFireColor(blockUnder, biomeKey);
         return resolved != null ? resolved : Main.topActiveBase().clone();

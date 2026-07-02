@@ -121,7 +121,7 @@ public class Main implements ClientModInitializer {
                             // maps this block/tag/biome. A match wins outright; otherwise the fire shows
                             // the top active profile's base colour (tentative — a later fire block in the
                             // bounding box may still resolve a specific colour and take over).
-                            String biomeKey = entity.level().getBiome(mutable).unwrapKey().get().identifier().toString();
+                            String biomeKey = entity.level().getBiome(mutable).unwrapKey().map(bk -> bk.identifier().toString()).orElse(null);
                             int[] resolved = resolveActiveFireColor(blockUnder, biomeKey);
                             if (resolved != null) {
                                 ((RenderFireColorAccessor) entity).firorize$setRenderFireColor(resolved);
@@ -161,14 +161,20 @@ public class Main implements ClientModInitializer {
      */
     @SuppressWarnings("deprecation") // builtInRegistryHolder().tags() is the supported per-block tag stream
     public static int[] resolveActiveFireColor(Block blockUnder, String biomeKey) {
-        String blockKey = BuiltInRegistries.BLOCK.getKey(blockUnder).toString();
+        var blockId = BuiltInRegistries.BLOCK.getKey(blockUnder);
+        String blockKey = blockId == null ? null : blockId.toString();
         ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = CONFIG_MANAGER.getFireColorPresets();
         for (String name : presets.keyList()) {
             if (!CONFIG_MANAGER.getActiveProfiles().contains(name)) continue;
-            ArrayList<ListOrderedMap<String, int[]>> list = presets.get(name).getLeft().getLeft();
+            KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> profile = presets.get(name);
+            if (profile == null || profile.getLeft() == null) continue;
+            ArrayList<ListOrderedMap<String, int[]>> list = profile.getLeft().getLeft();
+            // A well-formed profile always has three category maps; skip any malformed one rather than
+            // indexing list.get(1)/get(2) out of bounds.
+            if (list == null || list.size() < 3) continue;
             switch (CONFIG_MANAGER.getProfileType(name)) {
                 case 0 -> {
-                    if (list.get(0).containsKey(blockKey)) return list.get(0).get(blockKey).clone();
+                    if (blockKey != null && list.get(0).containsKey(blockKey)) return list.get(0).get(blockKey).clone();
                 }
                 case 1 -> {
                     ListOrderedMap<String, int[]> map = list.get(1);
@@ -190,13 +196,17 @@ public class Main implements ClientModInitializer {
      * buffer's base if no profile is active. Never null, so callers can {@code .clone()} safely.
      */
     public static int[] topActiveBase() {
+        int[] fallback = new int[]{-7456000, -6456034};
         ListOrderedMap<String, KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>>> presets = CONFIG_MANAGER.getFireColorPresets();
         for (String name : presets.keyList()) {
             if (CONFIG_MANAGER.getActiveProfiles().contains(name)) {
-                return presets.get(name).getLeft().getRight();
+                KeyValuePair<KeyValuePair<ArrayList<ListOrderedMap<String, int[]>>, int[]>, ArrayList<Integer>> profile = presets.get(name);
+                int[] base = (profile == null || profile.getLeft() == null) ? null : profile.getLeft().getRight();
+                return (base != null && base.length >= 2) ? base : fallback;
             }
         }
-        return CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+        int[] base = CONFIG_MANAGER.getCurrentBlockFireColors().getRight();
+        return (base != null && base.length >= 2) ? base : fallback;
     }
 
     public static final KeyMapping configKeybind = KeyMappingHelper.registerKeyMapping(
