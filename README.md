@@ -17,8 +17,8 @@
 Are you bored of that same old orange fire? In need of more atmospheric nether biomes? Wishing for some
 colorful variety next time you decide to burn your friend's house down?
 
-**Firorize** lets you recolour fire however you like — per **biome**, per **block it sits on**, and per
-**block tag** — with a priority system to settle any clashes. Group your colours into named **profiles**,
+**Firorize** lets you recolour fire however you like – per **biome**, per **block it sits on**, and per
+**block tag** – with a priority system to settle any clashes. Group your colours into named **profiles**,
 and now **share them with the whole community or send them straight to a friend, right inside the game.**
 
 It's fully **client-side**, so it works on any server without installing anything server-side.
@@ -47,10 +47,10 @@ It's fully **client-side**, so it works on any server without installing anythin
 - A preloaded **nether** profile to get you started
 
 #### Online sharing
-- **Built-in Gallery** — take a pick from many built-in fire profiles made by me
-- **Community Gallery** — browse fire profiles shared by other players and import them with a single click
+- **Built-in Gallery** – take a pick from many built-in fire profiles made by me
+- **Community Gallery** – browse fire profiles shared by other players and import them with a single click
 - **Upload** your own profiles to share them publicly
-- **Inbox** — privately send your custom profiles to friends
+- **Inbox** – privately send your custom profiles to friends
 
 #### Quality of life
 - Simple, flexible configuration menu (open with **I** by default)
@@ -61,12 +61,24 @@ It's fully **client-side**, so it works on any server without installing anythin
 
 ---
 
-## Gallery
+## Fire height
+
+#### Adjust the first-person fire height
+
+Shrink the first-person fire overlay so it's less obtrusive when you're on fire.
+
+<p align="center">
+  <img src="images/fire-height.png" alt="First-person view with the fire-overlay height slider set to 67, lowering the flames at the bottom of the screen" width="820">
+</p>
+
+---
+
+## Profiles & sharing
 
 #### Built-in profiles, ready to import
 
-Ship straight from a curated set — like the **Soul Fire** profile that restores the classic blue to
-soul sand and soul soil — and import them with one click.
+Ship straight from a curated set – like the **Soul Fire** profile that restores the classic blue to
+soul sand and soul soil – and import them with one click.
 
 <p align="center">
   <img src="images/builtin-profiles.png" alt="The Built-in Profiles browser, showing a Soul Fire block profile and a Nether Biomes profile, each with an Import button" width="820">
@@ -86,14 +98,6 @@ Your **Inbox** collects profiles other players have sent you, and lets you share
 
 <p align="center">
   <img src="images/inbox.png" alt="The Inbox screen for receiving and sending profiles between players" width="820">
-</p>
-
-#### Adjust the first-person fire height
-
-Shrink the first-person fire overlay so it's less obtrusive when you're on fire.
-
-<p align="center">
-  <img src="images/fire-height.png" alt="First-person view with the fire-overlay height slider set to 67, lowering the flames at the bottom of the screen" width="820">
 </p>
 
 ---
