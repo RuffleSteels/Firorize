@@ -107,8 +107,8 @@ Your **Inbox** collects profiles other players have sent you, and lets you share
 | Mod | Notes |
 | --- | --- |
 | [Fabric API](https://www.modrinth.com/mod/fabric-api) | **Required** |
-| [Mod Menu](https://www.modrinth.com/mod/modmenu) | **Required** (opens the config) |
-| [Sodium](https://www.modrinth.com/mod/sodium) | Recommended for performance |
+| [Mod Menu](https://www.modrinth.com/mod/modmenu) | Suggested (for opening config) |
+| [Sodium](https://www.modrinth.com/mod/sodium) | Compatible |
 | [Indium](https://www.modrinth.com/mod/indium) | Required **if** Sodium is installed |
 | Iris shaders | Compatible |
 | OptiFabric | Incompatible |
