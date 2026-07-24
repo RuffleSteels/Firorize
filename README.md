@@ -24,7 +24,7 @@ and now **share them with the whole community or send them straight to a friend,
 It's fully **client-side**, so it works on any server without installing anything server-side.
 
 <p align="center">
-  <img src="images/editor-hero.png" alt="The Firorize colour editor: a colour wheel and lightness slider on the left, an active profile list, a per-block search list, and a recoloured golden fire burning in-world" width="900">
+  <img src="https://github.com/RuffleSteels/Firorize/raw/master/images/editor-hero.jpg" alt="The Firorize colour editor: a colour wheel and lightness slider on the left, an active profile list, a per-block search list, and a recoloured golden fire burning in-world" width="900">
 </p>
 
 ---
@@ -68,7 +68,7 @@ It's fully **client-side**, so it works on any server without installing anythin
 Shrink the first-person fire overlay so it's less obtrusive when you're on fire.
 
 <p align="center">
-  <img src="images/fire-height.png" alt="First-person view with the fire-overlay height slider set to 67, lowering the flames at the bottom of the screen" width="820">
+  <img src="https://github.com/RuffleSteels/Firorize/raw/master/images/fire-height.jpg" alt="First-person view with the fire-overlay height slider set to 67, lowering the flames at the bottom of the screen" width="820">
 </p>
 
 ---
@@ -81,7 +81,7 @@ Ship straight from a curated set – like the **Soul Fire** profile that restore
 soul sand and soul soil – and import them with one click.
 
 <p align="center">
-  <img src="images/builtin-profiles.png" alt="The Built-in Profiles browser, showing a Soul Fire block profile and a Nether Biomes profile, each with an Import button" width="820">
+  <img src="https://github.com/RuffleSteels/Firorize/raw/master/images/builtin-profiles.jpg" alt="The Built-in Profiles browser, showing a Soul Fire block profile and a Nether Biomes profile, each with an Import button" width="820">
 </p>
 
 #### Browse and import from the community
@@ -89,7 +89,7 @@ soul sand and soul soil – and import them with one click.
 Discover fire profiles shared by other players and add them to your collection instantly.
 
 <p align="center">
-  <img src="images/community-profiles.png" alt="The Community Profiles browser listing player-shared Glazed Terracotta profiles alongside the profile list and block search" width="820">
+  <img src="https://github.com/RuffleSteels/Firorize/raw/master/images/community-profiles.jpg" alt="The Community Profiles browser listing player-shared Glazed Terracotta profiles alongside the profile list and block search" width="820">
 </p>
 
 #### Send profiles straight to friends
@@ -97,7 +97,7 @@ Discover fire profiles shared by other players and add them to your collection i
 Your **Inbox** collects profiles other players have sent you, and lets you share your own privately.
 
 <p align="center">
-  <img src="images/inbox.png" alt="The Inbox screen for receiving and sending profiles between players" width="820">
+  <img src="https://github.com/RuffleSteels/Firorize/raw/master/images/inbox.jpg" alt="The Inbox screen for receiving and sending profiles between players" width="820">
 </p>
 
 ---
